@@ -1,61 +1,80 @@
 # Friction Finder prototype (Group 4, DNSC 6317)
 
-An assistant for an HR or operations leader who sees a team's engagement score drop and has to
-work out the likely obstacle and who owns the fix. It joins survey aggregates, operational
-records, and documents, and writes a cited one-page brief. A person approves it. It declines
-when the data cannot answer.
+Version 0.2, Sept 17, 2026. Built for the second round of judge meeting 1 (Fri Sept 18: Ethirajan,
+Fullowan, Jamshidi, Keegan). Version 0.1 (Sept 14) is the previous git commit.
+
+Helps a **site or shift manager** decide **which obstacle to test first** after an engagement score
+falls, by answering *where did we drop, is it real, what is behind it, who owns it, what do we do*
+from survey aggregates, operational records, procedures, and open-text comments. Starting segment:
+operations-heavy workplaces where daily work is logged (warehouses, logistics, call centers).
 
 Everything in `data/` is synthetic. Northline Logistics does not exist. Planted patterns are
-listed in `data/generated/truth.json` so the assistant can be scored. Design: `SPEC.md`.
+listed in `data/generated/truth.json` and explained in `DATA_SPEC.md` so the assistant can be
+scored. Design history: `SPEC.md`.
 
 ## Run it
 
 ```bash
 cd prototype
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env            # then put the GW-provided key in .env as GW_AZURE_OPENAI_KEY
+cp .env.example .env            # then put the GW-provided key in .env (never in code or chat)
 .venv/bin/python data/generate.py
 .venv/bin/python -m app.probe   # confirms which deployments the GW Azure resource exposes
 .venv/bin/streamlit run app/ui.py
 ```
 
 The model is the GW-assigned Azure OpenAI resource (`gw-sb-04`), deployments `gpt-5-mini` for
-chat and `text-embedding-3-small` for embeddings, as found by the probe on Sept 14, 2026. The
-key lives only in `.env` (git-ignored). Never paste it into code, notebooks, or chat.
-
-Without a key the app still runs: rule-based scoping, keyword retrieval, and a templated brief.
-With the key: the model extracts the question's scope, embeddings power retrieval, and the model
-writes the brief from the evidence it is handed. Every number still comes from SQL and Python.
-A full question takes roughly 10 to 25 seconds with the model, under a second without.
+chat and `text-embedding-3-small` for embeddings. Without a key the app still runs: rule-based
+scoping, keyword retrieval, templated text. With the key: the model reads the question into a
+schema, embeddings power retrieval, and the model writes the brief and the action items from the
+evidence it is handed. Every number still comes from SQL and Python. The main question takes
+about 30 seconds with gpt-5-mini (about 60 with gpt-5); under a second without a model.
 
 ## Check it
 
 ```bash
-.venv/bin/python -m pytest tests -q        # data patterns, suppression, numbers, brief checks, refusals
-.venv/bin/python -m evals.run_evals        # eight gold questions against the truth file
+.venv/bin/python -m pytest tests -q               # 32 tests: data patterns, suppression, numbers, verdicts, checks, plan, report, log
+.venv/bin/python -m evals.run_evals               # 12 gold questions, confusion matrix, saved to evals/results/
+.venv/bin/python -m evals.run_evals --model gpt-5 # same questions on another deployment, for the comparison
+.venv/bin/python -m evals.run_evals --no-model    # rules mode
 .venv/bin/python -m app.cli "Why did the Richmond night shift's scores drop and why are deliveries late?"
 ```
 
-## The five demo moments
+## Three features on one screen
 
-1. "Why did the Richmond night shift's scores drop and why are deliveries late?" Chart, evidence
-   table, brief with owner and proposed test, "show me" SQL under every number.
-2. "Why did the Richmond Dispatch Day team's scores drop?" Fewer than 4 respondents: suppressed,
-   rolled up to the site, with the reason. (Keegan's first question.)
-3. Sidebar: upload a CSV of delay records; ask again; the new rows are in the evidence.
-   (Keegan's second question.)
-4. "What caused turnover on the Norfolk night shift?" or "Why did the Denver site drop?" Declined
-   with a reason.
-5. Approve or reject the brief; the decision lands in `approvals.jsonl`.
+1. **Diagnose.** Site overview (which teams moved, which are hidden under n<4, strength and two
+   opportunities vs the company), then the evidence brief for one team: likely obstacle, evidence
+   for and against, what is missing, the process owner from the directory, a proposed 30-day test.
+   "Show me" reveals the SQL and rows behind every number.
+2. **Check the signal.** Did the team really decline, or did different people respond? A
+   shift-share adjustment holds each tenure band at its company-wide mean and reports how much of
+   the change the mix explains; the remainder is judged against a threshold. Tenure chart shows the
+   year-one effect.
+3. **Act and review.** For a supported verdict only: a plan in Gallup's State of the Team shape
+   (one performance goal, one focus item, three or four actions with owners and dates, a review
+   cadence, and the item's discussion questions quoted verbatim from Gallup's outline), plus a
+   one-page HTML report and a Markdown brief.
+
+Plus: CSV upload of operational records, approve / reject / flag with a review log, evals with a
+confusion matrix and model comparison, the data specification, and a table of what each judge
+said and what changed because of it.
 
 ## Rules the code enforces
 
-- Minimum n is 4. Team-level means are NULL below that, in the SQL views, before any model
-  call. Comments from those team-waves are never indexed.
-- The model never queries respondent rows: `run_sql` allows only the views and a short list of
-  tables, and only single SELECT statements.
-- The brief is checked: every citation must exist, every number must appear in the evidence,
-  and causal language is rejected. Two failures and the templated brief is shown instead.
+- **Minimum n is 4.** Team-level means and who-responded breakdowns are NULL or omitted below
+  that, in the SQL views and in code, before any model call. Comments from those team-waves are
+  never indexed.
+- **The model never queries respondent rows.** `run_sql` allows only the views and a short list
+  of tables, and only single SELECT statements.
+- **The verdict is computed, not generated.** An item must fall 0.30 or more; a late-departure
+  band must rise 5 points and 1.5x; a comment theme must have 3 or more separate comments to
+  corroborate; staffing under 90% is a competing explanation. Survey alone = "insufficient
+  evidence", no owner, no test. No material fall = "no material change".
+- **The brief is checked.** Every citation must exist, every number must appear in the evidence,
+  causal language is rejected, the owner must be the directory's owner when supported and "Not
+  assigned" otherwise. Two failures and the templated brief is shown, labelled.
+- **Team-level results are watch items.** Inference belongs at site level (n about 50 here).
+- **No autonomous action.** A person approves, rejects, or flags; the plan is a draft until then.
 - GW-provided OpenAI API only, via `.env`. No fine-tuning. The key never leaves the laptop.
 
 ## Layout
@@ -64,10 +83,11 @@ A full question takes roughly 10 to 25 seconds with the model, under a second wi
 app/config.py     .env, model names, threshold
 app/db.py         DuckDB, suppressed views, guarded run_sql, CSV upload
 app/retrieval.py  document and comment chunks; embeddings or keyword search
-app/agent.py      scope, analyze, retrieve, explain (+ check + fallback), approve, run
-app/ui.py         Streamlit screen
+app/agent.py      scope, analyze, retrieve, assess, explain; plan, reports, approve/flag, review log
+app/ui.py         Streamlit screen (playbook, tabs, footer panels)
 app/cli.py        command-line runner
-data/generate.py  synthetic company with planted patterns; writes data/generated and data/docs
-evals/            questions.json and run_evals.py
+data/generate.py  synthetic company with planted patterns P1-P10; writes data/generated, data/docs, DATA_SPEC.md
+data/docs/        illustrative SOPs plus Gallup's item questions (quoted, attributed)
+evals/            questions.json, run_evals.py, results/
 tests/            pytest
 ```

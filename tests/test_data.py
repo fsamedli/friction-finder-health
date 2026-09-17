@@ -76,3 +76,26 @@ def test_owner_exists_for_richmond_handoff(tables):
     o = tables["ownership_directory"]
     row = o[(o.process_name == "Shift handoff procedure") & (o.site_name == "Richmond")]
     assert len(row) == 1 and row.iloc[0].owner_role == "Site Operations Manager"
+
+
+def test_employee_ids_unique(tables):
+    """Judge Finan's colleague Arpine (Sept 15, 2026): unique employee ids so nothing is cross-attributed."""
+    e = tables["employees"]
+    assert e.emp_id.is_unique
+    r = pd.read_csv(GEN / "responses.csv")
+    assert not r.duplicated(["emp_id", "wave_id"]).any()
+
+
+def test_p9_blip_has_no_operational_or_comment_signal(truth):
+    p = truth["P9"]
+    assert p["wave1_mean"] - p["wave2_mean"] >= 0.45 and p["n_wave1"] >= 4 and p["n_wave2"] >= 4
+    assert p["site_day_late_rate_from_june"] < 1.5 * p["site_day_late_rate_before_june"]
+    assert p["wave2_comments"] <= 2
+
+
+def test_p10_loud_comment_is_long_and_alone(truth, tables):
+    p = truth["P10"]
+    assert p["comment_words"] >= 100 and p["wave2_comments_total"] <= 3
+    assert abs(p["grand_mean_w1"] - p["grand_mean_w2"]) < 0.3
+    c = tables["comments"]
+    assert c[c.comment_id.isin(p["comment_ids"])].text.str.contains("forklift", case=False).all()

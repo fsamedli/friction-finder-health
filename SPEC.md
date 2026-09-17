@@ -166,3 +166,76 @@ runs and the UI shows a notice.
 - Whether the GW key uses a custom base URL. Configurable.
 - Whether Gallup data arrives (Keegan's "grapevine"). Tables are shaped like a Gallup export
   so real aggregates can replace the generated ones.
+
+---
+
+# Version 0.2, Sept 17, 2026: judge meeting 1 recommendations built in
+
+Status: built and verified (32 tests, 12/12 evals in rules mode; model-mode runs saved under
+`evals/results/`). Shown Fri Sept 18 to Ethirajan (10:30), Fullowan (12:00), Jamshidi (1:00),
+Keegan (2:30). Version 0.1 is git commit `4ee1144` in this folder.
+
+## What changed and why (judge → change → where)
+
+| Judge, date | What they asked or objected to | Change | Where |
+|---|---|---|---|
+| Keegan (Gallup), Sept 14 | Managers under four; how operational records connect | Kept: suppression in SQL, site roll-up, CSV upload. Added: who-responded breakdown also hidden under n<4 | `db.py`, `agent._analyze_mix` |
+| Fullowan (Freddie Mac), Sept 14 | Human in the loop, spot checks with numbers, response bias | Approve / reject / **flag** with a review log; response bias in every brief's limits | `agent.approve`, `review_log`, UI |
+| Lederman (MITRE), Sept 15 | "What's the data"; do not attribute causation to a blip; one-pager | `DATA_SPEC.md` generated with the data; P9 blip → verdict "insufficient", no owner, no test; one-page HTML report | `generate.write_data_spec`, `assess`, `report_html` |
+| Chang (FI), Sept 15 | One loud comment over-indexes; weight by breadth | Comment themes counted in code; a theme corroborates only with ≥3 separate comments; P10 loud comment → "single source" | `retrieve`, `assess`, `THEMES` |
+| Finan (Mizuho), Sept 15 | Confusion-matrix evals, weight misses; model reasons over text; gpt-5 vs mini | Evals report TP/FN/FP/TN per run, saved per model; `--model` flag; origin labels on every element | `evals/run_evals.py`, UI |
+| Kaznachey (FI), Sept 16 | Playbook questions, not only free text; team n is small; deterministic vs textual | Playbook buttons for the three features; team-level = watch items, thresholds stated; computed / generated / retrieved / templated chips | `ui.py` |
+| Jamshidi (Promontory), Sept 16 | Flag-this loop; admin review; transparency about what is AI; one-sentence idea statement | Flag button; review log expander; chips; idea statement in the header | `ui.py` |
+| Hall (instructor), Sept 14 | Three strong analytics features on a professional UI | Diagnose (site overview + brief), Check the signal (mix-adjusted), Act and review (plan + report) | `ui.py`, `agent.plan` |
+
+## The computed verdict (step 4, new)
+
+Code decides whether the evidence supports naming an obstacle; the model is told the verdict and
+cannot change it (the checker rejects a brief that does). Thresholds, all in `agent.py`:
+
+- `SURVEY_MATERIAL = 0.30`: an item mean change of 0.30 or more on the 5-point scale is material.
+  Screening rule, not a significance test; team-level findings are watch items.
+- `OPS_SIGNAL_ABS = 0.05` and `OPS_SIGNAL_RATIO = 1.5`: a late-departure band is a signal when its
+  rate rises 5 points or more and to at least 1.5x the earlier rate.
+- `COMMENT_BREADTH = 3`: a comment theme corroborates only with three or more separate comments.
+- `STAFFING_LOW = 0.90`: a month under 90% of scheduled headcount is a competing explanation.
+- `MIX_EXPLAINS = 0.30`: in the signal check, a residual below 0.30 after the who-responded
+  adjustment means "not a real decline beyond the mix".
+
+Verdicts: `supported` (material fall + operational signal or comment breadth) → obstacle, owner,
+test, plan. `insufficient` (survey moved, nothing else) → watch item, no owner, no test.
+`no_material_change` → watch list. `suppressed_insufficient` → site view with the Site Operations
+Manager.
+
+## The signal check (feature 2, new)
+
+Shift-share: expected change = Σ over tenure bands of (share in Wave 2 − share in Wave 1) ×
+company-wide band mean. Residual = observed change in the team grand mean − expected. Norfolk Day
+B: observed −0.45, expected from mix −0.20, residual −0.25 → "mostly a change in who responded".
+
+## The action plan and report (feature 3, new)
+
+Only for `supported`. Goal from the operational signal (bring the 06-07 late rate from 17.8% back
+to 7.4% by the review date); focus item = the fallen item most relevant to the theme (handoff →
+Q02); three or four actions written by the model from the brief, checked (owner roles must exist
+in the directory for that site, numbers must appear in the evidence) or templated from a bank per
+theme; owners and dates computed; Gallup's item-specific discussion questions quoted verbatim with
+attribution (license: may be copied for individual use, not altered). Report: self-contained HTML
+(no scripts) with two SVG charts, plus Markdown.
+
+## Evals (rewritten)
+
+12 gold questions with a class: positive (E1, E12), negative (E2, E3, E4, E9, E10), lookup (E5,
+E6, E7, E8, E11). Outcome per question: TP / FN / FP / TN, or pass / fail for lookups. Misses (FN)
+are the outcome we weight highest (Finan). Runs are saved to `evals/results/latest_<model>.json`
+and shown in the UI, so the gpt-5 vs gpt-5-mini comparison lives in the technical evaluation, not
+the main deck (Hall).
+
+## Known limits carried into November
+
+- No Gallup global-database benchmark or percentile rank (no licensed source); strength and
+  opportunities are measured against the company mean instead.
+- Two waves; no next-wave comparison yet (the review step is designed, not exercised).
+- Response bias is stated, not modelled. Real survey text is human behaviour; ours is a small bank.
+- gpt-5-mini takes about 30 s on the main question; gpt-5 about 60 s. The templated fallback covers
+  a model outage but reads flatter.

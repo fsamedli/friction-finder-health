@@ -1,0 +1,283 @@
+{
+  "model": "gpt-5-mini",
+  "retrieval": "embeddings",
+  "ts": "2026-09-17T21:52:08+00:00",
+  "passed": 12,
+  "total": 12,
+  "matrix": {
+    "TP": 2,
+    "FN": 0,
+    "FP": 0,
+    "TN": 5,
+    "FN*": 0
+  },
+  "lookups_passed": 5,
+  "lookups_total": 5,
+  "briefs_regenerated_or_fallback": 1,
+  "seconds": 88.6,
+  "rows": [
+    {
+      "id": "E1",
+      "class": "positive",
+      "planted": [
+        "P1",
+        "P2",
+        "P3",
+        "P8"
+      ],
+      "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+      "status": "ok",
+      "verdict": "supported",
+      "brief_mode": "fallback",
+      "check_notes": [
+        "model brief failed checks twice: evidence_against: cites unknown evidence id S9; templated brief shown"
+      ],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds": true,
+        "obstacle_matches": true,
+        "owner_contains": true,
+        "brief_checks_pass": true,
+        "truth_numbers": true
+      },
+      "outcome": "TP",
+      "seconds": 28.0
+    },
+    {
+      "id": "E2",
+      "class": "negative",
+      "planted": [
+        "P7"
+      ],
+      "question": "Why did the Richmond Dispatch Day team's scores drop?",
+      "status": "suppressed",
+      "verdict": "suppressed_insufficient",
+      "brief_mode": "llm",
+      "check_notes": [
+        "passed: every citation exists, every number appears in the evidence, verdict respected"
+      ],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds": true,
+        "evidence_kinds_absent": true,
+        "owner_not_assigned": true
+      },
+      "outcome": "TN",
+      "seconds": 10.3
+    },
+    {
+      "id": "E3",
+      "class": "negative",
+      "planted": [],
+      "question": "Why did the Denver site drop?",
+      "status": "refused",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "TN",
+      "seconds": 2.6
+    },
+    {
+      "id": "E4",
+      "class": "negative",
+      "planted": [],
+      "question": "What caused turnover on the Norfolk night shift?",
+      "status": "refused",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "TN",
+      "seconds": 2.1
+    },
+    {
+      "id": "E5",
+      "class": "lookup",
+      "planted": [
+        "P5"
+      ],
+      "question": "How do scores vary by tenure?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true,
+        "truth_numbers": true
+      },
+      "outcome": "pass",
+      "seconds": 1.7
+    },
+    {
+      "id": "E6",
+      "class": "lookup",
+      "planted": [
+        "P6"
+      ],
+      "question": "Is the Norfolk Day B decline real or did different people respond?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "truth_numbers": true,
+        "mix_shift": true,
+        "signal_verdict": true
+      },
+      "outcome": "pass",
+      "seconds": 2.0
+    },
+    {
+      "id": "E7",
+      "class": "lookup",
+      "planted": [],
+      "question": "Who owns the shift handoff process at Richmond?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "pass",
+      "seconds": 2.3
+    },
+    {
+      "id": "E8",
+      "class": "lookup",
+      "planted": [
+        "P1"
+      ],
+      "question": "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "truth_numbers": true
+      },
+      "outcome": "pass",
+      "seconds": 1.4
+    },
+    {
+      "id": "E9",
+      "class": "negative",
+      "planted": [
+        "P9"
+      ],
+      "question": "Why did the Roanoke Day C team's scores drop?",
+      "status": "ok",
+      "verdict": "insufficient",
+      "brief_mode": "llm",
+      "check_notes": [
+        "passed: every citation exists, every number appears in the evidence, verdict respected"
+      ],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds_absent": true,
+        "obstacle_contains": true,
+        "owner_not_assigned": true,
+        "brief_checks_pass": true,
+        "truth_numbers": true
+      },
+      "outcome": "TN",
+      "seconds": 7.9
+    },
+    {
+      "id": "E10",
+      "class": "negative",
+      "planted": [
+        "P10"
+      ],
+      "question": "Why did the Norfolk night shift's scores drop?",
+      "status": "ok",
+      "verdict": "no_material_change",
+      "brief_mode": "llm",
+      "check_notes": [
+        "passed: every citation exists, every number appears in the evidence, verdict respected"
+      ],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict_in": true,
+        "evidence_kinds_absent": true,
+        "obstacle_not_contains": true,
+        "owner_not_assigned": true,
+        "brief_checks_pass": true,
+        "comment_top_count_below": true
+      },
+      "outcome": "TN",
+      "seconds": 11.7
+    },
+    {
+      "id": "E11",
+      "class": "lookup",
+      "planted": [
+        "P1",
+        "P7"
+      ],
+      "question": "Where did scores drop across Richmond?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "evidence_kinds": true,
+        "message_contains": true,
+        "watch_contains": true
+      },
+      "outcome": "pass",
+      "seconds": 1.7
+    },
+    {
+      "id": "E12",
+      "class": "positive",
+      "planted": [
+        "P1",
+        "P3"
+      ],
+      "question": "Why did the Richmond Night A team's scores drop?",
+      "status": "ok",
+      "verdict": "supported",
+      "brief_mode": "llm",
+      "check_notes": [
+        "passed: every citation exists, every number appears in the evidence, verdict respected"
+      ],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "obstacle_matches": true,
+        "brief_checks_pass": true,
+        "plan_actions": true
+      },
+      "outcome": "TP",
+      "seconds": 16.9
+    }
+  ]
+}
