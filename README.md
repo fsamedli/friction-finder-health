@@ -40,6 +40,17 @@ about 30 seconds with gpt-5-mini (about 60 with gpt-5); under a second without a
 .venv/bin/python -m app.cli "Why did the Richmond night shift's scores drop and why are deliveries late?"
 ```
 
+## The screen (v0.3, Sept 17 evening): a decision memo, not a dashboard
+
+The business answer comes first: a headline verdict in plain language, four computed tiles (what
+fell, the operational rate, comments on the theme, respondents), then "What we found" beside
+"What to do on Monday" (the process owner from the directory, the proposed test, and the human
+decision: approve, reject, flag, download). Charts, the action plan, the signal check, and the
+technical appendix (evidence register and the SQL behind every number) sit in tabs underneath.
+Brand: slate ink on warm paper, teal for what code computed, orange for what needs a person;
+Fraunces for headlines, Source Sans 3 for text (loaded from Google Fonts; falls back to Georgia
+and Calibri offline). Theme lives in `.streamlit/config.toml`.
+
 ## Three features on one screen
 
 1. **Diagnose.** Site overview (which teams moved, which are hidden under n<4, strength and two

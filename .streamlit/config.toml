@@ -1,13 +1,33 @@
 [theme]
 base = "light"
-primaryColor = "#C8553D"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#EAF0F2"
+primaryColor = "#1F8FA8"
+backgroundColor = "#FAF8F3"
+secondaryBackgroundColor = "#FFFFFF"
 textColor = "#1B3A4B"
-font = "sans serif"
+linkColor = "#1F8FA8"
+font = "'Source Sans 3', Calibri, 'Segoe UI', sans-serif"
+headingFont = "'Fraunces', Georgia, serif"
+headingFontWeights = [600, 600, 600]
+baseRadius = "10px"
+buttonRadius = "999px"
+borderColor = "#E3DFD5"
+showWidgetBorder = true
+showSidebarBorder = false
+codeFont = "ui-monospace, Menlo, monospace"
+chartCategoricalColors = ["#1F8FA8", "#C8553D", "#B9C6CC", "#1B3A4B"]
+
+[theme.sidebar]
+backgroundColor = "#1B3A4B"
+secondaryBackgroundColor = "#25475A"
+textColor = "#EAF0F2"
+primaryColor = "#7FC4D4"
+borderColor = "#2E5A70"
 
 [browser]
 gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
 
 [server]
 headless = false

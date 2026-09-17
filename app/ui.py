@@ -1,10 +1,14 @@
 """Friction Finder screen.  Run:  streamlit run app/ui.py
 
-Three features on one interface (instructor, Sept 14, 2026): diagnose, check the signal, act and
-review. Every element is labelled computed, retrieved, generated, or templated (judges Jamshidi
-and Kaznachey, Sept 16). A person approves, rejects, or flags every brief."""
+A decision memo, not a dashboard. The business answer comes first (what happened, how sure we
+are, who acts on Monday, what the test is); the technical appendix (evidence, queries, checks)
+sits underneath for whoever asks. Three features on one screen (instructor, Sept 14, 2026):
+diagnose, check the signal, act and review. Every element is labelled computed, retrieved,
+generated, or templated (judges Jamshidi and Kaznachey, Sept 16). A person approves, rejects, or
+flags every brief."""
 from __future__ import annotations
 
+import html as _h
 import json
 import sys
 from pathlib import Path
@@ -16,7 +20,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import config
-from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, STAFFING_LOW, SURVEY_MATERIAL, Result,
+from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, STAFFING_LOW, SURVEY_MATERIAL, THEMES, Result,
                        approve, plan, report_html, report_markdown, review_log, run)
 from app.db import DB
 from app.retrieval import Retriever
@@ -24,32 +28,94 @@ from evals.run_evals import RESULTS, evaluate
 
 st.set_page_config(page_title="Friction Finder", page_icon="🔎", layout="wide", initial_sidebar_state="expanded")
 
-SLATE, TEAL, ORANGE, LIGHT, MUTED, GRID, SURFACE = "#1B3A4B", "#1F8FA8", "#C8553D", "#B9C6CC", "#6E7B85", "#E8ECEF", "#FFFFFF"  # teal+orange validated (dataviz); LIGHT = neutral reference series
+# Brand: slate ink on warm paper, teal for what the code computed, burnt orange for what needs a
+# person's attention. Teal and orange were validated for colour-vision separation.
+SLATE, TEAL, ORANGE, LIGHT, MUTED, GRID, PAPER, SURFACE = "#1B3A4B", "#1F8FA8", "#C8553D", "#B9C6CC", "#6E7B85", "#EDEAE2", "#FAF8F3", "#FFFFFF"
 ROOT = Path(__file__).resolve().parents[1]
+PLOTLY_CONFIG = {"displayModeBar": False}
 
 st.markdown(f"""
 <style>
-  .stApp h1 {{ color: {SLATE}; margin-bottom: 0; }}
-  .tag {{ display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; color:white; background:{ORANGE}; letter-spacing:.5px; margin-right:4px; }}
-  .tag-mid {{ background:{TEAL}; }} .tag-grey {{ background:{MUTED}; }} .tag-slate {{ background:{SLATE}; }}
-  .chip {{ display:inline-block; padding:1px 7px; border-radius:9px; font-size:10px; font-weight:700; letter-spacing:.5px; color:white; vertical-align:middle; margin-left:6px; }}
-  .chip-computed {{ background:{TEAL}; }} .chip-generated {{ background:{ORANGE}; }} .chip-templated {{ background:{SLATE}; }} .chip-retrieved {{ background:{MUTED}; }} .chip-human {{ background:#5B7A2F; }}
-  .ev {{ font-family: ui-monospace, Menlo, monospace; font-size:11px; color:{MUTED}; }}
-  .verdict {{ border-left:5px solid {TEAL}; background:#EAF0F2; padding:10px 14px; border-radius:4px; margin:6px 0 10px 0; }}
-  .verdict.warn {{ border-left-color:{ORANGE}; }}
-  .verdict b {{ color:{SLATE}; }}
-  .lead {{ font-size:16px; color:{SLATE}; }}
-  .small {{ font-size:12px; color:{MUTED}; }}
-  div[data-testid="stExpander"] summary p {{ font-weight:600; color:{SLATE}; }}
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+:root {{ --ink:{SLATE}; --teal:{TEAL}; --orange:{ORANGE}; --muted:{MUTED}; --rule:{GRID}; --paper:{PAPER}; }}
+.block-container {{ padding-top: 1.2rem; padding-bottom: 3rem; max-width: 1180px; }}
+h1, h2, h3 {{ letter-spacing: -0.01em; }}
+
+/* eyebrow labels, pills, chips */
+.eyebrow {{ font-family: 'Source Sans 3', Calibri, sans-serif; font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); }}
+.eyebrow.ink {{ color: var(--ink); opacity:.55; }}
+.pill {{ display:inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing:.04em; color:#fff; background: var(--teal); vertical-align: middle; }}
+.pill.orange {{ background: var(--orange); }} .pill.grey {{ background: var(--muted); }} .pill.ink {{ background: var(--ink); }}
+.chip {{ display:inline-block; padding: 0 7px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing:.08em; vertical-align: middle; margin-left: 6px; border: 1px solid; line-height: 17px; }}
+.chip-computed {{ color: var(--teal); border-color: var(--teal); }} .chip-generated {{ color: var(--orange); border-color: var(--orange); }}
+.chip-templated {{ color: var(--ink); border-color: var(--ink); }} .chip-retrieved {{ color: var(--muted); border-color: var(--muted); }} .chip-human {{ color:#4F7A21; border-color:#4F7A21; }}
+.ev {{ font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--muted); }}
+.small {{ font-size: 13px; color: var(--muted); }}
+
+/* masthead */
+.masthead {{ display:flex; align-items:flex-end; justify-content:space-between; gap: 24px; padding: 6px 0 18px 0; border-bottom: 1px solid var(--ink); margin-bottom: 22px; }}
+.masthead h1 {{ font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 46px; line-height: 1.0; margin: 0; color: var(--ink); }}
+.masthead .promise {{ font-size: 17px; color: var(--ink); max-width: 720px; margin-top: 10px; line-height: 1.45; }}
+.masthead .promise b {{ font-weight: 700; }}
+.masthead .meta {{ text-align: right; font-size: 12.5px; color: var(--muted); line-height: 1.7; white-space: nowrap; }}
+.masthead .meta b {{ color: var(--ink); }}
+
+/* playbook cards */
+.card-title {{ font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 600; color: var(--ink); margin: 2px 0 2px 0; line-height: 1.2; }}
+.card-sub {{ font-size: 13.5px; color: var(--muted); margin-bottom: 8px; min-height: 38px; }}
+div[data-testid="stVerticalBlockBorderWrapper"] > div {{ background: {SURFACE}; box-shadow: 0 1px 0 rgba(27,58,75,.06), 0 6px 20px -14px rgba(27,58,75,.25); }}
+
+/* buttons */
+button[data-testid="stBaseButton-secondary"] {{ border: 1px solid var(--ink) !important; color: var(--ink) !important; background: transparent !important; font-weight: 600 !important; }}
+button[data-testid="stBaseButton-secondary"]:hover {{ background: var(--ink) !important; color: #fff !important; }}
+button[data-testid="stBaseButton-primary"] {{ font-weight: 700 !important; }}
+
+/* memo */
+@keyframes rise {{ from {{ opacity:0; transform: translateY(6px); }} to {{ opacity:1; transform:none; }} }}
+.fade {{ animation: rise .45s ease-out both; }}
+.memo-head {{ margin: 8px 0 14px 0; }}
+.memo-title {{ font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1.15; color: var(--ink); margin: 6px 0 8px 0; }}
+.memo-sub {{ font-size: 16px; color: var(--ink); line-height: 1.5; }}
+.kpis {{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 18px 0; }}
+.kpi {{ background: {SURFACE}; border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; animation: rise .5s ease-out both; }}
+.kpi-label {{ font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing:.02em; margin-bottom: 4px; min-height: 30px; line-height:1.25; }}
+.kpi-value {{ font-family: 'Fraunces', Georgia, serif; font-size: 27px; font-weight: 600; color: var(--ink); line-height: 1.1; }}
+.kpi-value .arrow {{ color: var(--muted); font-size: 20px; padding: 0 3px; }}
+.kpi-tag {{ display:inline-block; margin-top: 7px; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #E9F4F7; color: var(--teal); }}
+.kpi-tag.warn {{ background: #FBEAE5; color: var(--orange); }} .kpi-tag.grey {{ background: #EEF0F1; color: var(--muted); }}
+.section {{ font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: var(--ink); margin: 10px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid var(--rule); }}
+.memo p, .memo li {{ font-size: 15.5px; line-height: 1.5; }}
+.act {{ background: {SURFACE}; border: 1px solid var(--rule); border-left: 4px solid var(--teal); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }}
+.act.warn {{ border-left-color: var(--orange); }}
+.act .who {{ font-family: 'Fraunces', Georgia, serif; font-size: 19px; font-weight: 600; color: var(--ink); }}
+.act .role {{ font-size: 13px; color: var(--muted); margin-bottom: 8px; }}
+.declined {{ background: #FBEAE5; border-left: 4px solid var(--orange); padding: 12px 16px; border-radius: 8px; font-size: 15.5px; }}
+.answer {{ background: {SURFACE}; border: 1px solid var(--rule); border-left: 4px solid var(--teal); padding: 12px 16px; border-radius: 8px; font-size: 15.5px; line-height: 1.5; }}
+
+/* tabs, expanders, tables */
+button[data-baseweb="tab"] p {{ font-weight: 600; font-size: 14.5px; }}
+details[data-testid="stExpander"] summary p, details[data-testid="stExpander"] summary span {{ font-weight: 600; color: var(--ink); }}
+.stMarkdown table {{ font-size: 14px; }}
+
+/* sidebar */
+section[data-testid="stSidebar"] .brand {{ font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: #fff; line-height:1.1; }}
+section[data-testid="stSidebar"] .brand-sub {{ font-size: 11.5px; letter-spacing:.14em; text-transform: uppercase; color: #9FC4D0; margin: 6px 0 14px 0; }}
+section[data-testid="stSidebar"] .stat {{ display:flex; justify-content:space-between; font-size: 13.5px; padding: 5px 0; border-bottom: 1px solid #2E5A70; }}
+section[data-testid="stSidebar"] .stat b {{ color:#fff; }}
+section[data-testid="stSidebar"] .stat span {{ color:#C6D6DD; }}
+section[data-testid="stSidebar"] .tag {{ display:inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; letter-spacing:.08em; color:#1B3A4B; background:#F3D9CF; margin-right: 4px; }}
+section[data-testid="stSidebar"] .tag.mid {{ background:#BFE3EB; }}
+section[data-testid="stSidebar"] .small {{ color:#B7C9D1; }}
 </style>
 """, unsafe_allow_html=True)
 
 
 def chip(kind: str) -> str:
-    return f"<span class='chip chip-{kind}'>{kind.upper()}</span>"
+    return f"<span class='chip chip-{kind}'>{kind}</span>"
 
 
-@st.cache_resource(show_spinner="Loading synthetic data, views, and documents...")
+@st.cache_resource(show_spinner="Loading the synthetic company, views, and documents...")
 def _load():
     db = DB()
     return db, Retriever(db)
@@ -59,59 +125,67 @@ db, retriever = _load()
 
 # ------------------------------------------------------------------ sidebar
 with st.sidebar:
-    st.markdown("<span class='tag'>SYNTHETIC DATA</span><span class='tag tag-mid'>FICTIONAL COMPANY</span>", unsafe_allow_html=True)
-    st.markdown("**Northline Logistics** (does not exist). 3 sites, 24 teams, 2 survey waves, 189 employees.")
+    st.markdown("<div class='brand'>Friction Finder</div><div class='brand-sub'>Group 4 · DNSC 6317 · GW</div>", unsafe_allow_html=True)
+    st.markdown("<span class='tag'>Synthetic data</span><span class='tag mid'>Fictional company</span>", unsafe_allow_html=True)
     n_ops = db.con.execute("SELECT COUNT(*) FROM ops_daily").fetchone()[0]
-    st.caption(f"{n_ops:,} daily operations rows" + (f" (incl. {db.uploaded_ops_rows:,} uploaded)" if db.uploaded_ops_rows else "") +
-               f" · 311 survey responses · 55 comments · reporting threshold n ≥ {config.MIN_N}")
-    st.divider()
-    st.markdown("**Status**")
     key = config.has_key()
-    st.write(("Model: " + config.MODEL + " (GW Azure OpenAI)") if key else "Model: no key, rules + templated text")
-    st.write(f"Retrieval: {retriever.mode}")
-    st.caption("Numbers never come from the model. The model reads the question and writes text from evidence it is handed; every draft is checked.")
-    st.divider()
-    st.markdown("**Upload operational records (CSV)**")
-    st.caption("How a client's own delay records enter in a pilot: an export from dispatch or the warehouse system, approved by its owner. Columns: date, site_id, shift, hour_band, departures, late_departures, rework_count.")
-    template = pd.DataFrame([{"date": "2026-09-11", "site_id": 1, "shift": "Night", "hour_band": "06-07",
-                              "departures": 24, "late_departures": 6, "rework_count": 1}])
-    st.download_button("Download CSV template", template.to_csv(index=False).encode(), "ops_template.csv", "text/csv", width="stretch")
-    up = st.file_uploader("Choose a CSV", type=["csv"], label_visibility="collapsed")
-    if up is not None and st.session_state.get("last_upload") != up.name + str(up.size):
-        try:
-            n = db.add_ops_upload(pd.read_csv(up))
-            st.session_state["last_upload"] = up.name + str(up.size)
-            st.success(f"Added {n} rows. They are in the operational evidence of the next question.")
-        except Exception as e:
-            st.error(f"Upload rejected: {e}")
-    st.divider()
-    st.caption("Built with the tools we were given: the group's GW Azure OpenAI resource, gpt-5-mini, reasoning effort minimal (scope) and low (writing). "
-               "A stronger model would change the wording of briefs, not the numbers or the verdicts.")
+    st.markdown(f"""
+<div style='margin-top:12px'>
+<div class='stat'><span>Company</span><b>Northline Logistics</b></div>
+<div class='stat'><span>Sites · teams · waves</span><b>3 · 24 · 2</b></div>
+<div class='stat'><span>Survey responses</span><b>311</b></div>
+<div class='stat'><span>Operations rows</span><b>{n_ops:,}{' ↑' if db.uploaded_ops_rows else ''}</b></div>
+<div class='stat'><span>Reporting threshold</span><b>n ≥ {config.MIN_N}</b></div>
+<div class='stat'><span>Model</span><b>{config.MODEL if key else 'none (rules)'}</b></div>
+<div class='stat'><span>Retrieval</span><b>{retriever.mode.split(' ')[0]}</b></div>
+</div>""", unsafe_allow_html=True)
+    st.markdown("<p class='small' style='margin-top:10px'>Numbers never come from the model. It reads the question and writes text from evidence it is handed; every draft is checked.</p>", unsafe_allow_html=True)
+    with st.expander("Bring your own operational records"):
+        st.caption("How a client's delay records enter in a pilot: an export from dispatch or the warehouse system, approved by its owner. Columns: date, site_id, shift, hour_band, departures, late_departures, rework_count.")
+        template = pd.DataFrame([{"date": "2026-09-11", "site_id": 1, "shift": "Night", "hour_band": "06-07",
+                                  "departures": 24, "late_departures": 6, "rework_count": 1}])
+        st.download_button("Download the CSV template", template.to_csv(index=False).encode(), "ops_template.csv", "text/csv", width="stretch")
+        up = st.file_uploader("Choose a CSV", type=["csv"], label_visibility="collapsed")
+        if up is not None and st.session_state.get("last_upload") != up.name + str(up.size):
+            try:
+                n = db.add_ops_upload(pd.read_csv(up))
+                st.session_state["last_upload"] = up.name + str(up.size)
+                st.success(f"Added {n} rows. They are in the operational evidence of the next question.")
+            except Exception as e:
+                st.error(f"Upload rejected: {e}")
+    with st.expander("About this prototype"):
+        st.caption("Built with the tools we were given: the group's GW Azure OpenAI resource, gpt-5-mini, reasoning effort minimal (scope) and low (writing). "
+                   "A stronger model changes the wording of briefs, not the numbers or the verdicts. Northline Logistics does not exist; patterns were planted so the assistant can be scored.")
 
-# ------------------------------------------------------------------ header
-st.title("Friction Finder")
-st.markdown("<p class='lead'>Helps a <b>site or shift manager</b> decide <b>which obstacle to test first</b> after an engagement score falls, "
-            "by answering <b>where did we drop, is it real, what is behind it, who owns it, what do we do</b> from "
-            "<b>survey aggregates, operational records, procedures, and open-text comments</b>.</p>", unsafe_allow_html=True)
-st.caption("Starting segment: operations-heavy workplaces where daily work is logged (warehouses, logistics, call centers). "
-           "One workflow, five fixed steps. A person approves every brief; the tool takes no action on its own.")
+# ------------------------------------------------------------------ masthead
+st.markdown(f"""
+<div class='masthead'>
+  <div>
+    <div class='eyebrow'>Evidence briefs for operations leaders</div>
+    <h1>Friction Finder</h1>
+    <div class='promise'>When a team's engagement score falls, the <b>site or shift manager</b> gets a one-page brief that says what is behind it,
+    how sure we are, <b>who owns the fix</b>, and what to test first. Built from survey results, the operation's own records, its procedures, and what employees wrote.</div>
+  </div>
+  <div class='meta'><b>Starting segment</b><br>operations-heavy workplaces<br>where daily work is logged<br><b>No autonomous action</b> · a person approves</div>
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ playbook
-PLAYBOOK = {
-    "1 · Diagnose": ("Where did we drop, and what is behind it?", [
+PLAYBOOK = [
+    ("01", "Diagnose", "Where did we drop, and what is behind it?", [
         ("Where did we drop? (Richmond)", "Where did scores drop across Richmond?"),
         ("Why did the night shift drop?", "Why did the Richmond night shift's scores drop and why are deliveries late?"),
         ("A team under 4 respondents", "Why did the Richmond Dispatch Day team's scores drop?"),
     ]),
-    "2 · Check the signal": ("Is the change real, or a change in who responded?", [
+    ("02", "Check the signal", "Is the change real, or did different people answer?", [
         ("Is the decline real?", "Is the Norfolk Day B decline real or did different people respond?"),
         ("Scores by tenure", "How do scores vary by tenure?"),
     ]),
-    "3 · Act and review": ("Who owns it, and what do we do first?", [
+    ("03", "Act and review", "Who owns it, and what do we do first?", [
         ("Who owns the handoff?", "Who owns the shift handoff process at Richmond?"),
-        ("Score and respondents, one team", "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?"),
+        ("One team's score and respondents", "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?"),
     ]),
-}
+]
 REDTEAM = [
     ("A blip with no operations signal", "Why did the Roanoke Day C team's scores drop?"),
     ("One loud comment", "Why did the Norfolk night shift's scores drop?"),
@@ -121,21 +195,21 @@ REDTEAM = [
 
 
 def _ask(q: str):
-    with st.spinner("Scoping, analyzing, retrieving, assessing, writing..."):
+    with st.spinner("Reading the question, querying the views, retrieving, assessing, writing..."):
         st.session_state["result"] = run(q, db, retriever)
     st.session_state["decision"] = None
     st.session_state["plan"] = None
 
 
 cols = st.columns(3, gap="medium")
-for col, (title, (caption, buttons)) in zip(cols, PLAYBOOK.items()):
-    with col:
-        st.markdown(f"**{title}**")
-        st.caption(caption)
+for col, (num, title, sub, buttons) in zip(cols, PLAYBOOK):
+    with col, st.container(border=True):
+        st.markdown(f"<div class='eyebrow'>{num} · {title}</div><div class='card-title'>{sub}</div>", unsafe_allow_html=True)
         for label, q in buttons:
             if st.button(label, key="pb_" + label, width="stretch"):
                 st.session_state["question"] = q
                 _ask(q)
+
 with st.expander("Red-team cases: what it refuses to do"):
     rc = st.columns(len(REDTEAM))
     for col, (label, q) in zip(rc, REDTEAM):
@@ -154,7 +228,7 @@ res: Result | None = st.session_state.get("result")
 # ------------------------------------------------------------------ charts
 def _style(fig, height=340, ytitle=None, xtitle=None):
     fig.update_layout(height=height, margin=dict(l=10, r=10, t=36, b=10), plot_bgcolor=SURFACE, paper_bgcolor=SURFACE,
-                      font=dict(family="Calibri, Arial, sans-serif", color=SLATE, size=12),
+                      font=dict(family="Source Sans 3, Calibri, Arial, sans-serif", color=SLATE, size=13),
                       legend=dict(orientation="h", y=1.12, x=0, font=dict(color=SLATE)), bargap=0.25, bargroupgap=0.08,
                       hoverlabel=dict(bgcolor=SURFACE, font=dict(color=SLATE)))
     fig.update_yaxes(gridcolor=GRID, zerolinecolor=GRID, title=ytitle, showline=False)
@@ -176,9 +250,10 @@ def _chart_survey(res: Result):
     fig.add_bar(name="Wave 1 (Mar 2026)", x=piv.item, y=piv["1"], marker_color=LIGHT, marker_line_width=0,
                 hovertemplate="%{x} · Wave 1: %{y:.2f}<extra></extra>")
     fig.add_bar(name="Wave 2 (Sep 2026)", x=piv.item, y=piv["2"], marker_color=[ORANGE if i in worst else TEAL for i in piv.item], marker_line_width=0,
-                text=[f"{d:+.2f}" if i in worst else "" for i, d in zip(piv.item, piv.delta)], textposition="outside", textfont=dict(color=SLATE, size=11),
+                text=[f"{d:+.2f}" if i in worst else "" for i, d in zip(piv.item, piv.delta)], textposition="outside", textfont=dict(color=SLATE, size=12),
                 customdata=piv.delta, hovertemplate="%{x} · Wave 2: %{y:.2f} (change %{customdata:+.2f})<extra></extra>")
     fig.update_layout(barmode="group", yaxis=dict(range=[1, 5.2]))
+    fig.update_xaxes(ticktext=[i.upper() for i in piv.item], tickvals=piv.item)
     return _style(fig, 340, "Mean (1 to 5)", "Survey item"), {i: labels[i] for i in worst}
 
 
@@ -210,11 +285,12 @@ def _chart_tenure(res: Result):
     if not ev:
         return None
     order = ["under_1", "1_to_3", "3_to_10", "over_10"]
+    names = ["Under 1 year", "1 to 3 years", "3 to 10 years", "Over 10 years"]
     vals = [ev[0].value.get(b) for b in order]
-    fig = go.Figure(go.Bar(x=order, y=vals, marker_color=[ORANGE, TEAL, TEAL, TEAL], marker_line_width=0,
+    fig = go.Figure(go.Bar(x=names, y=vals, marker_color=[ORANGE, TEAL, TEAL, TEAL], marker_line_width=0,
                            text=[f"{v:.2f}" if v is not None else "" for v in vals], textposition="outside", hovertemplate="%{x}: %{y:.2f}<extra></extra>"))
     fig.update_layout(yaxis=dict(range=[3, 4.6]))
-    return _style(fig, 320, "Grand mean (1 to 5)", "Tenure band")
+    return _style(fig, 320, "Grand mean (1 to 5)", "Tenure")
 
 
 def _chart_mix(res: Result):
@@ -223,10 +299,10 @@ def _chart_mix(res: Result):
         return None
     df = pd.DataFrame(ev[0].rows)
     fig = go.Figure()
-    for band, color in (("under_1", ORANGE), ("1_to_3", TEAL), ("3_to_10", "#5FA9BC"), ("over_10", LIGHT)):
+    for band, name, color in (("under_1", "Under 1 year", ORANGE), ("1_to_3", "1 to 3 years", TEAL), ("3_to_10", "3 to 10 years", "#5FA9BC"), ("over_10", "Over 10 years", LIGHT)):
         sub = df[df.tenure_band == band].set_index("wave_id").n.reindex([1, 2]).fillna(0)
-        fig.add_bar(name=band, x=["Wave 1", "Wave 2"], y=sub.values, marker_color=color, marker_line=dict(color=SURFACE, width=2),
-                    hovertemplate=band + ": %{y:.0f} respondents<extra></extra>")
+        fig.add_bar(name=name, x=["Wave 1", "Wave 2"], y=sub.values, marker_color=color, marker_line=dict(color=SURFACE, width=2),
+                    hovertemplate=name + ": %{y:.0f} respondents<extra></extra>")
     fig.update_layout(barmode="stack")
     return _style(fig, 320, "Respondents", None)
 
@@ -246,13 +322,15 @@ def _chart_heatmap(res: Result):
     for s in ev[0].value.get("suppressed", []):
         z.append([None] * len(items))
         ylab.append(f"{s['team_name']} (n<{config.MIN_N}, hidden)")
-    fig = go.Figure(go.Heatmap(z=z, x=items, y=ylab, zmin=-1, zmax=1, zmid=0,
-                               colorscale=[[0, ORANGE], [0.5, "#F2F4F5"], [1, TEAL]],
-                               text=[[f"{v:+.2f}" if v is not None else "" for v in row] for row in z], texttemplate="%{text}", textfont=dict(size=11),
-                               xgap=2, ygap=2, hoverongaps=False, hovertemplate="%{y} · %{x}: %{text}<extra></extra>",
+    fig = go.Figure(go.Heatmap(z=z, x=[i.upper() for i in items], y=ylab, zmin=-1, zmax=1, zmid=0,
+                               colorscale=[[0, ORANGE], [0.5, "#F2F1EC"], [1, TEAL]],
+                               text=[[f"{v:+.2f}" if v is not None else "" for v in row] for row in z], texttemplate="%{text}", textfont=dict(size=12),
+                               xgap=3, ygap=3, hoverongaps=False, hovertemplate="%{y} · %{x}: %{text}<extra></extra>",
                                colorbar=dict(title="Change<br>W1→W2", thickness=10)))
-    fig.update_yaxes(autorange="reversed")
-    return _style(fig, 60 + 28 * len(ylab), None, "Survey item")
+    fig.update_yaxes(autorange="reversed", automargin=True)
+    fig = _style(fig, 70 + 30 * len(ylab), None, "Survey item")
+    fig.update_layout(margin=dict(l=190))
+    return fig
 
 
 def _chart_site_items(res: Result):
@@ -261,21 +339,119 @@ def _chart_site_items(res: Result):
         return None
     df = pd.DataFrame(ev[0].rows).sort_values("vs_company")
     colors = [ORANGE if i in set(ev[0].value.get("opportunities", [])) else (TEAL if i == ev[0].value.get("strength") else LIGHT) for i in df.item]
-    fig = go.Figure(go.Bar(x=df.item, y=df.vs_company, marker_color=colors, marker_line_width=0, text=[f"{v:+.2f}" for v in df.vs_company], textposition="outside",
+    fig = go.Figure(go.Bar(x=[i.upper() for i in df.item], y=df.vs_company, marker_color=colors, marker_line_width=0, text=[f"{v:+.2f}" for v in df.vs_company], textposition="outside",
                            customdata=df.item_label, hovertemplate="%{x} %{customdata}: %{y:+.2f} vs company<extra></extra>"))
     fig.add_hline(y=0, line_color=MUTED, line_width=1)
     return _style(fig, 300, "Wave 2 vs company mean", "Survey item")
 
 
-# ------------------------------------------------------------------ result
-def _verdict_box(res: Result):
-    a = res.assessment
-    if not a:
+# ------------------------------------------------------------------ memo pieces (business layer)
+def _by_kind(res: Result) -> dict:
+    by = {}
+    for e in res.evidence:
+        by.setdefault(e.kind, []).append(e)
+    return by
+
+
+def _scope_name(res: Result) -> str:
+    sc = res.scope
+    if not sc:
+        return ""
+    return " ".join(x for x in [sc.site, sc.team] if x) or (sc.site or "")
+
+
+def _headline(res: Result) -> tuple[str, str, str, str]:
+    """(eyebrow, title, subline, pill kind) for the memo head."""
+    a, sc = res.assessment, res.scope
+    where = _scope_name(res)
+    if res.status == "refused":
+        return "Declined", "We cannot answer that from the data we have.", res.message, "orange"
+    if a is None:
+        titles = {"site_overview": (f"Where {where} moved between waves", "Team-level changes are watch items; the site level is where comparisons hold."),
+                  "review_decline_real": (f"Did {where} really decline?", "The change is checked against who responded in each wave."),
+                  "tenure_pattern": ("How scores vary by tenure", "Both waves, respondent-weighted, reportable groups only."),
+                  "owner_lookup": ("Who owns the process", "From the ownership directory."),
+                  "metric_lookup": ("The number you asked for", "From the reporting views; team figures only where n is 4 or more.")}
+        t, s = titles.get(sc.intent if sc else "", ("Answer", ""))
+        return "Computed answer", t, s, "teal"
+    theme = THEMES[a.theme]["label"] if a.theme else "the process"
+    if a.verdict == "supported":
+        corr = " and ".join(x for x, ok in (("the operation's own records", a.ops_signal), (f"{[e for e in res.evidence if e.kind == 'comment_themes'][0].value['top_count']} separate employee comments" if a.comment_signal else "", a.comment_signal)) if ok)
+        return ("Evidence brief", f"{theme[0].upper() + theme[1:]} is the likely obstacle on {where}.",
+                f"A supported hypothesis, not a proven cause: the survey fell and {corr} point the same way. {a.level.capitalize()} level, n = {a.n.get('w1')} to {a.n.get('w2')}.", "teal")
+    if a.verdict == "insufficient":
+        return ("Evidence brief", f"The survey moved on {where}, but nothing else did.",
+                "Not enough evidence to name an obstacle. Treat it as a watch item; no action proposed until the operation's records or more comments corroborate it.", "orange")
+    if a.verdict == "no_material_change":
+        return ("Evidence brief", f"No material change on {where}.",
+                f"No survey item fell {SURVEY_MATERIAL:.2f} or more between waves. Nothing to diagnose; keep on the watch list.", "grey")
+    return ("Evidence brief", f"{where} is too small to report on its own.",
+            f"Fewer than {config.MIN_N} respondents, so team results stay hidden to protect anonymity. The site-level view is shown instead; the manager reviews it with the Site Operations Manager.", "grey")
+
+
+def _kpis(res: Result) -> list[tuple[str, str, str, str]]:
+    """(label, value html, tag text, tag kind) tiles, computed only."""
+    by, a, sc = _by_kind(res), res.assessment, res.scope
+    tiles = []
+    if a is not None:
+        deltas = by.get("survey_delta", []) or by.get("survey_delta_site", [])
+        for e in [x for x in deltas if x.value.get("material") and x.value.get("delta", 0) < 0][:2] or deltas[:1]:
+            v = e.value
+            label = e.statement.split(", ", 1)[1].split(":")[0] if ", " in e.statement else v["item"]
+            tiles.append((label, f"{v.get('wave1', float('nan')):.2f}<span class='arrow'>→</span>{v.get('wave2', float('nan')):.2f}",
+                          f"{v['delta']:+.2f}, {'material' if v.get('material') else 'within noise'}", "warn" if v.get("material") else "grey"))
+        ops = by.get("ops_hour", [None])[0]
+        if ops:
+            v = ops.value
+            tiles.append((f"Late departures, {v['hour_band']} band", f"{v['before'] * 100:.1f}%<span class='arrow'>→</span>{v['after'] * 100:.1f}%",
+                          "operational signal" if v.get("signal") else "no signal", "warn" if v.get("signal") else "grey"))
+        th = by.get("comment_themes", [None])[0]
+        if th and th.value.get("total"):
+            v = th.value
+            lab = THEMES[v["top_theme"]]["label"] if v.get("top_theme") else "no theme"
+            tiles.append((f"Comments on '{lab}'", f"{v['top_count']}<span class='arrow'>of</span>{v['total']}",
+                          "corroborating" if v.get("breadth_ok") else "single source", "ok" if v.get("breadth_ok") else "grey"))
+        elif th:
+            tiles.append(("Wave 2 comments", "0", "none reportable", "grey"))
+        if a.n:
+            tiles.append((f"Respondents, {a.level} level", f"{a.n.get('w1')}<span class='arrow'>→</span>{a.n.get('w2')}",
+                          "watch items at team level" if a.level == "team" else "site roll-up", "grey"))
+        return tiles[:4]
+    if sc and sc.intent == "site_overview":
+        hm = by.get("site_heatmap", [None])[0]
+        si = by.get("site_items", [None])[0]
+        if hm:
+            v = hm.value
+            n_rep = len({c["team_id"] for c in hm.rows})
+            tiles += [("Teams reportable in both waves", f"{n_rep}<span class='arrow'>of</span>{n_rep + len(v['suppressed'])}", "team level", "grey"),
+                      (f"Hidden (fewer than {config.MIN_N} respondents)", f"{len(v['suppressed'])}", "never shown", "grey"),
+                      ("Team-level watch items", f"{len(v['watch'])}", f"fell {SURVEY_MATERIAL:.2f} or more", "warn" if v["watch"] else "grey")]
+        if si:
+            tiles.append(("Site respondents", f"{si.value['n1']}<span class='arrow'>→</span>{si.value['n2']}", "where inference holds", "ok"))
+    elif sc and sc.intent == "review_decline_real":
+        sig = by.get("signal_check", [None])[0]
+        if sig:
+            v = sig.value
+            tiles += [("Team grand mean", f"{v['gm_w1']:.2f}<span class='arrow'>→</span>{v['gm_w2']:.2f}", f"{v['observed']:+.2f} observed", "warn" if abs(v['observed']) >= SURVEY_MATERIAL else "grey"),
+                      ("Expected from who responded", f"{v['expected_from_mix']:+.2f}", "shift-share", "grey"),
+                      ("Remaining after adjustment", f"{v['residual']:+.2f}", f"{'within noise' if abs(v['residual']) < MIX_EXPLAINS else 'persists'}", "grey" if abs(v['residual']) < MIX_EXPLAINS else "warn"),
+                      ("Verdict", {"mix": "Who responded", "real": "Real change", "no_material_change": "No change"}.get(v["verdict"], v["verdict"]),
+                       {"mix": "not a real decline", "real": "persists after adjusting", "no_material_change": "nothing to explain"}.get(v["verdict"], ""), "ok" if v["verdict"] != "real" else "warn")]
+    elif sc and sc.intent == "tenure_pattern":
+        tp = by.get("tenure_pattern", [None])[0]
+        if tp:
+            for b, name in (("under_1", "Under 1 year"), ("1_to_3", "1 to 3 years"), ("3_to_10", "3 to 10 years"), ("over_10", "Over 10 years")):
+                if b in tp.value:
+                    tiles.append((name, f"{tp.value[b]:.2f}", "year-one effect" if b == "under_1" else "grand mean", "warn" if b == "under_1" else "grey"))
+    return tiles[:4]
+
+
+def _render_kpis(tiles):
+    if not tiles:
         return
-    ok = a.verdict == "supported"
-    reasons = "".join(f"<li>{r}</li>" for r in a.reasons)
-    st.markdown(f"<div class='verdict {'ok' if ok else 'warn'}'><b>{'Verdict' if ok else 'Verdict'}</b> {chip('computed')} &nbsp; {a.label}"
-                f"<ul class='small' style='margin:6px 0 0 16px'>{reasons}</ul></div>", unsafe_allow_html=True)
+    cells = "".join(f"<div class='kpi' style='animation-delay:{0.06 * i:.2f}s'><div class='kpi-label'>{_h.escape(l)}</div><div class='kpi-value'>{v}</div>"
+                    f"<span class='kpi-tag {'' if k == 'ok' else k}'>{_h.escape(t)}</span></div>" for i, (l, v, t, k) in enumerate(tiles))
+    st.markdown(f"<div class='kpis'>{cells}</div>", unsafe_allow_html=True)
 
 
 def _claims(items):
@@ -283,30 +459,36 @@ def _claims(items):
         st.markdown(f"- {i.get('claim')} <span class='ev'>[{', '.join(i.get('evidence_ids', []))}]</span>", unsafe_allow_html=True)
 
 
-def _brief_tab(res: Result):
-    b = res.brief
+def _memo(res: Result):
+    """The business layer: what we found, what to do Monday, and the human decision."""
+    b, a = res.brief, res.assessment
     mode = "generated" if b.mode == "llm" else "templated"
-    left, right = st.columns([3, 1.15], gap="large")
+    left, right = st.columns([1.55, 1], gap="large")
     with left:
-        st.markdown(f"#### Likely obstacle {chip(mode)}", unsafe_allow_html=True)
+        st.markdown("<div class='memo'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='section'>What we found {chip(mode)}</div>", unsafe_allow_html=True)
         st.markdown(b.obstacle)
-        st.markdown(f"**Evidence for** {chip(mode)} <span class='small'>each claim cites computed or retrieved evidence ids</span>", unsafe_allow_html=True)
+        st.markdown("**Evidence for**")
         _claims(b.evidence_for)
-        st.markdown(f"**Evidence against, competing explanations** {chip(mode)}", unsafe_allow_html=True)
+        st.markdown("**Evidence against, and competing explanations**")
         _claims(b.evidence_against)
-        st.markdown(f"**What is missing** {chip(mode)}", unsafe_allow_html=True)
+        st.markdown("**What we still do not know**")
         for m in b.missing:
             st.markdown(f"- {m}")
-        has_owner = any(e.kind == "owner" for e in res.evidence)
-        st.markdown(f"**Process owner** {chip('computed') if has_owner else chip(mode)}<br>{b.owner}", unsafe_allow_html=True)
-        st.markdown(f"**Proposed test** {chip(mode)}<br>{b.proposed_test}", unsafe_allow_html=True)
         st.caption(f"Limits: {b.limits}")
+        st.markdown("</div>", unsafe_allow_html=True)
     with right:
-        st.markdown(f"<span class='tag {'tag-mid' if b.mode == 'llm' else 'tag-slate'}'>{'MODEL-WRITTEN BRIEF' if b.mode == 'llm' else 'TEMPLATED BRIEF'}</span>", unsafe_allow_html=True)
-        for n in b.check_notes:
-            st.caption(n)
-        st.markdown(f"**Human decision** {chip('human')}", unsafe_allow_html=True)
-        note = st.text_input("Note (optional)", key="note", placeholder="e.g., checked the 06-07 number against dispatch")
+        st.markdown(f"<div class='section'>What to do on Monday</div>", unsafe_allow_html=True)
+        owner = next((e for e in res.evidence if e.kind == "owner"), None)
+        if owner and a and a.verdict == "supported":
+            st.markdown(f"<div class='act'><div class='eyebrow'>Process owner {chip('computed')}</div><div class='who'>{_h.escape(owner.value['name'])}</div>"
+                        f"<div class='role'>{_h.escape(owner.value['role'])} · owns '{_h.escape(owner.value['process'])}' (ownership directory)</div>"
+                        f"<div class='eyebrow'>Proposed 30-day test {chip(mode)}</div><div style='font-size:15px;line-height:1.45;margin-top:4px'>{_h.escape(b.proposed_test)}</div></div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='act warn'><div class='eyebrow'>No action proposed {chip('computed')}</div><div style='font-size:15px;line-height:1.45;margin-top:4px'>{_h.escape(b.proposed_test)}</div>"
+                        f"<div class='role' style='margin-top:8px'>{_h.escape(b.owner)}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='eyebrow' style='margin-top:6px'>Human decision {chip('human')}</div>", unsafe_allow_html=True)
+        note = st.text_input("Note (optional)", key="note", placeholder="e.g., checked the 06-07 number against dispatch", label_visibility="collapsed")
         c1, c2, c3 = st.columns(3)
         if c1.button("Approve", type="primary", width="stretch"):
             approve(res, "approved", note)
@@ -318,38 +500,35 @@ def _brief_tab(res: Result):
             approve(res, "flagged", note)
             st.session_state["decision"] = "flagged"
         if st.session_state.get("decision"):
-            st.success(f"Recorded: {st.session_state['decision']}. Logged with the evidence ids to approvals.jsonl.")
+            st.success(f"Recorded: {st.session_state['decision']}, with the evidence ids, in the review log.")
         else:
-            st.caption("Nothing happens until a person decides. Flag = 'this does not sound right'.")
+            st.caption("Nothing happens until a person decides. Flag means 'this does not sound right'.")
         p = st.session_state.get("plan")
-        st.download_button("Download one-page report (HTML)", report_html(res, p).encode(), "friction_finder_brief.html", "text/html", width="stretch")
-        st.download_button("Download brief (Markdown)", report_markdown(res, p).encode(), "friction_finder_brief.md", "text/markdown", width="stretch")
+        d1, d2 = st.columns(2)
+        d1.download_button("One-page report", report_html(res, p).encode(), "friction_finder_brief.html", "text/html", width="stretch")
+        d2.download_button("Brief (Markdown)", report_markdown(res, p).encode(), "friction_finder_brief.md", "text/markdown", width="stretch")
+        st.caption(f"{'Model-written' if b.mode == 'llm' else 'Templated'} brief · " + " · ".join(b.check_notes))
 
 
 def _signal_tab(res: Result):
     sig = [e for e in res.evidence if e.kind == "signal_check"]
     mix = [e for e in res.evidence if e.kind == "tenure_mix"]
     if sig:
-        v = sig[0].value
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Grand mean, Wave 1", f"{v['gm_w1']:.2f}", help=f"n={v['n_w1']}")
-        m2.metric("Grand mean, Wave 2", f"{v['gm_w2']:.2f}", f"{v['observed']:+.2f}", delta_color="normal", help=f"n={v['n_w2']}")
-        m3.metric("Expected from who responded", f"{v['expected_from_mix']:+.2f}", help="Change in tenure mix × company-wide band means (shift-share)")
-        m4.metric("Remaining after adjustment", f"{v['residual']:+.2f}", help=f"Below {MIX_EXPLAINS:.2f} = within normal variation")
-        st.markdown(f"<div class='verdict {'warn' if v['verdict'] != 'real' else 'ok'}'><b>Signal check</b> {chip('computed')} &nbsp; {sig[0].statement}</div>", unsafe_allow_html=True)
-        st.dataframe(pd.DataFrame(sig[0].rows).rename(columns={"tenure_band": "Tenure band", "share_w1": "Share W1", "share_w2": "Share W2",
-                                                               "company_band_mean": "Company mean (band)", "n_w1": "n W1", "n_w2": "n W2"}),
+        st.markdown(f"<div class='answer'><b>Signal check</b> {chip('computed')} &nbsp; {sig[0].statement}</div>", unsafe_allow_html=True)
+        st.markdown("")
+        st.dataframe(pd.DataFrame(sig[0].rows).rename(columns={"tenure_band": "Tenure band", "share_w1": "Share, Wave 1", "share_w2": "Share, Wave 2",
+                                                               "company_band_mean": "Company mean for the band", "n_w1": "n, Wave 1", "n_w2": "n, Wave 2"}),
                      width="stretch", hide_index=True)
     elif mix:
-        st.markdown(f"<div class='verdict'><b>Who responded</b> {chip('computed')} &nbsp; {mix[0].statement}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='answer'><b>Who responded</b> {chip('computed')} &nbsp; {mix[0].statement}</div>", unsafe_allow_html=True)
     fig = _chart_mix(res)
     if fig:
-        st.markdown("**Who responded, by tenure band**")
-        st.plotly_chart(fig, width="stretch")
+        st.markdown("**Who responded, by tenure**")
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
     deltas = [e for e in res.evidence if e.kind == "survey_delta"]
     if deltas:
         st.markdown(f"**Items that moved** {chip('computed')} <span class='small'>team level: watch items, not findings; inference belongs at site level</span>", unsafe_allow_html=True)
-        st.dataframe(pd.DataFrame([r for e in deltas for r in e.rows]).rename(columns={"item": "Item", "label": "Label", "wave1": "W1", "wave2": "W2", "delta": "Change", "n1": "n W1", "n2": "n W2", "material": f"≥ {SURVEY_MATERIAL:.2f}"}),
+        st.dataframe(pd.DataFrame([r for e in deltas for r in e.rows]).rename(columns={"item": "Item", "label": "Label", "wave1": "Wave 1", "wave2": "Wave 2", "delta": "Change", "n1": "n, W1", "n2": "n, W2", "material": f"≥ {SURVEY_MATERIAL:.2f}"}),
                      width="stretch", hide_index=True)
 
 
@@ -358,41 +537,42 @@ def _charts_tab(res: Result):
     out = _chart_survey(res)
     if out:
         fig, worst = out
-        st.markdown("**Survey items for this team, Wave 1 vs Wave 2.** " + ("Largest material drops labelled: " + "; ".join(f"{k} = {v}" for k, v in worst.items()) if worst else "No item moved materially."))
-        st.plotly_chart(fig, width="stretch")
+        st.markdown("**Survey items for this team, Wave 1 vs Wave 2.** " + ("Largest material drops labelled: " + "; ".join(f"{k.upper()} = {v}" for k, v in worst.items()) if worst else "No item moved materially."))
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_ops(res)
     if fig:
         ops = [e for e in res.evidence if e.kind == "ops_hour"][0]
         st.markdown("**Late departures by hour band, before and after June 2026.** " + ("The band with the operational signal is labelled." if ops.value.get("signal") else "No band changed materially."))
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_heatmap(res)
     if fig:
-        st.markdown(f"**Change in each item, by team (Wave 2 minus Wave 1).** Orange = fell, teal = rose. Teams under n={config.MIN_N} are listed but never shown.")
-        st.plotly_chart(fig, width="stretch")
+        st.markdown(f"**Change in each item, by team (Wave 2 minus Wave 1).** Orange fell, teal rose. Teams under n = {config.MIN_N} are listed but never shown.")
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_site_items(res)
     if fig:
-        st.markdown("**Site level, Wave 2 versus the company mean.** Teal = strength, orange = the two opportunities (the shape of Gallup's 'Interpreting Your Results' worksheet).")
-        st.plotly_chart(fig, width="stretch")
+        st.markdown("**Site level, Wave 2 versus the company mean.** Teal is the strength, orange the two opportunities: the shape of Gallup's 'Interpreting Your Results' worksheet.")
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_tenure(res)
     if fig:
-        st.markdown("**Grand mean by tenure band, both waves.** The year-one effect Gallup described.")
-        st.plotly_chart(fig, width="stretch")
+        st.markdown("**Grand mean by tenure, both waves.** The year-one effect Gallup described.")
+        st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
-    if not drawn and not any(e.kind == "tenure_mix" for e in res.evidence):
-        st.caption("No chart for this question.")
-    elif not drawn:
+    if not drawn:
         fig = _chart_mix(res)
-        st.markdown("**Who responded, by tenure band.**")
-        st.plotly_chart(fig, width="stretch")
+        if fig:
+            st.markdown("**Who responded, by tenure.**")
+            st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
+        else:
+            st.caption("No chart for this question.")
 
 
 def _plan_tab(res: Result):
-    st.caption("Feature 3. Gallup's State of the Team shape: one performance goal, one focus item, three or four immediate actions with owners, "
-               "a review cadence, and the item's discussion questions quoted from Gallup's outline. Built only when the verdict is supported.")
+    st.caption("Gallup's State of the Team shape: one performance goal, one focus item, three or four immediate actions with owners, a review cadence, "
+               "and the item's discussion questions quoted from Gallup's outline. Built only when the verdict is supported.")
     if st.session_state.get("plan") is None:
         if st.button("Build the action plan", type="primary"):
             with st.spinner("Drafting actions from the brief and the ownership directory..."):
@@ -401,35 +581,34 @@ def _plan_tab(res: Result):
     if not p:
         return
     mode = "generated" if p.mode == "llm" else "templated"
-    dec = st.session_state.get("decision")
-    if dec == "approved":
+    if st.session_state.get("decision") == "approved":
         st.success("Brief approved by the reviewer. The plan can go to the process owner.")
     else:
         st.warning("The brief is not yet approved. The plan stays a draft until a person approves the brief.")
-    st.markdown(f"**Performance goal** {chip('computed')}<br>{p.goal}", unsafe_allow_html=True)
-    st.markdown(f"**Focus item** {chip('computed')}<br>{p.focus_item.upper()}: {p.focus_label} (the fallen item most relevant to the corroborated theme)", unsafe_allow_html=True)
-    st.markdown(f"**Immediate actions** {chip(mode)} <span class='small'>owners come from the ownership directory (computed); dates are two-week steps from the wave close</span>", unsafe_allow_html=True)
+    g1, g2 = st.columns(2, gap="large")
+    g1.markdown(f"<div class='eyebrow'>Performance goal {chip('computed')}</div><p style='font-size:16px;line-height:1.45'>{_h.escape(p.goal)}</p>", unsafe_allow_html=True)
+    g2.markdown(f"<div class='eyebrow'>Focus item {chip('computed')}</div><p style='font-size:16px;line-height:1.45'><b>{p.focus_item.upper()}</b> · {_h.escape(p.focus_label)}<br><span class='small'>the fallen item most relevant to the corroborated theme</span></p>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section'>Immediate actions {chip(mode)} <span class='small' style='font-family:Source Sans 3, sans-serif;font-weight:400'>owners from the ownership directory (computed); dates are two-week steps from the wave close</span></div>", unsafe_allow_html=True)
     st.markdown("| # | Action | Owner | Due |\n|---|---|---|---|\n" +
                 "\n".join(f"| {i + 1} | {x['action'].replace('|', '/')} | {x['owner_role']}, {x['owner_name']} | {x['due']} |" for i, x in enumerate(p.actions)))
     for n in p.check_notes:
         st.caption(n)
-    st.markdown(f"**Success measure** {chip('computed')}<br>{p.success_measure}", unsafe_allow_html=True)
-    st.markdown(f"**Review and recalibrate** {chip('templated')}<br>{p.review_cadence}", unsafe_allow_html=True)
-    st.markdown(f"**Questions for the team conversation** {chip('retrieved')}", unsafe_allow_html=True)
+    m1, m2 = st.columns(2, gap="large")
+    m1.markdown(f"<div class='eyebrow'>Success measure {chip('computed')}</div><p style='font-size:15px;line-height:1.45'>{_h.escape(p.success_measure)}</p>", unsafe_allow_html=True)
+    m2.markdown(f"<div class='eyebrow'>Review and recalibrate {chip('templated')}</div><p style='font-size:15px;line-height:1.45'>{_h.escape(p.review_cadence)}</p>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section'>Questions for the team conversation {chip('retrieved')}</div>", unsafe_allow_html=True)
     for q in p.team_questions:
         st.markdown(f"- {q}")
     st.caption(f"Source: {p.questions_source}")
-    st.download_button("Download one-page report with the plan (HTML)", report_html(res, p).encode(), "friction_finder_brief_and_plan.html", "text/html")
+    st.download_button("Download the one-page report with the plan (HTML)", report_html(res, p).encode(), "friction_finder_brief_and_plan.html", "text/html")
 
 
-def _evidence_tab(res: Result):
-    st.caption("Computed = SQL over suppressed views plus Python. Retrieved = verbatim text found by similarity. Nothing here is written by the model.")
+def _appendix_tab(res: Result):
+    st.caption("Technical appendix. Computed = SQL over suppressed views plus Python. Retrieved = verbatim text found by similarity. Nothing here is written by the model. "
+               "Every number in the brief traces to one of the queries below; respondent-level rows are never queried. Run: " + " · ".join(res.notes) + ".")
     st.dataframe(pd.DataFrame([{"id": e.id, "origin": e.origin, "kind": e.kind, "statement": e.statement, "source": e.source} for e in res.evidence]),
                  width="stretch", hide_index=True)
-
-
-def _sql_tab(res: Result):
-    st.caption("Every number in the brief traces to one of these queries. Respondent-level rows are never queried; the views apply the reporting threshold before any model call.")
+    st.markdown("**Show me the queries**")
     for e in res.evidence:
         if e.sql:
             with st.expander(f"[{e.id}] {e.kind}: {e.statement[:90]}"):
@@ -438,50 +617,61 @@ def _sql_tab(res: Result):
                     st.dataframe(pd.DataFrame(e.rows), width="stretch", hide_index=True)
 
 
+# ------------------------------------------------------------------ result
 if res:
-    st.caption(" · ".join(res.notes))
-    if res.status == "refused":
-        st.warning(f"**Declined.** {res.message}")
-    elif res.status == "suppressed":
-        st.info(f"**Reporting threshold applied.** Team-level results are hidden for teams with fewer than {config.MIN_N} respondents. Site-level evidence is used instead.")
-    _verdict_box(res)
-    if res.brief is None and res.status == "ok" and res.message:
-        st.markdown(f"<div class='verdict'><b>Answer</b> {chip('computed')}<br>{res.message}</div>", unsafe_allow_html=True)
-
-    if res.evidence:
-        names = []
+    eyebrow, title, sub, kind = _headline(res)
+    pill = {"teal": "Supported hypothesis", "orange": "Insufficient evidence" if res.status != "refused" else "Declined", "grey": "Watch list"}[kind]
+    if res.assessment and res.assessment.verdict == "suppressed_insufficient":
+        pill = f"Hidden under n = {config.MIN_N}"
+    if res.assessment is None and res.status != "refused":
+        pill = "Computed"
+    where = _scope_name(res)
+    st.markdown(f"<div class='memo-head fade'><div class='eyebrow'>{eyebrow}{' · ' + _h.escape(where) if where else ''} · Wave 2, September 2026</div>"
+                f"<div class='memo-title'>{_h.escape(title)}</div>"
+                f"<div class='memo-sub'><span class='pill {kind if kind != 'teal' else ''}'>{pill}</span> &nbsp;{_h.escape(sub)}</div></div>", unsafe_allow_html=True)
+    if res.status != "refused":
+        _render_kpis(_kpis(res))
+        if res.assessment:
+            st.markdown("<div class='small'>Why the code says so: " + " ".join(res.assessment.reasons) + "</div>", unsafe_allow_html=True)
+            st.markdown("")
         if res.brief:
-            names.append("Brief")
-        if any(e.kind in ("signal_check", "tenure_mix") for e in res.evidence):
-            names.append("Signal check")
-        names += ["Charts", "Evidence", "Show me (SQL)"]
+            _memo(res)
+        elif res.message:
+            st.markdown(f"<div class='answer'>{_h.escape(res.message)}</div>", unsafe_allow_html=True)
+            st.markdown("")
+        names = []
+        if any(e.kind in ("survey_table", "ops_hour", "site_heatmap", "tenure_pattern", "tenure_mix") for e in res.evidence):
+            names.append("Charts")
         if res.assessment and res.assessment.verdict == "supported":
             names.append("Action plan")
+        if any(e.kind in ("signal_check", "tenure_mix") for e in res.evidence) and res.scope and res.scope.intent in ("review_decline_real", "diagnose_drop"):
+            names.append("Signal check")
+        names.append("Evidence and queries")
         tabs = st.tabs(names)
         for name, tab in zip(names, tabs):
             with tab:
-                {"Brief": _brief_tab, "Signal check": _signal_tab, "Charts": _charts_tab, "Evidence": _evidence_tab,
-                 "Show me (SQL)": _sql_tab, "Action plan": _plan_tab}[name](res)
+                {"Charts": _charts_tab, "Action plan": _plan_tab, "Signal check": _signal_tab, "Evidence and queries": _appendix_tab}[name](res)
 
 # ------------------------------------------------------------------ footer: how it works, evals, review log, data, changes
-st.divider()
+st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+st.markdown("<div class='eyebrow ink'>Under the hood</div>", unsafe_allow_html=True)
 with st.expander("How it works: one workflow, five fixed steps, then a person decides"):
     st.markdown(f"""
 | Step | What happens | Component |
 |---|---|---|
 | 1 Scope | The model reads the question into a fixed schema (site, team, items, intent). Names are checked against the tables; unknown sites or data we do not have are declined. | textual (model) + checks |
-| 2 Analyze | SQL over views that hide teams under n={config.MIN_N}; Python computes changes, rates, staffing ratios, and the who-responded adjustment. | deterministic |
+| 2 Analyze | SQL over views that hide teams under n = {config.MIN_N}; Python computes changes, rates, staffing ratios, and the who-responded adjustment. | deterministic |
 | 3 Retrieve | Comments and procedures are found by similarity (embeddings) and quoted verbatim; comment themes are counted in code. | deterministic + retrieval |
 | 4 Assess | The verdict comes from thresholds: an item fell ≥ {SURVEY_MATERIAL:.2f}; a late-departure band rose ≥ {OPS_SIGNAL_ABS * 100:.0f} points and ≥ {OPS_SIGNAL_RATIO}×; a theme has ≥ {COMMENT_BREADTH} separate comments; staffing under {STAFFING_LOW * 100:.0f}% is a competing explanation. No corroboration = "insufficient". | deterministic |
 | 5 Explain | The model writes the brief from the evidence it is handed. A checker rejects unknown citations, numbers not in the evidence, causal words, and any owner when the verdict is not supported; two failures and a templated brief is shown. | textual (model) + checks |
 | Decide | A person approves, rejects, or flags. The action plan is built only for supported verdicts. Nothing happens otherwise. | human |
 
-Team-level results are watch items (small n); comparisons and inference belong at site level. There is deliberately no autonomous action: this is an AI-assisted workflow with a reasoning step and human approval, not an agent that acts.
+Team-level results are watch items (small n); comparisons and inference belong at site level. There is deliberately no autonomous action: an AI-assisted workflow with a reasoning step and human approval, not an agent that acts.
 """)
 
-with st.expander("Evals: gold questions scored as a confusion matrix over the planted patterns"):
+with st.expander("How we test it: gold questions scored as a confusion matrix over the planted patterns"):
     st.caption("Positive cases = a planted, corroborated problem (found = TP, missed = FN). Negative cases = a blip, one loud comment, a suppressed team, data we do not have "
-               "(declined or 'insufficient' with no owner = TN, an obstacle named = FP). Misses are the outcome we weight highest. Lookups are pass/fail.")
+               "(declined or 'insufficient' with no owner = TN, an obstacle named = FP). Misses are the outcome we weight highest. Lookups are pass or fail.")
     files = sorted(RESULTS.glob("latest_*.json")) if RESULTS.exists() else []
     if files:
         rows = []
@@ -499,34 +689,34 @@ with st.expander("Evals: gold questions scored as a confusion matrix over the pl
                      width="stretch", hide_index=True)
     else:
         st.caption("No saved run yet.")
-    if st.button("Run the evals now" + (" (about three minutes with the model)" if config.has_key() else " (rules mode, seconds)")):
+    if st.button("Run the evals now" + (" (about two minutes with the model)" if config.has_key() else " (rules mode, seconds)")):
         with st.spinner("Running the gold questions..."):
             s = evaluate(db, retriever)
         st.write(f"{s['passed']}/{s['total']} passed · matrix {s['matrix']} · saved to evals/results/")
         st.rerun()
 
-with st.expander("Review log: every approval, rejection, and flag (admin view)"):
+with st.expander("Review log: every approval, rejection, and flag"):
     log = review_log()
     if log:
         st.dataframe(pd.DataFrame([{"when": r["ts"][:16].replace("T", " "), "who": r.get("who"), "decision": r["decision"], "verdict": r.get("verdict"),
                                     "brief": r.get("brief_mode"), "note": r.get("note"), "question": r["question"]} for r in reversed(log)]),
                      width="stretch", hide_index=True)
-        st.caption(f"{len(log)} decisions in approvals.jsonl. Flags are the user feedback loop; the reviewer reads them here.")
+        st.caption(f"{len(log)} decisions. Flags are the user feedback loop; the reviewer reads them here.")
     else:
         st.caption("No decisions recorded yet.")
 
-with st.expander("Data specification: what feeds the tool, and what was planted"):
+with st.expander("The data: what feeds the tool, and what was planted"):
     spec = ROOT / "DATA_SPEC.md"
     st.markdown(spec.read_text() if spec.exists() else "Run data/generate.py to produce DATA_SPEC.md.")
 
-with st.expander("What changed since Sept 14, 2026, and who asked for it"):
+with st.expander("What the judges told us since Sept 14, 2026, and what changed"):
     st.dataframe(pd.DataFrame([
         ("O'Neal Keegan, Gallup (Sept 14)", "What do you do for managers with fewer than four people? How would operational records connect?", "Suppression in the SQL views with site roll-up; CSV upload of delay records; honeymoon effect in the synthetic data", "app/db.py, sidebar, data/generate.py"),
-        ("Katie Fullowan, Freddie Mac (Sept 14)", "Show the human in the loop and spot-check outputs with numbers; surveys carry response bias", "Approve / reject / flag log with evidence ids; evals; response bias stated in every brief's limits", "Brief tab, review log"),
+        ("Katie Fullowan, Freddie Mac (Sept 14)", "Show the human in the loop and spot-check outputs with numbers; surveys carry response bias", "Approve / reject / flag log with evidence ids; evals; response bias stated in every brief's limits", "Memo, review log"),
         ("Jeremy Lederman, MITRE (Sept 15)", "What's the data? Don't attribute causation to a blip. Automate a one-pager", "Data specification page; red-team case P9 with an 'insufficient' verdict; one-page HTML report", "DATA_SPEC.md, assess(), report"),
         ("Robert Chang, FI Consulting (Sept 15)", "One employee writing a page will make the model over-index; weight by breadth", "Comment themes counted in code; a theme corroborates only with three or more separate comments; red-team case P10", "retrieve(), assess()"),
         ("Matthew Finan, Mizuho (Sept 15)", "Score test cases as a confusion matrix, weight misses highest; use the model's reasoning over text; test gpt-5 vs gpt-5-mini", "Evals report TP/FN/FP/TN; model writes text only, code computes numbers; saved runs per model", "evals/"),
-        ("Dmitri Kaznachey, FI Consulting (Sept 16)", "Offer the playbook questions, not only free text; team n is small; say deterministic vs textual", "Playbook buttons for the three features; team-level = watch items, site-level inference; computed / generated chips", "This screen"),
-        ("Taher Jamshidi, Promontory AI (Sept 16)", "A flag-this feedback loop, an admin review, transparency about what is AI, a one-sentence idea statement", "Flag button; review log; chips on every element; idea statement in the header", "This screen"),
+        ("Dmitri Kaznachey, FI Consulting (Sept 16)", "Offer the playbook questions, not only free text; team n is small; say deterministic vs textual", "Playbook cards for the three features; team-level = watch items, site-level inference; computed / generated labels", "This screen"),
+        ("Taher Jamshidi, Promontory AI (Sept 16)", "A flag-this feedback loop, an admin review, transparency about what is AI, a one-sentence idea statement", "Flag button; review log; labels on every element; idea statement in the masthead", "This screen"),
         ("Patrick Hall, instructor (Sept 14)", "A professional UI with about three strong analytics features, more than a chatbot", "Diagnose, check the signal, act and review, on one interface with charts, tables, upload, and report generation", "This screen"),
     ], columns=["Who", "What they said", "What changed", "Where"]), width="stretch", hide_index=True)
