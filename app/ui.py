@@ -292,6 +292,7 @@ for col, (num, title, sub, buttons) in zip(cols, PLAYBOOK):
             if st.button(label, key="pb_" + label, width="stretch"):
                 st.session_state["question"] = q
                 _ask(q)
+                st.rerun()   # re-render without the landing pulse; the brief still fills in after the computed part
 
 with st.expander("Red-team cases: what it refuses to do"):
     rc = st.columns(len(REDTEAM))
@@ -299,12 +300,14 @@ with st.expander("Red-team cases: what it refuses to do"):
         if col.button(label, key="rt_" + label, width="stretch"):
             st.session_state["question"] = q
             _ask(q)
+            st.rerun()
 
 qcol, bcol, rcol = st.columns([6, 1, 1], vertical_alignment="bottom")
 question = qcol.text_input("Or ask in your own words (Enter to ask)", key="question", on_change=_on_enter,
                            placeholder="e.g., Why did the Richmond night shift's scores drop and why are deliveries late?")
 if bcol.button("Ask", type="primary", width="stretch") and question.strip():
     _ask(question.strip())
+    st.rerun()
 rcol.button("Start over", width="stretch", on_click=_reset, help="Clear the result, the plan, and the chat")
 
 res: Result | None = st.session_state.get("result")

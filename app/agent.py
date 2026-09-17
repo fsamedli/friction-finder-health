@@ -400,7 +400,7 @@ def analyze(sc: Scope, db: DB) -> list[Evidence]:
             ev.append(Evidence(id=nid("S"), kind="survey_delta_site",
                                statement=f"{sc.site} site overall, {t.item_label} ({t.item}): {t.w1:.2f} in Wave 1 to {t.w2:.2f} in Wave 2 (n={nmap.get(1)} to {nmap.get(2)}), change {t.delta:+.2f} ({tag}).",
                                sql=r.sql, rows=[{"item": t.item, "wave1": t.w1, "wave2": t.w2, "delta": t.delta}], source="v_site_wave_item",
-                               value={"item": t.item, "delta": t.delta, "material": material, "n1": nmap.get(1), "n2": nmap.get(2)}))
+                               value={"item": t.item, "wave1": t.w1, "wave2": t.w2, "delta": t.delta, "material": material, "n1": nmap.get(1), "n2": nmap.get(2)}))
 
     # ---- reviewer: who responded (mix), and the mix-adjusted signal check
     if sc.team_id is not None and sc.intent in ("review_decline_real", "diagnose_drop"):
