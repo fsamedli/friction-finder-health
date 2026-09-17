@@ -1,0 +1,43 @@
+[
+  {
+    "id": "E1",
+    "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+    "expect": {"status": "ok", "evidence_kinds": ["survey_delta", "ops_hour", "staffing", "comment", "doc", "owner"],
+               "obstacle_contains": "handoff", "brief_checks_pass": true, "truth_numbers": ["P1.wave2_mean", "P3.late_rate_from_june"]}
+  },
+  {
+    "id": "E2",
+    "question": "Why did the Richmond Dispatch Day team's scores drop?",
+    "expect": {"status": "suppressed", "evidence_kinds": ["suppressed"], "evidence_kinds_absent": ["survey_delta"]}
+  },
+  {
+    "id": "E3",
+    "question": "Why did the Denver site drop?",
+    "expect": {"status": "refused", "message_contains": "Denver"}
+  },
+  {
+    "id": "E4",
+    "question": "What caused turnover on the Norfolk night shift?",
+    "expect": {"status": "refused", "message_contains": "turnover"}
+  },
+  {
+    "id": "E5",
+    "question": "How do scores vary by tenure?",
+    "expect": {"status": "ok", "message_contains": "under_1", "truth_numbers": ["P5.grand_mean_by_tenure.under_1"]}
+  },
+  {
+    "id": "E6",
+    "question": "Is the Norfolk Day B decline real or did different people respond?",
+    "expect": {"status": "ok", "mix_shift": true}
+  },
+  {
+    "id": "E7",
+    "question": "Who owns the shift handoff process at Richmond?",
+    "expect": {"status": "ok", "message_contains": "Site Operations Manager"}
+  },
+  {
+    "id": "E8",
+    "question": "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?",
+    "expect": {"status": "ok", "truth_numbers": ["P1.wave2_mean", "P1.n_wave2"]}
+  }
+]
