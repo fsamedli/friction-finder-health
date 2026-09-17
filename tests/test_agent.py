@@ -233,3 +233,17 @@ def test_repair_citations_fixes_prefix_only_near_miss(main_result):
     assert b.evidence_for[0]["evidence_ids"] == [staffing] and any(wrong in n for n in notes)
     assert b.evidence_against[0]["evidence_ids"] == ["Z99"]
     assert any("Z99" in p for p in check_brief(b, main_result.evidence))
+
+
+def test_chat_fallback_is_grounded(main_result):
+    """Without a model the follow-up chat returns evidence lines; it never invents numbers."""
+    from app.agent import chat_answer, chat_context, _numbers_in
+    out = chat_answer("Why is the handoff the likely obstacle?", main_result)
+    assert out["mode"] == "fallback" and "evidence" in out["answer"].lower()
+    allowed = _numbers_in(chat_context(main_result))
+    from app.agent import NUM_RE
+    for m in NUM_RE.finditer(out["answer"]):
+        num = m.group(1)
+        assert num in allowed or num.rstrip("0").rstrip(".") in allowed
+    off = chat_answer("What is the weather in Denver?", None)
+    assert "not on screen" in off["answer"].lower() or "closest evidence" in off["answer"].lower()

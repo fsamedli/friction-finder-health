@@ -17,11 +17,11 @@ codeFont = "ui-monospace, Menlo, monospace"
 chartCategoricalColors = ["#1F8FA8", "#C8553D", "#B9C6CC", "#1B3A4B"]
 
 [theme.sidebar]
-backgroundColor = "#1B3A4B"
-secondaryBackgroundColor = "#25475A"
-textColor = "#EAF0F2"
-primaryColor = "#7FC4D4"
-borderColor = "#2E5A70"
+backgroundColor = "#EEF2F4"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1B3A4B"
+primaryColor = "#1F8FA8"
+borderColor = "#D6DEE2"
 
 [browser]
 gatherUsageStats = false

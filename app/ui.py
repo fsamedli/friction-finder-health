@@ -21,7 +21,7 @@ import streamlit as st
 
 from app import config
 from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, STAFFING_LOW, SURVEY_MATERIAL, THEMES, Result,
-                       approve, plan, report_html, report_markdown, review_log, run)
+                       approve, chat_answer, plan, report_html, report_markdown, review_log, run)
 from app.db import DB
 from app.retrieval import Retriever
 from evals.run_evals import RESULTS, evaluate
@@ -98,15 +98,19 @@ button[data-baseweb="tab"] p {{ font-weight: 600; font-size: 14.5px; }}
 details[data-testid="stExpander"] summary p, details[data-testid="stExpander"] summary span {{ font-weight: 600; color: var(--ink); }}
 .stMarkdown table {{ font-size: 14px; }}
 
-/* sidebar */
-section[data-testid="stSidebar"] .brand {{ font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: #fff; line-height:1.1; }}
-section[data-testid="stSidebar"] .brand-sub {{ font-size: 11.5px; letter-spacing:.14em; text-transform: uppercase; color: #9FC4D0; margin: 6px 0 14px 0; }}
-section[data-testid="stSidebar"] .stat {{ display:flex; justify-content:space-between; font-size: 13.5px; padding: 5px 0; border-bottom: 1px solid #2E5A70; }}
-section[data-testid="stSidebar"] .stat b {{ color:#fff; }}
-section[data-testid="stSidebar"] .stat span {{ color:#C6D6DD; }}
-section[data-testid="stSidebar"] .tag {{ display:inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; letter-spacing:.08em; color:#1B3A4B; background:#F3D9CF; margin-right: 4px; }}
-section[data-testid="stSidebar"] .tag.mid {{ background:#BFE3EB; }}
-section[data-testid="stSidebar"] .small {{ color:#B7C9D1; }}
+/* sidebar (light) */
+section[data-testid="stSidebar"] .brand {{ font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--ink); line-height:1.1; }}
+section[data-testid="stSidebar"] .brand-sub {{ font-size: 11.5px; letter-spacing:.14em; text-transform: uppercase; color: var(--teal); margin: 6px 0 14px 0; }}
+section[data-testid="stSidebar"] .stat {{ display:flex; justify-content:space-between; font-size: 13.5px; padding: 5px 0; border-bottom: 1px solid #D6DEE2; }}
+section[data-testid="stSidebar"] .stat b {{ color: var(--ink); }}
+section[data-testid="stSidebar"] .stat span {{ color: var(--muted); }}
+section[data-testid="stSidebar"] .tag {{ display:inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; letter-spacing:.08em; color:#8A3A28; background:#F6DDD4; margin-right: 4px; }}
+section[data-testid="stSidebar"] .tag.mid {{ color:#155F70; background:#CDE7EE; }}
+section[data-testid="stSidebar"] .small {{ color: var(--muted); }}
+
+/* follow-up chat */
+div[data-testid="stChatMessage"] {{ background: {SURFACE}; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 14px; }}
+div[data-testid="stChatInput"] {{ border-radius: 999px; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -199,6 +203,7 @@ def _ask(q: str):
         st.session_state["result"] = run(q, db, retriever)
     st.session_state["decision"] = None
     st.session_state["plan"] = None
+    st.session_state["chat"] = []
 
 
 cols = st.columns(3, gap="medium")
@@ -651,6 +656,35 @@ if res:
         for name, tab in zip(names, tabs):
             with tab:
                 {"Charts": _charts_tab, "Action plan": _plan_tab, "Signal check": _signal_tab, "Evidence and queries": _appendix_tab}[name](res)
+
+# ------------------------------------------------------------------ follow-up chat, grounded in what is on screen
+st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown(f"<div class='eyebrow'>Ask about {'this brief' if res else 'the tool'} {chip('generated')}</div>"
+                "<div class='small' style='margin:2px 0 8px 0'>Follow-up questions are answered only from what is on screen: the evidence register, the brief, the data specification, and the "
+                "rules of the workflow. Every number in an answer is checked against them; anything else gets 'not on screen'.</div>", unsafe_allow_html=True)
+    chat = st.session_state.setdefault("chat", [])
+    for m in chat:
+        with st.chat_message(m["role"], avatar=("🧑‍💼" if m["role"] == "user" else "🔎")):
+            st.markdown(m["content"])
+            if m.get("notes"):
+                st.caption(" · ".join(m["notes"]))
+    examples = (["Why is the handoff the likely obstacle and not staffing?", "What does 'material' mean here?", "What would change the verdict?"] if res and res.brief
+                else ["How does the tool decide a verdict?", "What data is this built on, and what was planted?", "What happens for a team with fewer than four people?"])
+    ec = st.columns(len(examples))
+    asked = None
+    for col, ex in zip(ec, examples):
+        if col.button(ex, key="ex_" + ex, width="stretch"):
+            asked = ex
+    typed = st.chat_input("Ask a follow-up about the brief, the data, or how the tool works")
+    asked = asked or typed
+    if asked:
+        chat.append({"role": "user", "content": asked})
+        with st.spinner("Answering from what is on screen..."):
+            out = chat_answer(asked, res, st.session_state.get("plan"), chat)
+        chat.append({"role": "assistant", "content": out["answer"], "notes": [("model-written" if out["mode"] == "llm" else "templated")] + out["notes"]})
+        st.session_state["chat"] = chat[-12:]
+        st.rerun()
 
 # ------------------------------------------------------------------ footer: how it works, evals, review log, data, changes
 st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)

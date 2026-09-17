@@ -1198,3 +1198,105 @@ def review_log() -> list[dict]:
         except json.JSONDecodeError:
             continue
     return out
+
+
+# ----------------------------------------------------------------------------- ask about this brief (grounded follow-up chat)
+
+HOW_IT_WORKS = (
+    "HOW THE TOOL WORKS. Friction Finder is one workflow with five fixed steps, then a person decides. "
+    "1 Scope: the model reads the question into a fixed schema (site, team, items, intent); names are checked against the tables; unknown sites or data we do not have are declined. "
+    f"2 Analyze: SQL over views that hide teams under n={config.MIN_N}; Python computes changes, rates, staffing ratios, and the who-responded adjustment. "
+    "3 Retrieve: comments and procedures are found by similarity (embeddings) and quoted verbatim; comment themes are counted in code. "
+    f"4 Assess: the verdict comes from thresholds. A survey signal = an item fell {SURVEY_MATERIAL:.2f} or more on the 5-point scale. An operational signal = a late-departure band rose "
+    f"{OPS_SIGNAL_ABS * 100:.0f} points or more and to at least {OPS_SIGNAL_RATIO}x. A comment signal = one theme has {COMMENT_BREADTH} or more separate comments (one long comment is a single source). "
+    f"Staffing under {STAFFING_LOW * 100:.0f}% of scheduled is listed as a competing explanation, never as support. "
+    "The verdict is 'supported' ONLY when there is a survey signal AND at least one of the operational or comment signals; a survey signal alone is 'insufficient evidence' (watch item, no owner, no test); "
+    "no survey signal is 'no material change'; a team under the reporting threshold is 'suppressed' and the site level is shown instead. "
+    "5 Explain: the model writes the brief from the evidence it is handed; a checker rejects unknown citations, numbers not in the evidence, causal words, and any owner when the verdict is not supported; two failures and a templated brief is shown. "
+    "Decide: a person approves, rejects, or flags; the action plan is built only for supported verdicts; nothing happens otherwise. "
+    "Team-level results are watch items (small n); comparisons and inference belong at site level. There is deliberately no autonomous action. "
+    "Numbers never come from the model. Everything is synthetic: Northline Logistics does not exist; patterns were planted so the assistant can be scored. "
+    "The model is gpt-5-mini on the group's GW Azure OpenAI resource; a stronger model changes wording, not numbers or verdicts. "
+    "Limits: no Gallup global benchmark or percentile rank (no licensed source); two survey waves only; response bias is stated, not modelled."
+)
+
+
+def chat_context(result: Result | None, plan_: ActionPlan | None = None) -> str:
+    """Everything the follow-up chat is allowed to know: how the tool works, the data specification,
+    and the current result. Nothing else."""
+    parts = [HOW_IT_WORKS]
+    spec = config.ROOT / "DATA_SPEC.md"
+    if spec.exists():
+        parts.append("DATA SPECIFICATION:\n" + spec.read_text()[:7000])
+    if result:
+        parts.append(f"CURRENT QUESTION: {result.question}\nSTATUS: {result.status}")
+        if result.assessment:
+            a = result.assessment
+            parts.append(f"VERDICT (computed by code): {a.verdict}. {a.label} Reasons: {' '.join(a.reasons)}")
+        if result.message:
+            parts.append("COMPUTED ANSWER: " + result.message)
+        if result.evidence:
+            parts.append("EVIDENCE REGISTER:\n" + "\n".join(f"[{e.id}] ({e.kind}, {e.origin}) {e.statement}" for e in result.evidence))
+        if result.brief:
+            parts.append("BRIEF (" + ("written by the model" if result.brief.mode == "llm" else "templated") + "): " + json.dumps(asdict(result.brief)))
+        if plan_:
+            parts.append("ACTION PLAN: " + json.dumps(asdict(plan_)))
+    return "\n\n".join(parts)
+
+
+def _numbers_in(text: str) -> set[str]:
+    allowed = set(str(i) for i in range(0, 32))
+    for m in NUM_RE.finditer(text):
+        num = m.group(1)
+        allowed.add(num)
+        if "." in num:
+            allowed.add(num.rstrip("0").rstrip("."))
+    return allowed
+
+
+def _chat_fallback(question: str, ctx: str, note: str | None = None) -> dict:
+    """No model, or the model failed the check twice: return the closest lines from the context."""
+    stop = {"the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "is", "are", "was", "were", "it", "this", "that", "what", "why",
+            "how", "does", "do", "did", "can", "you", "me", "about", "tell", "explain", "mean", "means"}
+    qt = {t for t in re.findall(r"[a-z0-9]+", question.lower()) if len(t) > 2 and t not in stop}
+    lines = [l.strip() for l in ctx.splitlines() if len(l.strip()) > 30 and not l.startswith(("|", "#"))]
+    scored = sorted(((len(qt & set(re.findall(r"[a-z0-9]+", l.lower()))), l) for l in lines), key=lambda x: -x[0])
+    best = [l for s, l in scored[:3] if s > 0]
+    if best:
+        answer = "I can only answer from what is on screen. The closest evidence:\n" + "\n".join(f"- {l[:300]}" for l in best)
+    else:
+        answer = "That is not on screen. I can answer about the current brief, its evidence, the data, and how the tool works."
+    return {"answer": answer, "mode": "fallback", "notes": [note or "model unavailable; closest evidence lines shown"]}
+
+
+def chat_answer(question: str, result: Result | None, plan_: ActionPlan | None = None, history: list[dict] | None = None) -> dict:
+    """Grounded follow-up: the model answers only from the context, and every number in the answer
+    must already appear there. Returns {answer, mode, notes}."""
+    ctx = chat_context(result, plan_)
+    if not config.has_key():
+        return _chat_fallback(question, ctx)
+    allowed = _numbers_in(ctx)
+    hist = "\n".join(f"{m['role']}: {m['content']}" for m in (history or [])[-6:])
+    system = ("You answer a manager's follow-up questions about an evidence brief and about how the Friction Finder tool works. "
+              "Use ONLY the CONTEXT. If the context does not contain the answer, say that it is not on screen and what would be needed. "
+              "Never introduce a number that is not in the context. Never claim a cause; say 'supported hypothesis'. "
+              "Cite evidence ids in square brackets when you use them. Plain language for a manager, at most 120 words, no headings. "
+              "Return ONLY a JSON object: {\"answer\": string}.")
+    user = f"CONTEXT:\n{ctx}\n\nRECENT CONVERSATION:\n{hist or '(none)'}\n\nQUESTION: {question}"
+    notes: list[str] = []
+    for attempt in range(2):
+        try:
+            out = llm.chat_json(system, user if attempt == 0 else user + "\n\nYour previous answer used numbers not in the context: " + ", ".join(notes) + ". Answer again using only numbers from the context.",
+                                effort="minimal")
+        except llm.LLMUnavailable as e:
+            return _chat_fallback(question, ctx, note=f"model unavailable ({e}); closest evidence lines shown")
+        answer = str(out.get("answer", "")).strip()
+        notes = []
+        for m in NUM_RE.finditer(answer):
+            num = m.group(1)
+            alt = num.rstrip("0").rstrip(".") if "." in num else num
+            if num not in allowed and alt not in allowed:
+                notes.append(num)
+        if answer and not notes:
+            return {"answer": answer, "mode": "llm", "notes": ["checked: every number appears in the evidence, the brief, or the data specification"]}
+    return _chat_fallback(question, ctx, note="the model's answer used numbers not on screen twice (" + ", ".join(notes) + "); closest evidence lines shown instead")
