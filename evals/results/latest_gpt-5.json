@@ -1,20 +1,20 @@
 {
   "model": "gpt-5",
   "retrieval": "embeddings",
-  "ts": "2026-09-17T21:55:53+00:00",
-  "passed": 11,
+  "ts": "2026-09-17T21:59:58+00:00",
+  "passed": 12,
   "total": 12,
   "matrix": {
     "TP": 2,
     "FN": 0,
     "FP": 0,
-    "TN": 4,
-    "FN*": 1
+    "TN": 5,
+    "FN*": 0
   },
   "lookups_passed": 5,
   "lookups_total": 5,
-  "briefs_regenerated_or_fallback": 1,
-  "seconds": 223.5,
+  "briefs_regenerated_or_fallback": 2,
+  "seconds": 183.9,
   "rows": [
     {
       "id": "E1",
@@ -43,7 +43,7 @@
         "truth_numbers": true
       },
       "outcome": "TP",
-      "seconds": 53.3
+      "seconds": 22.1
     },
     {
       "id": "E2",
@@ -56,7 +56,7 @@
       "verdict": "suppressed_insufficient",
       "brief_mode": "fallback",
       "check_notes": [
-        "model brief failed checks twice: verdict is not 'supported': the obstacle must say the evidence is insufficient or that nothing changed materially; templated brief shown"
+        "model brief failed checks twice: number 95% does not appear in the evidence; templated brief shown"
       ],
       "passed": true,
       "checks": {
@@ -67,7 +67,7 @@
         "owner_not_assigned": true
       },
       "outcome": "TN",
-      "seconds": 47.0
+      "seconds": 38.0
     },
     {
       "id": "E3",
@@ -78,13 +78,13 @@
       "verdict": "",
       "brief_mode": "",
       "check_notes": [],
-      "passed": false,
+      "passed": true,
       "checks": {
         "status": true,
-        "message_contains": false
+        "message_contains": true
       },
-      "outcome": "FN*",
-      "seconds": 2.2
+      "outcome": "TN",
+      "seconds": 2.5
     },
     {
       "id": "E4",
@@ -101,7 +101,7 @@
         "message_contains": true
       },
       "outcome": "TN",
-      "seconds": 2.6
+      "seconds": 3.2
     },
     {
       "id": "E5",
@@ -121,7 +121,7 @@
         "truth_numbers": true
       },
       "outcome": "pass",
-      "seconds": 2.1
+      "seconds": 2.3
     },
     {
       "id": "E6",
@@ -142,7 +142,7 @@
         "signal_verdict": true
       },
       "outcome": "pass",
-      "seconds": 2.3
+      "seconds": 3.1
     },
     {
       "id": "E7",
@@ -159,7 +159,7 @@
         "message_contains": true
       },
       "outcome": "pass",
-      "seconds": 3.8
+      "seconds": 2.3
     },
     {
       "id": "E8",
@@ -178,7 +178,7 @@
         "truth_numbers": true
       },
       "outcome": "pass",
-      "seconds": 2.4
+      "seconds": 2.3
     },
     {
       "id": "E9",
@@ -204,7 +204,7 @@
         "truth_numbers": true
       },
       "outcome": "TN",
-      "seconds": 21.9
+      "seconds": 21.3
     },
     {
       "id": "E10",
@@ -230,7 +230,7 @@
         "comment_top_count_below": true
       },
       "outcome": "TN",
-      "seconds": 41.8
+      "seconds": 18.9
     },
     {
       "id": "E11",
@@ -252,7 +252,7 @@
         "watch_contains": true
       },
       "outcome": "pass",
-      "seconds": 2.5
+      "seconds": 1.8
     },
     {
       "id": "E12",
@@ -264,9 +264,9 @@
       "question": "Why did the Richmond Night A team's scores drop?",
       "status": "ok",
       "verdict": "supported",
-      "brief_mode": "llm",
+      "brief_mode": "fallback",
       "check_notes": [
-        "passed: every citation exists, every number appears in the evidence, verdict respected"
+        "model brief failed checks twice: owner must name the process owner from the directory: Site Operations Manager, Priya Singh; templated brief shown"
       ],
       "passed": true,
       "checks": {
@@ -277,7 +277,7 @@
         "plan_actions": true
       },
       "outcome": "TP",
-      "seconds": 41.5
+      "seconds": 66.1
     }
   ]
 }

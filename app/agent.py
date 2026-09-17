@@ -748,8 +748,10 @@ def check_brief(b: Brief, evidence: list[Evidence], assessment: Assessment | Non
     if re.search(r"\b(root cause|the cause is|caused by|proves)\b", text, re.I):
         problems.append("causal language: say 'supported hypothesis'")
     if assessment and assessment.verdict != "supported":
-        if not re.search(r"insufficient|no material|not enough|cannot name|does not support|suppressed", b.obstacle, re.I):
+        if not re.search(r"insufficient|no material|not enough|cannot name|does not support|suppressed|hidden|fewer than|reporting threshold|not shown|nothing to diagnose|no decline|watch (item|list)", b.obstacle, re.I):
             problems.append("verdict is not 'supported': the obstacle must say the evidence is insufficient or that nothing changed materially")
+        if re.search(r"(most )?likely obstacle (is|:)|is the obstacle|supported hypothesis:", b.obstacle, re.I):
+            problems.append("verdict is not 'supported': the obstacle must not name an obstacle")
         if re.search(r"[A-Z][a-z]+ [A-Z][a-z]+", b.owner) and "not assigned" not in b.owner.lower():
             problems.append("verdict is not 'supported': owner must be 'Not assigned'")
     if assessment and assessment.verdict == "supported":
@@ -905,14 +907,14 @@ def explain(question: str, sc: Scope, evidence: list[Evidence], assessment: Asse
 def run(question: str, db: DB, retriever: Retriever) -> Result:
     sc = scope(question, db)
     notes = [f"scope mode: {sc.mode}", f"retrieval mode: {retriever.mode}"]
+    if sc.unknown_entities:  # a place or thing we do not have is named in the decline, whatever the model called the intent
+        return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
+                      message=f"I do not have data for {', '.join(sc.unknown_entities)}. Known sites: {', '.join(db.sites())}.",
+                      notes=notes)
     if sc.intent == "unsupported":
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message=f"I cannot answer this from the data available. {sc.unsupported_reason or ''} "
                               "Available: survey results by team and wave, operational records, staffing, and process documents.",
-                      notes=notes)
-    if sc.unknown_entities:
-        return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
-                      message=f"I do not have data for {', '.join(sc.unknown_entities)}. Known sites: {', '.join(db.sites())}.",
                       notes=notes)
     if sc.intent in ("diagnose_drop", "review_decline_real", "metric_lookup", "owner_lookup", "site_overview") and sc.site is None and sc.team_id is None:
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,

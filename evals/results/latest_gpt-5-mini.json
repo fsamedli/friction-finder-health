@@ -1,7 +1,7 @@
 {
   "model": "gpt-5-mini",
   "retrieval": "embeddings",
-  "ts": "2026-09-17T21:52:08+00:00",
+  "ts": "2026-09-17T22:01:30+00:00",
   "passed": 12,
   "total": 12,
   "matrix": {
@@ -13,8 +13,8 @@
   },
   "lookups_passed": 5,
   "lookups_total": 5,
-  "briefs_regenerated_or_fallback": 1,
-  "seconds": 88.6,
+  "briefs_regenerated_or_fallback": 0,
+  "seconds": 91.0,
   "rows": [
     {
       "id": "E1",
@@ -28,9 +28,9 @@
       "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
       "status": "ok",
       "verdict": "supported",
-      "brief_mode": "fallback",
+      "brief_mode": "llm",
       "check_notes": [
-        "model brief failed checks twice: evidence_against: cites unknown evidence id S9; templated brief shown"
+        "passed: every citation exists, every number appears in the evidence, verdict respected"
       ],
       "passed": true,
       "checks": {
@@ -43,7 +43,7 @@
         "truth_numbers": true
       },
       "outcome": "TP",
-      "seconds": 28.0
+      "seconds": 21.8
     },
     {
       "id": "E2",
@@ -67,7 +67,7 @@
         "owner_not_assigned": true
       },
       "outcome": "TN",
-      "seconds": 10.3
+      "seconds": 10.6
     },
     {
       "id": "E3",
@@ -84,7 +84,7 @@
         "message_contains": true
       },
       "outcome": "TN",
-      "seconds": 2.6
+      "seconds": 2.2
     },
     {
       "id": "E4",
@@ -101,7 +101,7 @@
         "message_contains": true
       },
       "outcome": "TN",
-      "seconds": 2.1
+      "seconds": 1.9
     },
     {
       "id": "E5",
@@ -121,7 +121,7 @@
         "truth_numbers": true
       },
       "outcome": "pass",
-      "seconds": 1.7
+      "seconds": 2.6
     },
     {
       "id": "E6",
@@ -142,7 +142,7 @@
         "signal_verdict": true
       },
       "outcome": "pass",
-      "seconds": 2.0
+      "seconds": 2.2
     },
     {
       "id": "E7",
@@ -159,7 +159,7 @@
         "message_contains": true
       },
       "outcome": "pass",
-      "seconds": 2.3
+      "seconds": 2.1
     },
     {
       "id": "E8",
@@ -178,7 +178,7 @@
         "truth_numbers": true
       },
       "outcome": "pass",
-      "seconds": 1.4
+      "seconds": 1.8
     },
     {
       "id": "E9",
@@ -204,7 +204,7 @@
         "truth_numbers": true
       },
       "outcome": "TN",
-      "seconds": 7.9
+      "seconds": 8.6
     },
     {
       "id": "E10",
@@ -230,7 +230,7 @@
         "comment_top_count_below": true
       },
       "outcome": "TN",
-      "seconds": 11.7
+      "seconds": 10.8
     },
     {
       "id": "E11",
@@ -252,7 +252,7 @@
         "watch_contains": true
       },
       "outcome": "pass",
-      "seconds": 1.7
+      "seconds": 2.2
     },
     {
       "id": "E12",
@@ -266,7 +266,8 @@
       "verdict": "supported",
       "brief_mode": "llm",
       "check_notes": [
-        "passed: every citation exists, every number appears in the evidence, verdict respected"
+        "passed: every citation exists, every number appears in the evidence, verdict respected",
+        "citation S9 corrected to O9"
       ],
       "passed": true,
       "checks": {
@@ -277,7 +278,7 @@
         "plan_actions": true
       },
       "outcome": "TP",
-      "seconds": 16.9
+      "seconds": 24.2
     }
   ]
 }
