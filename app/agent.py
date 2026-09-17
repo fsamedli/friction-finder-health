@@ -904,9 +904,12 @@ def explain(question: str, sc: Scope, evidence: list[Evidence], assessment: Asse
 
 # ----------------------------------------------------------------------------- orchestration
 
-def run(question: str, db: DB, retriever: Retriever) -> Result:
+def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Result:
+    """fast=True stops before the written brief (see write_brief)."""
+    import time as _time
+    _t0 = _time.time()
     sc = scope(question, db)
-    notes = [f"scope mode: {sc.mode}", f"retrieval mode: {retriever.mode}"]
+    notes = [f"scope mode: {sc.mode} ({_time.time() - _t0:.1f}s)", f"retrieval mode: {retriever.mode}"]
     if sc.unknown_entities:  # a place or thing we do not have is named in the decline, whatever the model called the intent
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message=f"I do not have data for {', '.join(sc.unknown_entities)}. Known sites: {', '.join(db.sites())}.",
@@ -921,8 +924,10 @@ def run(question: str, db: DB, retriever: Retriever) -> Result:
                       message="Which site or team do you mean? Known sites: " + ", ".join(db.sites()) + ".", notes=notes)
     if sc.intent == "owner_lookup":
         return _owner_lookup(question, sc, db, [], notes)
+    _t1 = _time.time()
     evidence = analyze(sc, db)
     evidence += retrieve(sc, question, db, retriever, evidence)
+    notes.append(f"analyze + retrieve: {_time.time() - _t1:.1f}s")
     if not evidence:
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message="The data cannot answer this question; no evidence was found for that scope.", notes=notes)
@@ -931,10 +936,28 @@ def run(question: str, db: DB, retriever: Retriever) -> Result:
         msg = " ".join(e.statement for e in evidence if e.kind in kinds)
         return Result(status="ok", question=question, scope=sc, evidence=evidence, brief=None, message=msg, notes=notes)
     assessment = assess(sc, evidence, db)
-    brief = explain(question, sc, evidence, assessment)
-    notes.append(f"brief mode: {brief.mode}")
     status = "suppressed" if any(e.kind == "suppressed" for e in evidence) else "ok"
-    return Result(status=status, question=question, scope=sc, evidence=evidence, brief=brief, notes=notes, assessment=assessment)
+    res = Result(status=status, question=question, scope=sc, evidence=evidence, brief=None, notes=notes, assessment=assessment)
+    if not fast:
+        write_brief(res)
+    return res
+
+
+def needs_brief(res: Result) -> bool:
+    """True when the computed part is done and only the written brief is missing."""
+    return res.status in ("ok", "suppressed") and res.assessment is not None and res.brief is None
+
+
+def write_brief(res: Result) -> Result:
+    """Step 5 on its own, so the screen can show the computed verdict, tiles, and charts first and
+    let the model's prose arrive afterwards."""
+    if res.assessment is None or res.scope is None:
+        return res
+    import time as _time
+    _t0 = _time.time()
+    res.brief = explain(res.question, res.scope, res.evidence, res.assessment)
+    res.notes.append(f"brief mode: {res.brief.mode} ({_time.time() - _t0:.1f}s)")
+    return res
 
 
 def _owner_lookup(question: str, sc: Scope, db: DB, evidence: list[Evidence], notes: list[str]) -> Result:

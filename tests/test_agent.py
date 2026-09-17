@@ -247,3 +247,12 @@ def test_chat_fallback_is_grounded(main_result):
         assert num in allowed or num.rstrip("0").rstrip(".") in allowed
     off = chat_answer("What is the weather in Denver?", None)
     assert "not on screen" in off["answer"].lower() or "closest evidence" in off["answer"].lower()
+
+
+def test_run_sql_returns_whole_small_views(db):
+    """The row cap must never truncate the reporting views (24 teams x 12 items x 2 waves = 576 rows);
+    a silent LIMIT without ORDER BY made counts change between runs on Sept 17, 2026."""
+    n_teams = db.run_sql("SELECT COUNT(*) AS c FROM teams").rows.c.iloc[0]
+    rows = db.run_sql("SELECT team_id, item, wave_id FROM v_team_wave_item").rows
+    assert len(rows) == n_teams * 12 * 2
+    assert not rows.duplicated(["team_id", "item", "wave_id"]).any()

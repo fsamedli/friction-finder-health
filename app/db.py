@@ -18,7 +18,7 @@ ALLOWED = {"sites", "teams", "waves", "q12_items", "ownership_directory", "staff
            "v_team_wave_item", "v_site_wave_item", "v_tenure_wave_item", "v_team_wave_n",
            "v_team_tenure_mix", "v_ops_month", "v_ops_hour", "v_comments_reportable"}
 
-ROW_CAP = 500
+ROW_CAP = 5000   # protects the show-me panel and the model from huge outputs; every view here is far smaller (v_team_wave_item is 576 rows)
 
 VIEWS = f"""
 CREATE OR REPLACE VIEW v_team_wave_n AS

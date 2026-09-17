@@ -21,7 +21,7 @@ import streamlit as st
 
 from app import config
 from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, STAFFING_LOW, SURVEY_MATERIAL, THEMES, Result,
-                       approve, chat_answer, plan, report_html, report_markdown, review_log, run)
+                       approve, chat_answer, needs_brief, plan, report_html, report_markdown, review_log, run, write_brief)
 from app.db import DB
 from app.retrieval import Retriever
 from evals.run_evals import RESULTS, evaluate
@@ -108,6 +108,23 @@ section[data-testid="stSidebar"] .tag {{ display:inline-block; padding: 2px 8px;
 section[data-testid="stSidebar"] .tag.mid {{ color:#155F70; background:#CDE7EE; }}
 section[data-testid="stSidebar"] .small {{ color: var(--muted); }}
 
+/* checklist */
+.checks {{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin: 2px 0 16px 0; }}
+.check {{ background: {SURFACE}; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.4; color: var(--ink); }}
+.check .ic {{ display:inline-block; width: 20px; height: 20px; border-radius: 50%; text-align:center; line-height: 20px; font-weight: 700; font-size: 12px; color:#fff; margin-right: 6px; }}
+.check .ic.on {{ background: var(--teal); }} .check .ic.off {{ background: #C2CBD1; }} .check .ic.warn {{ background: var(--orange); }}
+.check .t {{ font-weight: 700; }}
+/* company pulse */
+.pulse {{ background: {SURFACE}; border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px 6px 16px; }}
+.pulse .site {{ font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--ink); }}
+.pulse .row {{ display:flex; justify-content:space-between; font-size: 13.5px; padding: 5px 0; border-bottom: 1px solid var(--rule); }}
+.pulse .row span {{ color: var(--muted); }} .pulse .row b {{ color: var(--ink); }}
+.pulse .row b.warn {{ color: var(--orange); }}
+/* workflow flow */
+.flow {{ display:flex; gap: 8px; margin: 6px 0 14px 0; }}
+.step {{ flex:1; background: {SURFACE}; border: 1px solid var(--rule); border-top: 4px solid var(--teal); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.35; }}
+.step.model {{ border-top-color: var(--orange); }} .step.human {{ border-top-color: #4F7A21; }}
+.step b {{ display:block; font-size: 13.5px; color: var(--ink); margin-bottom: 2px; }}
 /* follow-up chat */
 div[data-testid="stChatMessage"] {{ background: {SURFACE}; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 14px; }}
 div[data-testid="stChatInput"] {{ border-radius: 999px; }}
@@ -122,7 +139,14 @@ def chip(kind: str) -> str:
 @st.cache_resource(show_spinner="Loading the synthetic company, views, and documents...")
 def _load():
     db = DB()
-    return db, Retriever(db)
+    retriever = Retriever(db)
+    if config.has_key():
+        try:  # warm the connection to the GW resource once, so the first click is not 10 seconds slower than the rest
+            from app import llm
+            llm.chat_json("Return only {\"ok\": true}.", "ok", effort="minimal")
+        except Exception:
+            pass
+    return db, retriever
 
 
 db, retriever = _load()
@@ -199,12 +223,66 @@ REDTEAM = [
 
 
 def _ask(q: str):
-    with st.spinner("Reading the question, querying the views, retrieving, assessing, writing..."):
-        st.session_state["result"] = run(q, db, retriever)
+    with st.spinner("Reading the question, querying the views, retrieving, assessing..."):
+        st.session_state["result"] = run(q, db, retriever, fast=True)   # the written brief arrives after the computed part is on screen
     st.session_state["decision"] = None
     st.session_state["plan"] = None
     st.session_state["chat"] = []
+    st.session_state["last_asked"] = q
 
+
+def _on_enter():
+    q = st.session_state.get("question", "").strip()
+    if q and q != st.session_state.get("last_asked"):
+        _ask(q)
+
+
+def _reset():
+    for k in ("result", "decision", "plan", "chat", "last_asked", "note"):
+        st.session_state.pop(k, None)
+    st.session_state["question"] = ""
+
+
+def _pulse() -> list[dict]:
+    """Company pulse for the landing page: one card per site, all from the reporting views."""
+    gm = db.run_sql("SELECT site_name, wave_id, ROUND(AVG(mean_score), 2) AS gm, MIN(n) AS n FROM v_site_wave_item WHERE reportable GROUP BY 1, 2").rows
+    hidden = db.run_sql(f"SELECT s.site_name, COUNT(DISTINCT t.team_id) AS hidden FROM v_team_wave_n n JOIN teams t ON t.team_id = n.team_id JOIN sites s ON s.site_id = t.site_id WHERE n.n < {config.MIN_N} GROUP BY 1").rows
+    teams = db.run_sql("SELECT s.site_name, COUNT(*) AS teams FROM teams t JOIN sites s ON s.site_id = t.site_id GROUP BY 1").rows
+    tw = db.run_sql("SELECT site_name, team_id, item, wave_id, mean_score, reportable FROM v_team_wave_item ORDER BY site_name, team_id, item, wave_id").rows
+    ops = db.run_sql("SELECT site_name, period, ROUND(SUM(late_departures) * 1.0 / SUM(departures), 3) AS late_rate FROM v_ops_hour GROUP BY 1, 2").rows
+    out = []
+    for site in db.sites():
+        g = {int(r.wave_id): (float(r.gm), int(r.n)) for r in gm[gm.site_name == site].itertuples()}
+        t = tw[tw.site_name == site]
+        piv = t.pivot_table(index=["team_id", "item"], columns="wave_id", values="mean_score", aggfunc="first")
+        watch = int(((piv.get(2) - piv.get(1)).round(2) <= -SURVEY_MATERIAL).sum()) if 1 in piv.columns and 2 in piv.columns else 0  # same rounding as the site overview
+        o = {r.period: float(r.late_rate) for r in ops[ops.site_name == site].itertuples()}
+        out.append({"site": site, "gm1": g.get(1, (None, None))[0], "gm2": g.get(2, (None, None))[0], "n1": g.get(1, (None, None))[1], "n2": g.get(2, (None, None))[1],
+                    "hidden": int(hidden[hidden.site_name == site].hidden.iloc[0]) if len(hidden[hidden.site_name == site]) else 0,
+                    "teams": int(teams[teams.site_name == site].teams.iloc[0]), "watch": watch,
+                    "late1": o.get("Jan-May 2026"), "late2": o.get("Jun-Sep 2026")})
+    return out
+
+
+if st.session_state.get("result") is None:
+    st.markdown("<div class='eyebrow'>Company pulse · Wave 2 (Sep 2026) vs Wave 1 (Mar 2026)</div>", unsafe_allow_html=True)
+    pc = st.columns(3, gap="medium")
+    for col, row in zip(pc, _pulse()):
+        with col:
+            d = (row["gm2"] - row["gm1"]) if row["gm1"] is not None and row["gm2"] is not None else 0.0
+            dl = (row["late2"] - row["late1"]) * 100 if row["late1"] is not None and row["late2"] is not None else 0.0
+            st.markdown(f"""<div class='pulse'><div class='site'>{row['site']}</div>
+<div class='row'><span>Engagement grand mean</span><b class='{'warn' if d <= -0.1 else ''}'>{row['gm1']:.2f} → {row['gm2']:.2f} ({d:+.2f})</b></div>
+<div class='row'><span>Respondents</span><b>{row['n1']} → {row['n2']}</b></div>
+<div class='row'><span>Teams hidden (n &lt; {config.MIN_N})</span><b>{row['hidden']} of {row['teams']}</b></div>
+<div class='row'><span>Team-level watch items</span><b class='{'warn' if row['watch'] >= 8 else ''}'>{row['watch']}</b></div>
+<div class='row'><span>Late departures, all shifts</span><b class='{'warn' if dl >= 1 else ''}'>{row['late1'] * 100:.1f}% → {row['late2'] * 100:.1f}%</b></div>
+</div>""", unsafe_allow_html=True)
+            if st.button(f"Open {row['site']}", key="pulse_" + row["site"], width="stretch"):
+                st.session_state["question"] = f"Where did scores drop across {row['site']}?"
+                _ask(st.session_state["question"])
+                st.rerun()
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
 cols = st.columns(3, gap="medium")
 for col, (num, title, sub, buttons) in zip(cols, PLAYBOOK):
@@ -222,10 +300,12 @@ with st.expander("Red-team cases: what it refuses to do"):
             st.session_state["question"] = q
             _ask(q)
 
-qcol, bcol = st.columns([6, 1], vertical_alignment="bottom")
-question = qcol.text_input("Or ask in your own words", key="question", placeholder="e.g., Why did the Richmond night shift's scores drop and why are deliveries late?")
+qcol, bcol, rcol = st.columns([6, 1, 1], vertical_alignment="bottom")
+question = qcol.text_input("Or ask in your own words (Enter to ask)", key="question", on_change=_on_enter,
+                           placeholder="e.g., Why did the Richmond night shift's scores drop and why are deliveries late?")
 if bcol.button("Ask", type="primary", width="stretch") and question.strip():
     _ask(question.strip())
+rcol.button("Start over", width="stretch", on_click=_reset, help="Clear the result, the plan, and the chat")
 
 res: Result | None = st.session_state.get("result")
 
@@ -459,6 +539,19 @@ def _render_kpis(tiles):
     st.markdown(f"<div class='kpis'>{cells}</div>", unsafe_allow_html=True)
 
 
+def _checklist(a):
+    """Why the code says so, as four cells: survey, operations, comments, staffing."""
+    def reason(prefix):
+        return next((r.split(":", 1)[1].strip() for r in a.reasons if r.startswith(prefix)), "")
+    cells = [("Survey", a.survey_signal, "material fall" if a.survey_signal else "no material fall", reason("Survey"), "on" if a.survey_signal else "off"),
+             ("Operations", a.ops_signal, "signal" if a.ops_signal else "no signal", reason("Operations"), "on" if a.ops_signal else "off"),
+             ("Comments", a.comment_signal, "corroborating" if a.comment_signal else "not corroborating", reason("Comments"), "on" if a.comment_signal else "off"),
+             ("Staffing", a.staffing_signal, "competing explanation" if a.staffing_signal else "no shortage month", reason("Staffing") or f"No month under {STAFFING_LOW * 100:.0f}% of scheduled.", "warn" if a.staffing_signal else "off")]
+    html = "".join(f"<div class='check'><div class='eyebrow ink'>{lab}</div><div><span class='ic {kind}'>{'✓' if kind == 'on' else ('!' if kind == 'warn' else '–')}</span><span class='t'>{_h.escape(short)}</span></div>"
+                   f"<div class='small'>{_h.escape(text)}</div></div>" for lab, _, short, text, kind in cells)
+    st.markdown(f"<div class='eyebrow ink' style='margin-bottom:6px'>Why the code says so</div><div class='checks'>{html}</div>", unsafe_allow_html=True)
+
+
 def _claims(items):
     for i in items:
         st.markdown(f"- {i.get('claim')} <span class='ev'>[{', '.join(i.get('evidence_ids', []))}]</span>", unsafe_allow_html=True)
@@ -637,8 +730,10 @@ if res:
     if res.status != "refused":
         _render_kpis(_kpis(res))
         if res.assessment:
-            st.markdown("<div class='small'>Why the code says so: " + " ".join(res.assessment.reasons) + "</div>", unsafe_allow_html=True)
-            st.markdown("")
+            _checklist(res.assessment)
+        if needs_brief(res):
+            with st.spinner("Writing the brief from the evidence (about 20 seconds with the model)..."):
+                write_brief(res)
         if res.brief:
             _memo(res)
         elif res.message:
@@ -690,6 +785,14 @@ with st.container(border=True):
 st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
 st.markdown("<div class='eyebrow ink'>Under the hood</div>", unsafe_allow_html=True)
 with st.expander("How it works: one workflow, five fixed steps, then a person decides"):
+    st.markdown("""<div class='flow'>
+<div class='step model'><b>1 Scope</b>the model reads the question into a schema; unknown names are declined</div>
+<div class='step'><b>2 Analyze</b>SQL over suppressed views; Python computes every number</div>
+<div class='step'><b>3 Retrieve</b>comments and procedures by similarity, quoted verbatim; themes counted</div>
+<div class='step'><b>4 Assess</b>thresholds decide the verdict; owner only if supported</div>
+<div class='step model'><b>5 Explain</b>the model writes the brief; a checker rejects invented numbers, bad citations, causal words</div>
+<div class='step human'><b>Decide</b>a person approves, rejects, or flags; the plan is a draft until then</div>
+</div>""", unsafe_allow_html=True)
     st.markdown(f"""
 | Step | What happens | Component |
 |---|---|---|
@@ -742,6 +845,37 @@ with st.expander("Review log: every approval, rejection, and flag"):
 with st.expander("The data: what feeds the tool, and what was planted"):
     spec = ROOT / "DATA_SPEC.md"
     st.markdown(spec.read_text() if spec.exists() else "Run data/generate.py to produce DATA_SPEC.md.")
+
+with st.expander("The business case and the pilot scorecard (hypotheses, to be measured)"):
+    st.markdown(f"""
+**Who.** The user is the site or shift manager. The buyer is the client's head of operations or of HR. The data owners are operations
+(dispatch or warehouse exports) and HR (the survey vendor's team-level export). Adoption is approved by the HR business partner with the site
+operations director. Channel hypothesis: sold with the engagement-survey debrief or as an operations-analytics add-on; sponsorship is not a channel.
+
+**What it replaces.** Today the link between a fallen score and a broken process is made by consultants reading signals during executive briefings,
+or not at all; comments go unread at scale; action planning stalls on follow-through.
+
+**Pilot entry criterion.** A client where manual reading fails: enough teams, waves, and comments that nobody reads them all, and an operation that
+logs daily work (warehouses, logistics, call centers). Knowledge-work firms with only a survey do not qualify.
+
+**Pilot scorecard, measured, not claimed.** Time from results release to an owned action; share of briefs approved, rejected, flagged; share of proposed
+tests actually run and re-measured; movement in the operational rate and the focus item at the next wave; manager rating of the State of the Team
+conversation. No time-saved claim until the pilot measures it.
+
+**What would rule it out.** No operational records at the client; briefs mostly rejected or flagged; no movement at the next wave.
+""")
+
+with st.expander("Assumptions and integration options (what we chose, and why)"):
+    st.markdown("""
+| Question | Options considered | Chosen for the pilot | Why |
+|---|---|---|---|
+| How operational records arrive | manual CSV export; scheduled export to a shared folder; API integration with dispatch or the warehouse system | manual CSV export, approved by the business-unit owner | fastest to start; the owner stays in control; integration is a later decision once value is shown |
+| How survey results arrive | the vendor's team-level export; a vendor API | team-level export in the vendor's shape | aggregates only, never respondent rows; real data can replace the synthetic tables without code changes |
+| Where the reporting threshold lives | in prompts; in code; in the database views | the database views | a prompt cannot bypass it; comments under the threshold are never indexed |
+| What the model may do | write numbers; decide verdicts; write text | write text only, checked | numbers and verdicts come from code; the checker rejects invented numbers and causal words |
+| Which model | gpt-5 vs gpt-5-mini on the GW resource | gpt-5-mini | same verdicts on the gold set, about half the latency; comparison saved in the evals |
+| Who acts | the tool; the manager; the process owner | the manager approves, the process owner acts | no autonomous action by design, tied to the risk tier |
+""")
 
 with st.expander("What the judges told us since Sept 14, 2026, and what changed"):
     st.dataframe(pd.DataFrame([
