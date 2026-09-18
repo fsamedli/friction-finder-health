@@ -15,7 +15,7 @@ TABLES = ["sites", "teams", "employees", "waves", "responses", "comments", "ops_
 
 # What the model (and the show-me panel) is allowed to query. Respondent rows are NOT here.
 ALLOWED = {"sites", "teams", "waves", "q12_items", "ownership_directory", "staffing",
-           "v_team_wave_item", "v_site_wave_item", "v_tenure_wave_item", "v_team_wave_n",
+           "v_team_wave_item", "v_site_wave_item", "v_company_wave_item", "v_company_shift_wave_item", "v_tenure_wave_item", "v_team_wave_n",
            "v_team_tenure_mix", "v_ops_month", "v_ops_hour", "v_comments_reportable"}
 
 ROW_CAP = 5000   # protects the show-me panel and the model from huge outputs; every view here is far smaller (v_team_wave_item is 576 rows)
@@ -58,6 +58,39 @@ SELECT l.site_id, s.site_name, l.wave_id, w.wave_name, l.item, q.label AS item_l
        CASE WHEN COUNT(*) >= {MIN_N} THEN ROUND(AVG(score), 2) END AS mean_score,
        COUNT(*) AS n, COUNT(*) >= {MIN_N} AS reportable
 FROM long l JOIN sites s ON s.site_id = l.site_id JOIN waves w ON w.wave_id = l.wave_id
+JOIN q12_items q ON q.item = l.item
+GROUP BY ALL;
+
+-- Company-wide roll-ups (Tatenda Kagande, Sept 17, 2026): the same suppression rule, one row per item and wave.
+CREATE OR REPLACE VIEW v_company_wave_item AS
+WITH long AS (
+  SELECT r.wave_id, i.item,
+         CASE i.item
+           WHEN 'q01' THEN q01 WHEN 'q02' THEN q02 WHEN 'q03' THEN q03 WHEN 'q04' THEN q04
+           WHEN 'q05' THEN q05 WHEN 'q06' THEN q06 WHEN 'q07' THEN q07 WHEN 'q08' THEN q08
+           WHEN 'q09' THEN q09 WHEN 'q10' THEN q10 WHEN 'q11' THEN q11 WHEN 'q12' THEN q12 END AS score
+  FROM responses r CROSS JOIN q12_items i
+)
+SELECT l.wave_id, w.wave_name, l.item, q.label AS item_label,
+       CASE WHEN COUNT(*) >= {MIN_N} THEN ROUND(AVG(score), 2) END AS mean_score,
+       COUNT(*) AS n, COUNT(*) >= {MIN_N} AS reportable
+FROM long l JOIN waves w ON w.wave_id = l.wave_id
+JOIN q12_items q ON q.item = l.item
+GROUP BY ALL;
+
+CREATE OR REPLACE VIEW v_company_shift_wave_item AS
+WITH long AS (
+  SELECT r.wave_id, i.item, t.shift,
+         CASE i.item
+           WHEN 'q01' THEN q01 WHEN 'q02' THEN q02 WHEN 'q03' THEN q03 WHEN 'q04' THEN q04
+           WHEN 'q05' THEN q05 WHEN 'q06' THEN q06 WHEN 'q07' THEN q07 WHEN 'q08' THEN q08
+           WHEN 'q09' THEN q09 WHEN 'q10' THEN q10 WHEN 'q11' THEN q11 WHEN 'q12' THEN q12 END AS score
+  FROM responses r JOIN teams t ON t.team_id = r.team_id CROSS JOIN q12_items i
+)
+SELECT l.wave_id, w.wave_name, l.item, q.label AS item_label, l.shift,
+       CASE WHEN COUNT(*) >= {MIN_N} THEN ROUND(AVG(score), 2) END AS mean_score,
+       COUNT(*) AS n, COUNT(*) >= {MIN_N} AS reportable
+FROM long l JOIN waves w ON w.wave_id = l.wave_id
 JOIN q12_items q ON q.item = l.item
 GROUP BY ALL;
 
@@ -177,6 +210,8 @@ class DB:
         return """Allowed views (SELECT only):
 - v_team_wave_item(site_id, site_name, team_id, team_name, shift, wave_id, wave_name, item, item_label, mean_score, n, reportable): team x wave x item means; mean_score is NULL when n < 4.
 - v_site_wave_item(site_id, site_name, wave_id, wave_name, item, item_label, mean_score, n, reportable): site roll-up.
+- v_company_wave_item(wave_id, wave_name, item, item_label, mean_score, n, reportable): company roll-up.
+- v_company_shift_wave_item(wave_id, wave_name, item, item_label, shift, mean_score, n, reportable): company roll-up by shift.
 - v_tenure_wave_item(tenure_band, wave_id, item, mean_score, n, reportable): by tenure band (under_1, 1_to_3, 3_to_10, over_10).
 - v_team_tenure_mix(team_id, wave_id, tenure_band, n, grand_mean): who responded, by tenure band.
 - v_team_wave_n(team_id, wave_id, n): respondent counts.

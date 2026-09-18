@@ -256,3 +256,32 @@ def test_run_sql_returns_whole_small_views(db):
     rows = db.run_sql("SELECT team_id, item, wave_id FROM v_team_wave_item").rows
     assert len(rows) == n_teams * 12 * 2
     assert not rows.duplicated(["team_id", "item", "wave_id"]).any()
+
+
+# ---- ported from Tatenda Kagande's Sept 17 commit (company-wide scope, auto-detect, no-drop exit)
+
+def test_scope_company_wide(db):
+    sc = _scope_rules("Why did the overall scores drop?", db.sites(), db.teams())
+    assert sc.site == "ALL" and sc.team_id is None
+
+
+def test_company_overview_has_sites_as_rows(db, retriever):
+    res = run("Where did scores drop across all sites?", db, retriever)
+    assert res.status == "ok" and res.scope.intent == "site_overview"
+    hm = [e for e in res.evidence if e.kind == "site_heatmap"][0]
+    assert hm.value["level"] == "site" and {c["team_name"] for c in hm.rows} == set(db.sites())
+    si = [e for e in res.evidence if e.kind == "site_items"][0]
+    assert si.value["level"] == "company" and si.value["n2"] > 100
+
+
+def test_auto_detect_picks_or_asks(db, retriever):
+    """A diagnosis with no site either picks the site with the clearly largest site-level fall
+    (and says so) or declines with the list of sites that moved."""
+    from app.agent import auto_detect_site
+    picked, why = auto_detect_site(db)
+    assert ("largest site-level fall" in why) if picked else ("Which site" in why)
+    res = run("Why did the night shift scores drop?", db, retriever)
+    if picked:
+        assert res.scope.site == picked and any("largest site-level fall" in n for n in res.notes)
+    else:
+        assert res.status == "refused" and "Which site" in res.message

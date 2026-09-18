@@ -23,7 +23,9 @@ from app.retrieval import Retriever
 # All computed rules live here so they can be read out in Q&A. They are screening rules on a
 # 5-point scale and on rates, not significance tests: team-level findings are "watch items";
 # inference is site-level (judge Kaznachey, Sept 16).
-SURVEY_MATERIAL = 0.30   # item mean change treated as material (5-point scale)
+SURVEY_MATERIAL = 0.30   # team-level item mean change treated as material (5-point scale)
+SITE_MATERIAL = 0.20     # site or company level: about two standard errors of a mean difference at n = 50 (SD 0.5)
+SITE_LEAD = 0.05         # auto-detect picks a site only when its largest fall leads the runner-up by this much
 OPS_SIGNAL_ABS = 0.05    # late-departure rate change of 5 points or more ...
 OPS_SIGNAL_RATIO = 1.5   # ... and at least 1.5x the earlier rate
 STAFFING_LOW = 0.90      # actual headcount below 90% of scheduled
@@ -179,6 +181,8 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
     for s in sites:
         if s.lower() in ql:
             sc.site = s
+    if any(w in ql for w in ["all sites", "company wide", "company-wide", "whole company", "across the company", "overall", "every site"]):
+        sc.site = "ALL"   # company-wide roll-up (Tatenda Kagande, Sept 17, 2026)
     if "night" in ql:
         sc.shift = "Night"
     elif "day shift" in ql or " day " in f" {ql} ":
@@ -221,7 +225,7 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
 
 
 def _resolve_team(sc: Scope, teams: pd.DataFrame) -> None:
-    if sc.intent == "site_overview":
+    if sc.intent == "site_overview" or sc.site == "ALL":
         sc.team, sc.team_id = None, None
         return
     if sc.team and sc.site:
@@ -259,13 +263,14 @@ def _scope_llm(q: str, db: DB, sites: list[str], teams: pd.DataFrame) -> Scope:
         "owner_lookup (who owns a process), metric_lookup (a specific number), unsupported (ONLY when the question needs a data type "
         "from the does-not-exist list, or names a site or team not in the known lists).\n"
         "Rules: never guess a site or team that is not in the known lists; put such names in unknown_entities. "
+        "If the question asks for company-wide, overall, or all sites, set site to 'ALL'. "
         "site, team, and shift may be null. items: ONLY item codes the question explicitly refers to (e.g., 'materials' -> ['q02']); "
         "otherwise []. waves default to [1, 2]. Do not explain; return the JSON object only."
     )
     out = llm.chat_json(system, q, effort="minimal")
     rules = _scope_rules(q, sites, teams)  # deterministic safety net
     sc = Scope(intent=str(out.get("intent") or "diagnose_drop"), mode="llm")
-    sc.site = out.get("site") if out.get("site") in sites else None
+    sc.site = out.get("site") if (out.get("site") in sites or out.get("site") == "ALL") else None
     team = out.get("team")
     sc.team = team if team in set(teams.team_name) else None
     sc.shift = out.get("shift") if out.get("shift") in ("Day", "Night") else None
@@ -395,8 +400,8 @@ def analyze(sc: Scope, db: DB) -> list[Evidence]:
         nmap = {int(k): int(v) for k, v in df.groupby("wave_id").n.first().to_dict().items()}
         worst = piv.sort_values("delta").head(2)
         for t in worst.itertuples():
-            material = abs(t.delta) >= SURVEY_MATERIAL
-            tag = "material" if material else "within normal variation"
+            material = abs(t.delta) >= SITE_MATERIAL
+            tag = f"material at site level: {SITE_MATERIAL:.2f} or more" if material else "within normal variation"
             ev.append(Evidence(id=nid("S"), kind="survey_delta_site",
                                statement=f"{sc.site} site overall, {t.item_label} ({t.item}): {t.w1:.2f} in Wave 1 to {t.w2:.2f} in Wave 2 (n={nmap.get(1)} to {nmap.get(2)}), change {t.delta:+.2f} ({tag}).",
                                sql=r.sql, rows=[{"item": t.item, "wave1": t.w1, "wave2": t.w2, "delta": t.delta}], source="v_site_wave_item",
@@ -516,6 +521,8 @@ def _analyze_mix(sc: Scope, db: DB, nid, full: bool) -> list[Evidence]:
 
 
 def _analyze_site_overview(sc: Scope, db: DB, nid) -> list[Evidence]:
+    if sc.site == "ALL":
+        return _analyze_company_overview(sc, db, nid)
     ev = []
     r = db.run_sql(f"SELECT team_id, team_name, shift, wave_id, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE site_name = '{sc.site}' ORDER BY team_id, item, wave_id")
     df = r.rows
@@ -547,15 +554,71 @@ def _analyze_site_overview(sc: Scope, db: DB, nid) -> list[Evidence]:
     piv["vs_company"] = (piv.w2 - piv.company_mean).round(2)
     strength = piv.sort_values("vs_company", ascending=False).iloc[0].to_dict()
     opps = piv.sort_values("vs_company").head(2).to_dict(orient="records")
-    material = piv[piv.delta.abs() >= SURVEY_MATERIAL]
+    material = piv[piv.delta.abs() >= SITE_MATERIAL]
     ev.append(Evidence(id=nid("S"), kind="site_items",
                        statement=(f"{sc.site} site level (n={nmap.get(1)} to {nmap.get(2)}, where comparisons are meaningful): strength = {strength['item_label']} ({strength['item']}) at {strength['w2']:.2f}, "
                                   f"{strength['vs_company']:+.2f} vs the company mean; two opportunities = {', '.join(f'{o[chr(105)+chr(116)+chr(101)+chr(109)+chr(95)+chr(108)+chr(97)+chr(98)+chr(101)+chr(108)]} ({o[chr(105)+chr(116)+chr(101)+chr(109)]}) at {o[chr(119)+chr(50)]:.2f}, {o[chr(118)+chr(115)+chr(95)+chr(99)+chr(111)+chr(109)+chr(112)+chr(97)+chr(110)+chr(121)]:+.2f} vs company' for o in opps)}. "
-                                  + (f"Items that moved {SURVEY_MATERIAL:.2f} or more at site level: " + ", ".join(f"{m.item} {m.delta:+.2f}" for m in material.itertuples()) + "."
-                                     if len(material) else f"No item moved {SURVEY_MATERIAL:.2f} or more at site level.")),
+                                  + (f"Items that moved {SITE_MATERIAL:.2f} or more at site level: " + ", ".join(f"{m.item} {m.delta:+.2f}" for m in material.itertuples()) + "."
+                                     if len(material) else f"No item moved {SITE_MATERIAL:.2f} or more at site level.")),
                        sql=r2.sql, rows=piv.to_dict(orient="records"), source="v_site_wave_item",
                        value={"strength": strength["item"], "opportunities": [o["item"] for o in opps], "n1": nmap.get(1), "n2": nmap.get(2)}))
     return ev
+
+
+def _analyze_company_overview(sc: Scope, db: DB, nid) -> list[Evidence]:
+    """Company-wide view (idea: Tatenda Kagande, Sept 17, 2026): sites as rows of the heatmap, and the
+    company roll-up per item from v_company_wave_item."""
+    ev = []
+    r = db.run_sql("SELECT site_id, site_name, wave_id, item, item_label, mean_score, n, reportable FROM v_site_wave_item ORDER BY site_name, item, wave_id")
+    df = r.rows
+    cells, watch = [], []
+    for site, g in df.groupby("site_name"):
+        piv = _pivot_waves(g)
+        n2 = int(g[g.wave_id == 2].n.iloc[0])
+        for t in piv.itertuples():
+            cells.append({"team_id": int(g.site_id.iloc[0]), "team_name": site, "shift": "", "item": t.item, "item_label": t.item_label,
+                          "wave1": t.w1, "wave2": t.w2, "delta": t.delta, "n": n2})
+            if t.delta <= -SITE_MATERIAL:
+                watch.append((site, t.item, t.item_label, t.delta))
+    watch.sort(key=lambda x: x[3])
+    ev.append(Evidence(id=nid("S"), kind="site_heatmap",
+                       statement=(f"All sites: {df.site_name.nunique()} sites, each with n of about 50 per wave, where comparisons are meaningful. Site-level items that fell "
+                                  f"{SITE_MATERIAL:.2f} or more: " + ("; ".join(f"{s} {i} {d:+.2f}" for s, i, _, d in watch) if watch else "none") + "."),
+                       sql=r.sql, rows=cells, source="v_site_wave_item",
+                       value={"suppressed": [], "watch": [{"team": s, "item": i, "label": l, "delta": d} for s, i, l, d in watch], "level": "site"}))
+    r2 = db.run_sql("SELECT wave_id, item, item_label, mean_score, n FROM v_company_wave_item ORDER BY item, wave_id")
+    piv = _pivot_waves(r2.rows)
+    nmap = {int(k): int(v) for k, v in r2.rows.groupby("wave_id").n.first().to_dict().items()}
+    piv["company_mean"] = piv.w2
+    piv["vs_company"] = 0.0
+    material = piv[piv.delta.abs() >= SITE_MATERIAL]
+    hi, lo = piv.sort_values("w2").iloc[-1].to_dict(), piv.sort_values("w2").head(2).to_dict(orient="records")
+    ev.append(Evidence(id=nid("S"), kind="site_items",
+                       statement=(f"Company level (n={nmap.get(1)} to {nmap.get(2)}): highest item in Wave 2 = {hi['item_label']} ({hi['item']}) at {hi['w2']:.2f}; "
+                                  f"two lowest = {', '.join(f'{o[chr(105)+chr(116)+chr(101)+chr(109)+chr(95)+chr(108)+chr(97)+chr(98)+chr(101)+chr(108)]} ({o[chr(105)+chr(116)+chr(101)+chr(109)]}) at {o[chr(119)+chr(50)]:.2f}' for o in lo)}. "
+                                  + (f"Items that moved {SITE_MATERIAL:.2f} or more company-wide: " + ", ".join(f"{m.item} {m.delta:+.2f}" for m in material.itertuples()) + "."
+                                     if len(material) else f"No item moved {SITE_MATERIAL:.2f} or more company-wide; the movement is at site and team level.")),
+                       sql=r2.sql, rows=piv.to_dict(orient="records"), source="v_company_wave_item",
+                       value={"strength": hi["item"], "opportunities": [o["item"] for o in lo], "n1": nmap.get(1), "n2": nmap.get(2), "level": "company"}))
+    return ev
+
+
+def auto_detect_site(db: DB) -> tuple[str | None, str]:
+    """When a diagnosis names no site: rank sites by their largest site-level fall. Pick one only if
+    it leads clearly; otherwise say which sites moved and ask (idea: Tatenda Kagande, Sept 17, 2026)."""
+    df = db.run_sql("SELECT site_name, wave_id, item, mean_score FROM v_site_wave_item ORDER BY site_name, item, wave_id").rows
+    piv = df.pivot_table(index=["site_name", "item"], columns="wave_id", values="mean_score", aggfunc="first").reset_index()
+    piv.columns = [str(c) for c in piv.columns]
+    piv["delta"] = (piv["2"] - piv["1"]).round(2)
+    worst = piv.sort_values("delta").groupby("site_name").head(1).sort_values("delta")
+    moved = worst[worst.delta <= -SITE_MATERIAL]
+    if not len(moved):
+        return None, f"No site has an item that fell {SITE_MATERIAL:.2f} or more at site level, so there is no site-level drop to diagnose. Name a team to look at team level."
+    top = moved.iloc[0].to_dict()
+    desc = "; ".join(f"{m.site_name} ({m.item} {m.delta:+.2f})" for m in moved.itertuples())
+    if len(moved) == 1 or (top["delta"] <= float(moved.iloc[1]["delta"]) - SITE_LEAD):
+        return str(top["site_name"]), f"No site named; {top['site_name']} has the largest site-level fall ({top['item']} {top['delta']:+.2f}). Sites with a material fall: {desc}."
+    return None, f"More than one site moved and none leads clearly: {desc}. Which site do you mean?"
 
 
 # ----------------------------------------------------------------------------- step 3: retrieve
@@ -919,6 +982,16 @@ def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Resu
                       message=f"I cannot answer this from the data available. {sc.unsupported_reason or ''} "
                               "Available: survey results by team and wave, operational records, staffing, and process documents.",
                       notes=notes)
+    if sc.site == "ALL" and sc.intent in ("diagnose_drop", "site_overview", "metric_lookup"):
+        sc.intent = "site_overview"   # company-wide questions get the overview; diagnosis needs a site or team
+    if sc.intent == "diagnose_drop" and sc.site is None and sc.team_id is None:
+        picked, why = auto_detect_site(db)
+        notes.append(why)
+        if picked:
+            sc.site = picked
+            _resolve_team(sc, db.teams())
+        else:
+            return Result(status="refused", question=question, scope=sc, evidence=[], brief=None, message=why, notes=notes)
     if sc.intent in ("diagnose_drop", "review_decline_real", "metric_lookup", "owner_lookup", "site_overview") and sc.site is None and sc.team_id is None:
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message="Which site or team do you mean? Known sites: " + ", ".join(db.sites()) + ".", notes=notes)

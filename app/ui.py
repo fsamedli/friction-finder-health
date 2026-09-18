@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import config
-from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, STAFFING_LOW, SURVEY_MATERIAL, THEMES, Result,
+from app.agent import (COMMENT_BREADTH, MIX_EXPLAINS, OPS_SIGNAL_ABS, OPS_SIGNAL_RATIO, SITE_MATERIAL, STAFFING_LOW, SURVEY_MATERIAL, THEMES, Result,
                        approve, chat_answer, needs_brief, plan, report_html, report_markdown, review_log, run, write_brief)
 from app.db import DB
 from app.retrieval import Retriever
@@ -201,6 +201,7 @@ st.markdown(f"""
 # ------------------------------------------------------------------ playbook
 PLAYBOOK = [
     ("01", "Diagnose", "Where did we drop, and what is behind it?", [
+        ("Where did we drop? (all sites)", "Where did scores drop across all sites?"),
         ("Where did we drop? (Richmond)", "Where did scores drop across Richmond?"),
         ("Why did the night shift drop?", "Why did the Richmond night shift's scores drop and why are deliveries late?"),
         ("A team under 4 respondents", "Why did the Richmond Dispatch Day team's scores drop?"),
@@ -445,6 +446,8 @@ def _scope_name(res: Result) -> str:
     sc = res.scope
     if not sc:
         return ""
+    if sc.site == "ALL":
+        return "all sites"
     return " ".join(x for x in [sc.site, sc.team] if x) or (sc.site or "")
 
 
@@ -508,14 +511,21 @@ def _kpis(res: Result) -> list[tuple[str, str, str, str]]:
     if sc and sc.intent == "site_overview":
         hm = by.get("site_heatmap", [None])[0]
         si = by.get("site_items", [None])[0]
-        if hm:
+        if hm and hm.value.get("level") == "site":
+            v = hm.value
+            tiles += [("Sites compared", f"{len({c['team_id'] for c in hm.rows})}", "n about 50 each", "grey"),
+                      ("Site-level items that fell", f"{len(v['watch'])}", f"{SITE_MATERIAL:.2f} or more", "warn" if v["watch"] else "grey")]
+            if v["watch"]:
+                w = v["watch"][0]
+                tiles.append((f"Largest fall: {w['team']}", f"{w['delta']:+.2f}", f"{w['item'].upper()} {w['label'][:28]}", "warn"))
+        elif hm:
             v = hm.value
             n_rep = len({c["team_id"] for c in hm.rows})
             tiles += [("Teams reportable in both waves", f"{n_rep}<span class='arrow'>of</span>{n_rep + len(v['suppressed'])}", "team level", "grey"),
                       (f"Hidden (fewer than {config.MIN_N} respondents)", f"{len(v['suppressed'])}", "never shown", "grey"),
                       ("Team-level watch items", f"{len(v['watch'])}", f"fell {SURVEY_MATERIAL:.2f} or more", "warn" if v["watch"] else "grey")]
         if si:
-            tiles.append(("Site respondents", f"{si.value['n1']}<span class='arrow'>→</span>{si.value['n2']}", "where inference holds", "ok"))
+            tiles.append((f"{'Company' if si.value.get('level') == 'company' else 'Site'} respondents", f"{si.value['n1']}<span class='arrow'>→</span>{si.value['n2']}", "where inference holds", "ok"))
     elif sc and sc.intent == "review_decline_real":
         sig = by.get("signal_check", [None])[0]
         if sig:
@@ -649,11 +659,16 @@ def _charts_tab(res: Result):
         drawn = True
     fig = _chart_heatmap(res)
     if fig:
-        st.markdown(f"**Change in each item, by team (Wave 2 minus Wave 1).** Orange fell, teal rose. Teams under n = {config.MIN_N} are listed but never shown.")
+        hm = [e for e in res.evidence if e.kind == "site_heatmap"][0]
+        if hm.value.get("level") == "site":
+            st.markdown(f"**Change in each item, by site (Wave 2 minus Wave 1).** Orange fell, teal rose. Site level is where comparisons hold (n about 50); {SITE_MATERIAL:.2f} or more counts as material here.")
+        else:
+            st.markdown(f"**Change in each item, by team (Wave 2 minus Wave 1).** Orange fell, teal rose. Teams under n = {config.MIN_N} are listed but never shown.")
         st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_site_items(res)
-    if fig:
+    si = [e for e in res.evidence if e.kind == "site_items"]
+    if fig and si and si[0].value.get("level") != "company":
         st.markdown("**Site level, Wave 2 versus the company mean.** Teal is the strength, orange the two opportunities: the shape of Gallup's 'Interpreting Your Results' worksheet.")
         st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
@@ -730,6 +745,9 @@ if res:
     st.markdown(f"<div class='memo-head fade'><div class='eyebrow'>{eyebrow}{' · ' + _h.escape(where) if where else ''} · Wave 2, September 2026</div>"
                 f"<div class='memo-title'>{_h.escape(title)}</div>"
                 f"<div class='memo-sub'><span class='pill {kind if kind != 'teal' else ''}'>{pill}</span> &nbsp;{_h.escape(sub)}</div></div>", unsafe_allow_html=True)
+    auto = next((n for n in res.notes if n.startswith("No site named")), None)
+    if auto:
+        st.markdown(f"<div class='small' style='margin:-6px 0 10px 0'>{chip('computed')} {_h.escape(auto)}</div>", unsafe_allow_html=True)
     if res.status != "refused":
         _render_kpis(_kpis(res))
         if res.assessment:
