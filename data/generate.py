@@ -16,6 +16,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+try:
+    from . import generate_impact
+except ImportError:  # run as a script: python data/generate.py
+    import generate_impact
+
 SEED = 42
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "generated"
@@ -531,6 +536,7 @@ def main():
         df.to_csv(OUT / f"{name}.csv", index=False)
     write_docs(ownership)
     truth = compute_truth(teams, employees, responses, comments, ops, staffing)
+    truth = generate_impact.run(teams, responses, truth)  # v0.6 tables; own RNG, v0.5 files unchanged
     (OUT / "truth.json").write_text(json.dumps(truth, indent=2))
     write_data_spec({"sites": sites, "teams": teams, "employees": employees, "waves": waves, "responses": responses,
                      "comments": comments, "ops_daily": ops, "staffing": staffing, "ownership_directory": ownership,
