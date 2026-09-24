@@ -63,7 +63,9 @@ def test_why_suppressed_for_small_team():
 
 def test_planted_association_found_and_null_is_null():
     assert I.association("late_departures", "q02")["verdict"] == "association"
-    assert I.association("injuries", "q02")["verdict"] == "no association detected"
+    assert I.association("injuries", "q02")["verdict"] == "too rare to test"          # P13
+    assert I.association("absence_days", "grand")["verdict"] == "association"         # P12
+    assert I.association("quits", "q02")["verdict"] == "no association detected"
 
 
 def test_quartile_link_direction():

@@ -255,6 +255,9 @@ def quartile_link(kpi: str, item: str = "grand") -> dict:
 @lru_cache(maxsize=None)
 def association(kpi: str, item: str = "grand") -> dict:
     c = _cells(kpi, item)
+    if (c.rate > 0).sum() < 10:  # rare events (injuries): most cells are zero, a slope would be meaningless
+        return {"kpi": kpi, "item": item, "slope": None, "ci_low": None, "ci_high": None, "p": None,
+                "n_cells": int(len(c)), "n_teams": int(c.team_id.nunique()), "points": [], "verdict": "too rare to test"}
     fit = smf.ols("rate ~ x", data=c).fit(cov_type="cluster", cov_kwds={"groups": c["team_id"]})
     lo, hi = (float(v) for v in fit.conf_int().loc["x"])
     return {"kpi": kpi, "item": item, "slope": round(float(fit.params["x"]), 3), "ci_low": round(lo, 3),
