@@ -127,7 +127,7 @@
     "file": "1440_09-15_data.jpg",
     "overflow": false,
     "sw": 1440,
-    "height": 1199,
+    "height": 1403,
     "h1": "Data sources",
     "errors": []
   },
@@ -149,7 +149,7 @@
     "file": "1440_09-15_trust.jpg",
     "overflow": false,
     "sw": 1440,
-    "height": 900,
+    "height": 1355,
     "h1": "Trust & method",
     "errors": []
   },
@@ -215,7 +215,7 @@
     "file": "1440_11-30_teams_4_tab_plan.jpg",
     "overflow": false,
     "sw": 1440,
-    "height": 900,
+    "height": 944,
     "h1": "Richmond Night A Watch",
     "errors": []
   },
@@ -281,7 +281,7 @@
     "file": "1440_11-30_data.jpg",
     "overflow": false,
     "sw": 1440,
-    "height": 1199,
+    "height": 1403,
     "h1": "Data sources",
     "errors": []
   },
@@ -303,7 +303,7 @@
     "file": "1440_11-30_trust.jpg",
     "overflow": false,
     "sw": 1440,
-    "height": 900,
+    "height": 1355,
     "h1": "Trust & method",
     "errors": []
   },
@@ -325,7 +325,7 @@
     "file": "390_09-15_teams.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1192,
+    "height": 1194,
     "h1": "Teams",
     "errors": []
   },
@@ -347,7 +347,7 @@
     "file": "390_09-15_teams_4_tab_drivers.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2283,
+    "height": 2256,
     "h1": "Richmond Night A Needs attention",
     "errors": []
   },
@@ -358,7 +358,7 @@
     "file": "390_09-15_teams_4_tab_evidence.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2561,
+    "height": 2300,
     "h1": "Richmond Night A Needs attention",
     "errors": []
   },
@@ -369,7 +369,7 @@
     "file": "390_09-15_teams_4_tab_plan.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1579,
+    "height": 1571,
     "h1": "Richmond Night A Needs attention",
     "errors": []
   },
@@ -413,7 +413,7 @@
     "file": "390_09-15_insights.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1661,
+    "height": 1701,
     "h1": "Engagement × operations",
     "errors": []
   },
@@ -435,7 +435,7 @@
     "file": "390_09-15_data.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2798,
+    "height": 3111,
     "h1": "Data sources",
     "errors": []
   },
@@ -457,7 +457,7 @@
     "file": "390_09-15_trust.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2000,
+    "height": 2018,
     "h1": "Trust & method",
     "errors": []
   },
@@ -479,7 +479,7 @@
     "file": "390_11-30_teams.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1192,
+    "height": 1194,
     "h1": "Teams",
     "errors": []
   },
@@ -501,7 +501,7 @@
     "file": "390_11-30_teams_4_tab_drivers.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2247,
+    "height": 2220,
     "h1": "Richmond Night A Watch",
     "errors": []
   },
@@ -512,7 +512,7 @@
     "file": "390_11-30_teams_4_tab_evidence.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2525,
+    "height": 2264,
     "h1": "Richmond Night A Watch",
     "errors": []
   },
@@ -523,7 +523,7 @@
     "file": "390_11-30_teams_4_tab_plan.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1658,
+    "height": 1713,
     "h1": "Richmond Night A Watch",
     "errors": []
   },
@@ -556,7 +556,7 @@
     "file": "390_11-30_impact_plan-richmond-night-a.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2243,
+    "height": 2208,
     "h1": "Impact review It worked",
     "errors": []
   },
@@ -567,7 +567,7 @@
     "file": "390_11-30_insights.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 1661,
+    "height": 1701,
     "h1": "Engagement × operations",
     "errors": []
   },
@@ -589,7 +589,7 @@
     "file": "390_11-30_data.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2798,
+    "height": 3111,
     "h1": "Data sources",
     "errors": []
   },
@@ -611,7 +611,7 @@
     "file": "390_11-30_trust.jpg",
     "overflow": false,
     "sw": 390,
-    "height": 2000,
+    "height": 2018,
     "h1": "Trust & method",
     "errors": []
   }

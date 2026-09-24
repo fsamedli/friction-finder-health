@@ -24,6 +24,31 @@ Detect → Explain → Act → Prove journey strip, a **Start demo** button in t
 walkthrough with one sentence of narration per step), "Demo CSV (synthetic)" on every data source.
 Before/after screenshots: `docs/overnight/before_after.html`. Brand tokens: `docs/design/brand.md`.
 
+**v0.7 Part 2 (overnight Sept 24):**
+- **Before every rehearsal: `./scripts/demo_check.sh`.** It walks the whole demo at 1440 and 390 px against a
+  keyless private server and a scratch cache (your demo state is untouched), and fails on any console error,
+  failed API call, missing number or label, or horizontal scroll.
+- **Ask:** the 3 scripted questions return **prepared answers** generated once with gpt-5-mini
+  (`scripts/prepare_answers.py`), labelled with time and model, plus a **Run live** button.
+- **Evals:** gold (12), **adversarial** (`evals/adversarial/`, 15 cases; first run 10/15 → 15/15 after the
+  fix, both modes; labelled "seen during development"), and a **holdout kit** for a teammate (`evals/holdout/`,
+  empty). **Trust › Quality** shows all of it from saved result files.
+- **Feedback and usability:** "Useful?" on briefs and plans (`feedback.jsonl`); `?study=1` mode, SUS page and
+  `scripts/score_study.py` (`docs/usability/PROTOCOL.md`). Ships empty.
+- **Output and upload:** print-ready one-page report per plan (`/api/report/<plan>`, with download); CSV
+  export on every data table; team-month operating-data upload (Data sources: template, validation, Back to
+  demo data; the board recomputes).
+- **Docs:**
+  - `docs/ARCHITECTURE.md`: where the AI is used, the guards, and why these techniques
+  - `docs/risk/TEVV_EVIDENCE.md`: NIST AI RMF evidence map
+  - `docs/demo/DEMO_SCRIPT.md`
+  - `docs/HOW_IT_WORKS.md`
+  - `docs/design/brand.md`
+- **Accessibility and speed:**
+  - 0 axe-core WCAG A/AA violations on 13 routes (`node web/scripts/a11y.mjs`)
+  - first-load JS 299 kB (95 kB gzip); pages lazy-load
+  - associations warmed at startup
+
 **Demo path (about 4 minutes, no model call until step 6). Start with Reset demo, clock on Sept 15:**
 1. **Today** (`/`): "Night A needs attention: late departures are running 1.6x what comparable teams would
    predict, and engagement fell at the same time." 81 observed vs 51 expected (Poisson p < 0.001).
@@ -38,7 +63,9 @@ Before/after screenshots: `docs/overnight/before_after.html`. Brand tokens: `doc
    pricing shown as a hypothesis.
 6. **Ask** (`/ask`): model mode ~15 s; progress stepper, "N of N numbers checked against the evidence",
    step trace with real timings, evidence register with the SQL.
-7. **Trust & method** (`/trust`), **Insights** (`/insights`), **Data sources** (`/data`) for Q&A.
+7. **Trust & method** (`/trust`, opens on Quality), **Insights** (`/insights`), **Data sources** (`/data`) for Q&A.
+
+The same path runs as a guided walkthrough: top bar → **Start demo**. Full script with fallbacks: `docs/demo/DEMO_SCRIPT.md`.
 
 Old v0.6 URLs (`/why/4`, `/plan/4`, `/proof/...`, `/hood`) redirect to the new screens.
 SQL guard: `app/db.py` parses every query with sqlglot; all tables must be allowlisted, table functions are
