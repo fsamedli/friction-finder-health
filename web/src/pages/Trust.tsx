@@ -62,7 +62,7 @@ export default function Trust() {
             <CardHeader title="An AI-assisted workflow" sub="Fixed steps; the AI model at two of them; deterministic queries and statistical checks; a person at every decision. No autonomous actions."
               right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI reads & writes</Badge><Badge tone="warn">person decides</Badge></>} />
             <Architecture />
-            <div className="mt-5 grid gap-4 md:grid-cols-3 text-[13px]">
+            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 text-[13px]">
               <div className="rounded-lg bg-canvas p-3"><b>What the AI does</b><p className="mt-1 text-fg-soft">Turns a question into a structured request, and writes the brief from evidence it is handed. Model: {meta?.model ?? 'none configured (rules mode)'}.</p></div>
               <div className="rounded-lg bg-canvas p-3"><b>What the AI never does</b><p className="mt-1 text-fg-soft">Produce a number, decide a verdict, see respondent rows, or approve a plan. Every number in a brief is checked against the evidence.</p></div>
               <div className="rounded-lg bg-canvas p-3"><b>Without a model key</b><p className="mt-1 text-fg-soft">Everything except the written brief still works: rules-based question reading, keyword retrieval, templated text.</p></div>
@@ -70,7 +70,7 @@ export default function Trust() {
           </Card>
         )}
         {t === 'evaluation' && (!ev.data ? <PageSkeleton /> : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {ev.data.map((e) => (
               <Card key={e.file}>
                 <CardHeader title={e.model === 'rules-only' ? 'Rules mode (no model)' : e.model} sub={`Gold questions scored against planted answers · ${e.ts?.slice(0, 10)}`} right={<span className="text-[26px] font-semibold tnum">{e.passed}/{e.total}</span>} />

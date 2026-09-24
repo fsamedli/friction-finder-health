@@ -119,7 +119,7 @@ export default function Ask() {
       {err && <Card className="mt-6 border-crit-100 text-crit-700">{err}</Card>}
 
       {r && (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_1fr] animate-in">
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_1fr] animate-in">
           <Card>
             <div className="flex flex-wrap items-center gap-2">
               <Provenance kind={r.mode === 'model' ? 'model' : 'computed'} />
@@ -133,7 +133,7 @@ export default function Ask() {
                 <div><div className="label mb-1">Evidence for</div><ul className="space-y-1.5">{b.evidence_for.map((x, i) => <li key={i} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /><span>{x.claim} <span className="font-mono text-[11px] text-fg-faint">{(x.evidence_ids ?? []).join(' ')}</span></span></li>)}</ul></div>
                 {b.evidence_against.length > 0 && <div><div className="label mb-1">Evidence against</div><ul className="space-y-1.5">{b.evidence_against.map((x, i) => <li key={i} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span className="text-fg-soft">{x.claim}</span></li>)}</ul></div>}
                 {b.missing.length > 0 && <div><div className="label mb-1">What the data can't tell us</div><ul className="list-disc pl-5 text-fg-soft">{b.missing.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-                <div className="grid gap-4 sm:grid-cols-2 rounded-lg bg-canvas p-3"><div><div className="label mb-1">Owner</div><p>{b.owner}</p></div><div><div className="label mb-1">Proposed test</div><p>{b.proposed_test}</p></div></div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-lg bg-canvas p-3"><div><div className="label mb-1">Owner</div><p>{b.owner}</p></div><div><div className="label mb-1">Proposed test</div><p>{b.proposed_test}</p></div></div>
               </div>
             )}
             {r.status !== 'ok' && <p className="mt-3 text-fg-soft">{r.message}</p>}

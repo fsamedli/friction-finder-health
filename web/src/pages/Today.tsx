@@ -48,7 +48,7 @@ function PlanRow({ p, r }: { p: Plan; r: Did | null }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="font-medium text-[14px]">{p.team_label}</div>
-          <div className="text-[12.5px] text-fg-mute truncate">{p.obstacle}</div>
+          <div className="text-[12.5px] text-fg-mute line-clamp-2">{p.obstacle}</div>
         </div>
         {r?.status === 'ok' ? <Badge tone={r.verdict === 'worked' ? 'ok' : 'warn'} dot>Review: {r.verdict}</Badge> : <Badge tone="info" dot>In progress</Badge>}
       </div>
@@ -106,7 +106,7 @@ function ManagerToday() {
           icon={<CalendarClock size={16} />} tone={reviewReady && r?.verdict === 'worked' ? 'ok' : 'brand'} sub={main ? `${main.p.team_label} · ${longDate(main.p.review)}` : 'no plan yet'} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader title="Needs your attention" sub={`Teams whose operating KPIs or engagement moved beyond normal variation · ${monthRange(b.window)}`}
             right={<Method>
@@ -162,7 +162,7 @@ function HrToday() {
     <div>
       <PageHeader crumbs={<>Northline Logistics · all sites</>} title={<>Good morning, Jordan</>}
         sub={<>{reds.length ? <><b>{reds.length} team{reds.length > 1 ? 's' : ''}</b> across {meta?.sites.length ?? 3} sites need attention</> : 'No team is outside normal variation'}; {ambers.length} to watch. Excess operating cost {money(total)} in {monthRange(all[0].window)}.</>} />
-      <div className="grid gap-4 md:grid-cols-3 stagger">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 stagger">
         {all.map((b) => {
           const r = b.teams.filter((t) => t.status === 'red').length, a = b.teams.filter((t) => t.status === 'amber').length
           return (

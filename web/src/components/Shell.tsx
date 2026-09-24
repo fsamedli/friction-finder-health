@@ -84,7 +84,7 @@ function Dropdown({ trigger, children, align = 'right', width = 300 }: { trigger
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((o) => !o)} className="focus:outline-none">{trigger(open)}</button>
       {open && (
-        <div className={cx('absolute top-11 z-40 rounded-xl border border-border bg-surface shadow-pop animate-in', align === 'right' ? 'right-0' : 'left-0')} style={{ width }}>
+        <div className={cx('absolute top-11 z-40 rounded-xl border border-border bg-surface shadow-pop animate-in', align === 'right' ? 'right-0' : 'left-0')} style={{ width: `min(${width}px, calc(100vw - 24px))` }}>
           {children(close)}
         </div>
       )}
@@ -177,10 +177,10 @@ function UserMenu() {
   const pick = (r: Role) => { setRole(r); if (r === 'manager') setSiteId(1) }
   return (
     <Dropdown width={280} trigger={() => (
-      <span className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 hover:bg-canvas">
+      <span className="flex items-center gap-2 rounded-lg p-1 sm:pr-2 hover:bg-canvas">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[12px] font-semibold text-brand-900">{p.initials}</span>
         <span className="hidden md:block text-left leading-tight"><span className="block text-[13px] font-medium">{p.name}</span><span className="block text-[11.5px] text-fg-mute">{role === 'manager' ? 'Site manager' : 'People analytics'}</span></span>
-        <ChevronDown size={14} className="text-fg-faint" />
+        <ChevronDown size={14} className="hidden sm:block text-fg-faint" />
       </span>
     )}>
       {(close) => (
@@ -206,15 +206,15 @@ function UserMenu() {
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const { meta, siteId, setSiteId, role } = useStore()
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface px-4 lg:px-6">
-      <button onClick={onMenu} className="lg:hidden rounded-lg p-2 text-fg-mute hover:bg-canvas" aria-label="Open menu"><Menu size={20} /></button>
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-3 border-b border-border bg-surface px-4 lg:px-6">
+      <button onClick={onMenu} className="lg:hidden rounded-lg p-1.5 sm:p-2 text-fg-mute hover:bg-canvas" aria-label="Open menu"><Menu size={20} /></button>
       <div className="hidden sm:flex items-center gap-2 text-[13px]">
         <span className="flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 font-medium ring-1 ring-border"><Building2 size={14} className="text-fg-mute" />Northline Logistics</span>
         <span className="text-fg-faint">/</span>
       </div>
       <select value={siteId} onChange={(e) => setSiteId(Number(e.target.value))} disabled={role === 'manager'}
         title={role === 'manager' ? 'A site manager sees their own site' : 'Choose a site'}
-        className="h-9 rounded-lg border border-border-strong bg-surface px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
+        className="h-9 min-w-0 max-w-[132px] sm:max-w-none rounded-lg border border-border-strong bg-surface px-2 sm:px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
         {(meta?.sites ?? [{ site_id: 1, site_name: 'Richmond' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name} DC</option>)}
       </select>
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">

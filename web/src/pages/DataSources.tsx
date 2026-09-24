@@ -24,7 +24,7 @@ export default function DataSources() {
     <div>
       <PageHeader title="Data sources" sub="The client owns both halves: the survey export from Gallup Access and its own operating records. Friction Finder runs on the client's side; operating data never goes to Gallup."
         actions={<Badge tone="ok" dot>{src.data.filter((s) => s.status === 'connected').length} connected</Badge>} />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 stagger">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 stagger">
         {src.data.map((s) => (
           <Card key={s.id}>
             <div className="flex items-start justify-between gap-3">
@@ -41,7 +41,7 @@ export default function DataSources() {
           </Card>
         ))}
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card>
           <CardHeader title="Upload operating records" sub="A site can start with a CSV export — no integration project. Uploaded rows are used by the Ask flow in this session." />
           <div className="rounded-xl border-2 border-dashed border-border-strong bg-canvas/50 px-6 py-8 text-center">

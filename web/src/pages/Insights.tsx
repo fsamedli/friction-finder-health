@@ -54,7 +54,7 @@ export default function Insights() {
           </table>
         </div>
       </Card>
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title={`${KPI_SHORT[sel.kpi]} vs ${sel.item === 'grand' ? 'overall engagement' : `${sel.item.toUpperCase()} · ${meta?.items[sel.item] ?? ''}`}`} sub={`Each dot is one team in one survey wave · ${a?.n_cells ?? '…'} team-waves`} />
           {!a ? <PageSkeleton /> : a.verdict === 'too rare to test' ? <Empty title="Too rare to test" sub="Most team-quarters have zero events. Needs a year or more of history." />

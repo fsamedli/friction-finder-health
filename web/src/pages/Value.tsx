@@ -21,7 +21,7 @@ function CostRow({ k, c, onSave }: { k: string; c: Cost; onSave: (k: string, v: 
     try { await onSave(k, n) } catch (e) { setErr(String((e as Error).message)) }
   }
   return (
-    <div className="grid gap-3 border-t border-border py-4 first:border-0 md:grid-cols-[1fr_150px_1.4fr] md:items-start">
+    <div className="grid grid-cols-1 gap-3 border-t border-border py-4 first:border-0 md:grid-cols-[1fr_150px_1.4fr] md:items-start">
       <div><div className="font-medium text-[13.5px]">{c.label}</div><div className="mt-1"><Badge tone={KIND[c.kind].tone}>{KIND[c.kind].label}</Badge></div></div>
       <div>
         <div className="flex items-center rounded-lg border border-border-strong focus-within:ring-4 focus-within:ring-brand/10">
@@ -59,7 +59,7 @@ export default function Value() {
         <Stat label="Value if it helps a little" value={`${money(v.low, true)}–${money(v.high, true)}`} tone="brand" sub="per site, per year · assumption below" />
         <Stat label="US warehousing sites" value={num(v.segment.establishments)} sub="starting segment · BLS NAICS 493" />
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader title="Unit costs" sub="Every input has a source or is marked as an assumption. Edit any value; the site board and this page recompute." />
           {Object.entries(costs.data).map(([k, c]) => <CostRow key={k + c.value} k={k} c={c} onSave={save} />)}

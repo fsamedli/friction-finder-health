@@ -27,7 +27,7 @@ function Overview({ w }: { w: Why }) {
   const e = w.excess?.[k]
   const marks = [{ m: '2026-03', label: 'Wave 1' }, { m: '2026-09', label: 'Wave 2' }].filter((x) => w.kpi_trend.some((d) => d.month === x.m))
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.45fr_1fr]">
       <Card>
         <CardHeader title="Operating KPIs" sub="Per 10 people per month · this team vs comparable teams" right={<Provenance kind="computed" />} />
         <Segmented value={k} onChange={setK} options={KPI_ORDER.map((x) => ({ id: x, label: <span className={w.excess?.[x]?.flagged ? 'text-crit-700' : ''}>{KPI_SHORT[x]}</span> }))} />
@@ -69,7 +69,7 @@ function Drivers({ w }: { w: Why }) {
           ))}
         </div>
       </Card>
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title={`${KPI_SHORT[sel.kpi]} vs ${itemLabel}`} sub={`Each dot is one team in one survey wave · ${a?.n_cells ?? '…'} team-waves`} right={<span className="text-[12px] text-fg-mute"><span className="text-crit">◆</span> {w.team.team_name}</span>} />
           {!a ? <PageSkeleton /> : a.verdict === 'too rare to test' ? <Empty title="Too rare to test" sub="Most team-quarters have zero events. Needs a year or more of history." />
@@ -116,13 +116,13 @@ function Evidence({ ev }: { ev: { r: AskResult | null; err: string | null } }) {
   const quote = (s: string) => s.match(/"(.+)"/)?.[1] ?? s
   const meta = (s: string) => s.match(/\(([^)]*wave \d[^)]*)\)/)?.[1] ?? ''
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
       <Card>
         <CardHeader title={r.assessment?.label ?? r.message} sub="Verdict computed by rules from survey, operating records and comments" right={<Provenance kind="computed" />} />
         <ul className="space-y-2 text-[13.5px]">
           {(r.assessment?.reasons ?? []).map((x) => <li key={x} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand shrink-0" /><span className="text-fg-soft">{x}</span></li>)}
         </ul>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 border-t border-border pt-4 text-[13px]">
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-t border-border pt-4 text-[13px]">
           <div><div className="label mb-1">Is the drop real?</div><p className="text-fg-soft">{mix?.statement ?? '—'}</p></div>
           <div><div className="label mb-1">Operating detail</div><p className="text-fg-soft">{ops?.statement ?? '—'}</p>{staffing && <p className="text-fg-soft mt-2">{staffing.statement}</p>}</div>
         </div>
@@ -167,7 +167,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
 
   if (existing) {
     return (
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader title={existing.obstacle} sub={`Focus item: ${existing.focus} · KPI to watch: ${KPI_SHORT[existing.kpi]}`} right={<Badge tone="ok" dot>Approved</Badge>} />
           <ol className="divide-y divide-border rounded-lg border border-border">
@@ -211,7 +211,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
       <p className="mt-2 text-[12.5px] text-fg-mute">Focus item: {drop?.label ?? 'overall engagement'} · KPI to watch: {KPI_SHORT[kpi]} · starts Sept 21, reviewed Nov 30 (two full months of operating data)</p>
       <div className="mt-4 space-y-2">
         {actions.map((a, i) => (
-          <div key={i} className="grid gap-2 md:grid-cols-[1fr_220px_150px]">
+          <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_150px]">
             <input value={a.text} onChange={(e) => set(i, 'text', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13.5px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
             <input value={a.owner} onChange={(e) => set(i, 'owner', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
             <input type="date" value={a.due} onChange={(e) => set(i, 'due', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
@@ -265,7 +265,7 @@ export default function TeamDetail() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6 stagger">
         <Stat label={e ? `${KPI_SHORT[flagged[0]]} · 3 months` : 'Operating KPIs'} value={e ? <>{num(e.observed)}<span className="text-[16px] text-fg-faint"> vs {num(e.expected)}</span></> : 'Normal'} tone={e ? 'crit' : 'ok'} sub={e ? `expected from comparable teams · ${pval(e.p)}` : 'within normal variation'} />
         <Stat label="Excess operating cost" value={money(w.excess_cost ?? 0)} tone={(w.excess_cost ?? 0) > 0 ? 'crit' : undefined} sub="last 3 months · unit costs editable" />
-        <Stat label="Largest survey change" value={drop ? `${signed(drop.delta)}` : '—'} tone={drop?.significant ? 'crit' : undefined} sub={drop ? <span className="truncate">{drop.label}</span> : 'hidden: small wave'} />
+        <Stat label="Largest survey change" value={drop ? `${signed(drop.delta)}` : '—'} tone={drop?.significant ? 'crit' : undefined} sub={drop ? <span className="line-clamp-2">{drop.label}</span> : 'hidden: small wave'} />
         <Stat label="Respondents" value={`${w.engagement?.n_w1 ?? '—'} → ${w.engagement?.n_w2 ?? '—'}`} sub="wave 1 → wave 2 · minimum 4" />
       </div>
 

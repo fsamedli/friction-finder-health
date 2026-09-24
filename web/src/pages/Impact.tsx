@@ -77,10 +77,10 @@ export default function Impact() {
         <Stat label="Change vs comparable teams" value={signed((r.estimate ?? 0) * 10, 1)} tone={worked ? 'ok' : 'warn'} sub={`per 10 people / month · 95% CI ${signed(r.ci_low! * 10, 1)} to ${signed(r.ci_high! * 10, 1)}`} />
         <Stat label="Per quarter" value={num(Math.abs(r.events_avoided_per_quarter ?? 0))} tone="brand" sub={`${fell ? 'fewer' : 'more'} ${r.kpi_label.toLowerCase()}`} />
         <Stat label="Worth per quarter" value={worked && r.dollars_per_quarter != null ? money(r.dollars_per_quarter) : '—'} tone="brand" sub={r.unit_cost ? `at ${money(r.unit_cost)} each (client-entered)` : 'no unit cost entered'} />
-        <Stat label="Compared with" value={r.comparison?.teams.length ?? 0} sub={<span className="truncate" title={r.comparison?.teams.join(', ')}>{r.comparison?.teams.join(', ')}</span>} />
+        <Stat label="Compared with" value={r.comparison?.teams.length ?? 0} sub={<span className="line-clamp-2" title={r.comparison?.teams.join(', ')}>{r.comparison?.teams.join(', ')}</span>} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader title={`${r.kpi_label}, per 10 people per month`} sub="This team vs the comparison teams' average, before and after the plan" right={<><Provenance kind="computed" /><Provenance kind="synthetic" /></>} />
           <DidChart series={r.series ?? []} pre={r.pre_months ?? []} post={r.post_months ?? []} start={r.start} compLabel={`Comparable teams (${r.comparison?.teams.length})`} />
@@ -105,7 +105,7 @@ export default function Impact() {
       {r.also && r.also.length > 0 && (
         <Card className="mt-6">
           <CardHeader title="Other KPIs the obstacle could touch" sub="Reported as they are — two months is short for rare events" />
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {r.also.filter((a) => a.status === 'ok').map((a) => (
               <div key={a.kpi} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                 <div><div className="font-medium">{a.kpi_label}</div><div className="text-[12px] text-fg-mute tnum">{signed((a.estimate ?? 0) * 10, 1)} per 10 / month · CI {signed(a.ci_low! * 10, 1)} to {signed(a.ci_high! * 10, 1)}</div></div>
