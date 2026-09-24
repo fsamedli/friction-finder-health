@@ -1,5 +1,40 @@
 # Friction Finder prototype (Group 4, DNSC 6317)
 
+## v0.6 (Sept 23, 2026): detect → explain → act → prove
+
+Branch `v0.6-detect-explain-act-prove`. Spec and plan: `docs/specs/2026-09-23-detect-explain-act-prove-*.md`.
+Why: Gallup Access already shows what moved and has AI action planning; the gap Gallup named (Keegan,
+Sept 18) is linking engagement to the client's own operating data, which Gallup sells today as a
+once-a-year Business Impact Analysis. v0.6 does that monthly, per team, and checks whether the fix worked.
+
+```bash
+./run_demo.sh            # builds web/ if needed, starts FastAPI on :8000, opens the browser
+```
+
+Development: `.venv/bin/uvicorn api.main:app --reload` and, in `web/`, `npm run dev` (proxies /api to :8000).
+
+**Demo path (about 4 minutes, no model call until step 6):**
+1. **Detect** (`/`, as of Sept 15): Richmond Night A is the only red team: 81 late departures vs 51 expected
+   from comparable night teams (Poisson p < 0.001) and "Materials and equipment" down 0.80 points after
+   adjusting for who responded. Teams under 4 people are rolled up.
+2. **Explain** (`/why/4`): trend vs comparable teams; item changes; the linkage grid across 34 team-waves
+   (Q02 x late departures is the strongest link; "65 pairs tested, about 3 light up by chance"); the v0.5
+   evidence engine in rules mode (signal check, comments, process owner).
+3. **Act** (`/plan/4`): the seeded plan (Sept 21, review Nov 30); any other team gets a one-card draft to approve.
+4. **Prove** (`/proof/plan-richmond-night-a`): "76 days to go" -> **Fast-forward** -> it worked: late
+   departures fell 10.6 per 10 people a month more than comparable teams (95% CI), placebo check, absences
+   and quits honestly inconclusive. Follow-up months are synthetic.
+5. **Business case** (`/value`): sourced unit costs, editable; $80K-$144K per 300-person site per year.
+6. **Ask** (`/ask`): the v0.5 question -> brief flow (model mode ~30 s).
+7. **Under the hood** (`/hood`): assumptions, architecture, evals, "you told us -> we changed".
+
+Methods (all in `app/impact.py`, no model): Poisson excess vs pooled comparable-team rate (p < 0.01,
+"too rare to judge" below 3 expected events); item change adjusted for tenure mix with a Welch t-test,
+Bonferroni over 12 items; OLS with team-clustered SEs and Gallup-style quartile comparison;
+difference-in-differences with Poisson SEs and a placebo run. Tests: `tests/test_impact*.py`, `tests/test_api.py`.
+
+---
+
 Version 0.2, Sept 17, 2026. Built for the second round of judge meeting 1 (Fri Sept 18: Ethirajan,
 Fullowan, Jamshidi, Keegan). Version 0.1 (Sept 14) is the previous git commit.
 

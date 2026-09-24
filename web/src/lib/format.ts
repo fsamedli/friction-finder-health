@@ -2,7 +2,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export const money = (v: number | null | undefined, compact = false) => {
   if (v == null || !Number.isFinite(v)) return '—'
-  if (compact && Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(v >= 100000 ? 0 : 1)}K`
+  if (compact && Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
+  if (compact && Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(Math.abs(v) >= 100000 ? 0 : 1)}K`
   return v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
 export const pts = (v: number | null | undefined) =>

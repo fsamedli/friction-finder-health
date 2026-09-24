@@ -33,7 +33,7 @@ export function TrendChart({ data, k, window: win, marks = [], teamLabel }: {
           {marks.map((x) => <ReferenceLine key={x.m} x={x.m} stroke={x.color ?? MIST} strokeDasharray="2 3" label={{ value: x.label, position: 'top', fontSize: 11, fill: '#6B7F8A' }} />)}
           <Tooltip content={<Tip fmt={(v) => v.toFixed(1)} />} />
           <Line name="Comparable teams" dataKey="base" stroke={MIST} strokeWidth={2} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-          <Line name={teamLabel} dataKey="team" stroke={RUST} strokeWidth={2.6} dot={{ r: 2.5, fill: RUST }} animationDuration={900} />
+          <Line name={teamLabel} dataKey="team" stroke={RUST} strokeWidth={2.6} dot={{ r: 2.5, fill: RUST }} animationDuration={600} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

@@ -53,7 +53,7 @@ export interface Why {
 export interface PlanAction { text: string; owner: string; due: string }
 export interface Plan {
   id: string; team_id: number; item: string; kpi: Kpi; obstacle: string; focus: string
-  actions: PlanAction[]; start: string; review: string; status: string; note: string
+  actions: PlanAction[]; start: string; review: string; status: string; note: string; team_label?: string
 }
 export interface Did {
   plan_id: string; kpi: Kpi; kpi_label: string; start: string; review: string
@@ -78,7 +78,7 @@ export interface Evidence { id: string; kind: string; statement: string; sql: st
 export interface AskResult {
   id: string; status: string; question: string; message: string; mode: 'model' | 'rules'; seconds: number; notes: string[]
   assessment: { verdict: string; label: string; level: string; reasons: string[]; n: Record<string, unknown> } | null
-  brief: { obstacle: string; evidence_for: { text: string; ids?: string[] }[]; evidence_against: { text: string; ids?: string[] }[]; missing: string[]; owner: string; proposed_test: string; limits: string; mode: string; check_notes: string[] } | null
+  brief: { obstacle: string; evidence_for: { claim: string; evidence_ids?: string[] }[]; evidence_against: { claim: string; evidence_ids?: string[] }[]; missing: string[]; owner: string; proposed_test: string; limits: string; mode: string; check_notes: string[] } | null
   evidence: Evidence[]
 }
 

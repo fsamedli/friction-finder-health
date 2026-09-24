@@ -139,7 +139,9 @@ class PlanIn(BaseModel):
 
 @app.get("/api/plans")
 def plans():
-    return I.load_plans()
+    teams = pd.read_csv(config.DATA_DIR / "teams.csv").merge(pd.read_csv(config.DATA_DIR / "sites.csv"), on="site_id")
+    label = {int(t.team_id): f"{t.site_name} {t.team_name}" for t in teams.itertuples()}
+    return [{**p, "team_label": label.get(int(p["team_id"]), "")} for p in I.load_plans()]
 
 
 @app.post("/api/plans")
