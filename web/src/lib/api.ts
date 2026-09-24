@@ -111,8 +111,8 @@ export const api = {
   assumptions: () => j<{ rows: { k: string; v: string; why: string }[]; with_real_data: string[] }>('/api/assumptions'),
   evals: () => j<{ file: string; model: string; passed: number; total: number; matrix: Record<string, number>; ts: string; rows: { id: string; class: string; question: string; status: string; verdict: string; passed: boolean; outcome: string }[] }[]>('/api/evals/latest'),
   feedback: () => j<{ who: string; when: string; said: string; changed: string }[]>('/api/feedback'),
-  ask: (question: string) =>
-    j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) }),
+  ask: (question: string, rules = false) =>
+    j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, rules }) }),
   approve: (result_id: string, decision: 'approved' | 'rejected' | 'flagged', note = '') =>
     j<Record<string, unknown>>('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result_id, decision, note }) }),
 }

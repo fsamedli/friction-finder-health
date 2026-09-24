@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 import io
 import json
+import threading
 import time
 import uuid
 from dataclasses import asdict
@@ -243,6 +244,10 @@ def feedback():
 # ------------------------------------------------------------------ ask (v0.5 flow)
 class AskIn(BaseModel):
     question: str = Field(min_length=3, max_length=500)
+    rules: bool = False   # True: rules mode (no model call), used by the Why page so it stays under a second
+
+
+_rules_lock = threading.Lock()
 
 
 def _brief_mode(res) -> str:
@@ -253,7 +258,17 @@ def _brief_mode(res) -> str:
 @app.post("/api/ask")
 def ask(q: AskIn):
     t0 = time.time()
-    res = agent.run(q.question, _db(), _retriever())
+    retriever = _retriever()  # build outside the rules switch, so model-mode retrieval keeps its embeddings
+    if q.rules:
+        with _rules_lock:  # the v0.5 agent reads config.has_key(); switch it off for this one call
+            real = config.has_key
+            config.has_key = lambda: False
+            try:
+                res = agent.run(q.question, _db(), retriever, fast=True)
+            finally:
+                config.has_key = real
+    else:
+        res = agent.run(q.question, _db(), retriever)
     rid = uuid.uuid4().hex[:10]
     _state["results"][rid] = res
     return _jsonable({"id": rid, "status": res.status, "question": res.question, "message": res.message,
