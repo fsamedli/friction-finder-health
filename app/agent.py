@@ -967,10 +967,36 @@ def explain(question: str, sc: Scope, evidence: list[Evidence], assessment: Asse
 
 # ----------------------------------------------------------------------------- orchestration
 
+# Requests the tool must decline before any query runs, whatever the model reads into them (adversarial pack, Sept 24):
+# anything about named or numbered individuals, individual answers, or judging or predicting a person.
+OUT_OF_SCOPE = [
+    (re.compile(r"\b(individual|each|every|single|raw)\s+(survey\s+)?(responses?|answers?|respondents?)\b|\bresponses? (of|from|by) (each|every|individual)", re.I),
+     "Individual survey answers are never shown; results are reported for teams of 4 or more."),
+    (re.compile(r"\b(employee|respondent|worker|person)\s*#?\s*\d+\b|\bwho (gave|answered|rated|scored)\b|\bwhich (employees?|people|workers|respondents?)\b", re.I),
+     "The tool does not identify or single out individual employees or respondents."),
+    (re.compile(r"\b(performance review|performance evaluation|appraisal|disciplin\w*|fire|terminate|write up)\b", re.I),
+     "The tool does not evaluate, review or discipline people; it looks at teams and processes."),
+    (re.compile(r"\b(likely|going|about) to (quit|leave|resign)\b|\bpredict\w* (who|which)\b", re.I),
+     "The tool does not predict what individual employees will do."),
+]
+
+
+def out_of_scope(question: str) -> str | None:
+    for pat, why in OUT_OF_SCOPE:
+        if pat.search(question):
+            return why
+    return None
+
+
 def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Result:
     """fast=True stops before the written brief (see write_brief)."""
     import time as _time
     _t0 = _time.time()
+    why_not = out_of_scope(question)
+    if why_not:
+        return Result(status="refused", question=question, scope=None, evidence=[], brief=None,
+                      message=f"I cannot answer this. {why_not} Available: survey results by team and wave, operational records, staffing, and process documents.",
+                      notes=["declined before any query: out of scope"])
     sc = scope(question, db)
     notes = [f"scope mode: {sc.mode} ({_time.time() - _t0:.1f}s)", f"retrieval mode: {retriever.mode}"]
     if sc.unknown_entities:  # a place or thing we do not have is named in the decline, whatever the model called the intent
@@ -1007,7 +1033,9 @@ def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Resu
     if sc.intent in ("tenure_pattern", "metric_lookup", "review_decline_real", "site_overview"):
         kinds = ("tenure_pattern", "survey_delta", "signal_check", "suppressed", "site_heatmap", "site_items") if sc.intent != "review_decline_real" else ("signal_check", "tenure_mix", "suppressed")
         msg = " ".join(e.statement for e in evidence if e.kind in kinds)
-        return Result(status="ok", question=question, scope=sc, evidence=evidence, brief=None, message=msg, notes=notes)
+        # a lookup that could only return a suppression notice is a suppression, not an answer
+        only_suppressed = any(e.kind == "suppressed" for e in evidence) and not any(e.kind in ("survey_delta", "survey_table", "site_items", "site_heatmap", "tenure_pattern", "signal_check") for e in evidence)
+        return Result(status="suppressed" if only_suppressed else "ok", question=question, scope=sc, evidence=evidence, brief=None, message=msg, notes=notes)
     assessment = assess(sc, evidence, db)
     status = "suppressed" if any(e.kind == "suppressed" for e in evidence) else "ok"
     res = Result(status=status, question=question, scope=sc, evidence=evidence, brief=None, notes=notes, assessment=assessment)
