@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell, BookOpenCheck, Building2, CalendarClock, ChevronDown, ClipboardList, Database, LayoutDashboard, LineChart,
@@ -7,7 +7,7 @@ import {
 import { api, type Board, type Plan } from '../lib/api'
 import { longDate } from '../lib/format'
 import { DETECT, PERSONA, REVIEW, useStore, visiblePlans, type Role } from '../lib/store'
-import { cx } from './ui'
+import { PageSkeleton, cx } from './ui'
 import DemoGuide, { StartDemo, useDemo } from './DemoGuide'
 import StudyBar, { studyOn } from './Study'
 
@@ -279,7 +279,7 @@ export default function Shell() {
       <Topbar onMenu={() => setMenu(true)} onDemo={startDemo} />
       <UploadBanner />
       <main id="main" tabIndex={-1} key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
-        <Outlet />
+        <Suspense fallback={<PageSkeleton />}><Outlet /></Suspense>
       </main>
       <DemoGuide step={demo.step} set={demo.set} />
       {studyOn() && <StudyBar />}

@@ -1,5 +1,5 @@
 import {
-  Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer,
+  Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, ReferenceArea, ReferenceLine, ResponsiveContainer,
   Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
 } from 'recharts'
 import type { Assoc, ItemChange, Quartile } from '../lib/api'
@@ -19,20 +19,6 @@ function Tip({ active, payload, label, unit }: { active?: boolean; payload?: { n
           <span className="tnum font-medium">{Number(p.value).toFixed(1)}{unit ? ` ${unit}` : ''}</span>
         </div>
       ))}
-    </div>
-  )
-}
-
-export function Spark({ data, flagged }: { data: { month: string; rate: number; baseline: number }[]; flagged?: boolean }) {
-  return (
-    <div className="h-8 w-28" role="img" aria-label={`Trend over ${data.length} months${flagged ? ', above normal variation' : ''}`}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 3, right: 2, bottom: 3, left: 2 }}>
-          <YAxis hide domain={[0, 'dataMax']} />
-          <Line dataKey="baseline" stroke={C.grey} strokeWidth={1.2} strokeDasharray="2 2" dot={false} isAnimationActive={false} />
-          <Line dataKey="rate" stroke={flagged ? C.crit : C.fg} strokeWidth={1.7} dot={false} isAnimationActive={false} />
-        </LineChart>
-      </ResponsiveContainer>
     </div>
   )
 }

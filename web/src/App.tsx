@@ -1,17 +1,19 @@
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import Shell from './components/Shell'
 import { StoreProvider } from './lib/store'
 import Today from './pages/Today'
-import Teams from './pages/Teams'
-import TeamDetail from './pages/TeamDetail'
-import Plans from './pages/Plans'
-import Impact from './pages/Impact'
-import Insights from './pages/Insights'
-import Ask from './pages/Ask'
-import DataSources from './pages/DataSources'
-import Value from './pages/Value'
-import Trust from './pages/Trust'
-import Sus from './pages/Sus'
+// Today loads with the app; every other screen is fetched when first opened (smaller first load).
+const Teams = lazy(() => import('./pages/Teams'))
+const TeamDetail = lazy(() => import('./pages/TeamDetail'))
+const Plans = lazy(() => import('./pages/Plans'))
+const Impact = lazy(() => import('./pages/Impact'))
+const Insights = lazy(() => import('./pages/Insights'))
+const Ask = lazy(() => import('./pages/Ask'))
+const DataSources = lazy(() => import('./pages/DataSources'))
+const Value = lazy(() => import('./pages/Value'))
+const Trust = lazy(() => import('./pages/Trust'))
+const Sus = lazy(() => import('./pages/Sus'))
 
 // v0.6 URLs from the README and earlier demos keep working.
 const ToTeam = ({ tab }: { tab?: string }) => { const { teamId } = useParams(); return <Navigate to={`/teams/${teamId}${tab ? `?tab=${tab}` : ''}`} replace /> }

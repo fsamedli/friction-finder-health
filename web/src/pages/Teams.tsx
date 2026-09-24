@@ -4,7 +4,7 @@ import { ChevronRight, Lock, Search } from 'lucide-react'
 import { api, type Status, type TeamRow } from '../lib/api'
 import { money, monthRange, num, signed } from '../lib/format'
 import { useLoad, useStore } from '../lib/store'
-import { Spark } from '../components/charts'
+import { Spark } from '../components/Spark'
 import { Badge, Card, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, Segmented, StatusBadge, cx } from '../components/ui'
 
 type Filter = 'all' | 'attention' | 'normal'

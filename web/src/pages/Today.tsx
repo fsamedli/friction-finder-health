@@ -4,7 +4,7 @@ import { api, KPI_ORDER, type Board, type Did, type Plan, type TeamRow } from '.
 import { dataThrough, longDate, money, monthRange, num, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
 import { PERSONA, useLoad, useStore, visiblePlans } from '../lib/store'
-import { Spark } from '../components/charts'
+import { Spark } from '../components/Spark'
 import Journey from '../components/Journey'
 import { Badge, Button, Card, CardHeader, Empty, ErrorState, Method, PageHeader, PageSkeleton, Stat, StatusBadge, cx } from '../components/ui'
 
