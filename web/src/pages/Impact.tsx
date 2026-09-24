@@ -5,7 +5,7 @@ import { longDate, money, month, num, per10, signed } from '../lib/format'
 import { REVIEW, SEED_PLAN, useLoad, useStore, visiblePlans } from '../lib/store'
 import { DidChart } from '../components/charts'
 import Journey from '../components/Journey'
-import { Badge, Button, Card, CardHeader, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Stat } from '../components/ui'
+import { Badge, Button, Card, CardHeader, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Stat } from '../components/ui'
 
 function Placebo({ r }: { r: Did }) {
   const all = [...(r.placebo ?? []).map((p) => ({ ...p, mine: false })), { team_id: -1, team: 'This team', estimate: r.estimate!, mine: true }]
@@ -43,7 +43,10 @@ export default function Impact() {
   const r = res.data
   const p = plans.data.find((x) => x.id === planId)
   const crumbs = <><button onClick={() => nav('/plans')} className="hover:text-fg">Action plans</button><span>/</span><span>{p?.team_label}</span></>
-  const actions = <a href={`/api/report/${planId}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
+  const actions = <>
+    <a href={`/api/report/${planId}?as_of=${asOf}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
+    <a href={`/api/report/${planId}?as_of=${asOf}&download=true`} className="text-[12.5px] font-medium text-fg-mute hover:text-fg underline">Download</a>
+  </>
 
   if (r.status === 'not_reached') {
     return (
@@ -85,7 +88,8 @@ export default function Impact() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
-          <CardHeader title={`${r.kpi_label}, per 10 people per month`} sub="This team vs the comparison teams' average, before and after the plan" right={<><Provenance kind="computed" /><Provenance kind="synthetic" /></>} />
+          <CardHeader title={`${r.kpi_label}, per 10 people per month`} sub="This team vs the comparison teams' average, before and after the plan"
+            right={<><Provenance kind="computed" /><Provenance kind="synthetic" /><CsvButton filename={`impact_${planId}.csv`} rows={() => (r.series ?? []).map((x) => ({ month: x.month, this_team_per_10: +(x.treated * 10).toFixed(2), comparison_per_10: +(x.comparison * 10).toFixed(2), period: (r.pre_months ?? []).includes(x.month) ? 'before' : (r.post_months ?? []).includes(x.month) ? 'after' : '' }))} /></>} />
           <DidChart series={r.series ?? []} pre={r.pre_months ?? []} post={r.post_months ?? []} start={r.start} compLabel={`Comparable teams (${r.comparison?.teams.length})`} />
         </Card>
         <div className="space-y-6">

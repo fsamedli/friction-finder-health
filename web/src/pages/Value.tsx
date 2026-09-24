@@ -3,7 +3,7 @@ import { RotateCcw } from 'lucide-react'
 import { api, type Cost } from '../lib/api'
 import { money, num } from '../lib/format'
 import { useLoad } from '../lib/store'
-import { Badge, Button, Card, CardHeader, ErrorState, PageHeader, PageSkeleton, Stat } from '../components/ui'
+import { Badge, Button, Card, CardHeader, CsvButton, ErrorState, PageHeader, PageSkeleton, Stat } from '../components/ui'
 
 const KIND: Record<Cost['kind'], { label: string; tone: 'brand' | 'warn' | 'neutral' }> = {
   sourced: { label: 'Sourced', tone: 'brand' }, assumption: { label: 'Assumption', tone: 'warn' },
@@ -61,7 +61,8 @@ export default function Value() {
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>
-          <CardHeader title="Unit costs" sub="Every input has a source or is marked as an assumption. Edit any value; the site board and this page recompute." />
+          <CardHeader title="Unit costs" sub="Every input has a source or is marked as an assumption. Edit any value; the site board and this page recompute."
+            right={<CsvButton filename="unit_costs.csv" rows={() => Object.entries(costs.data!).map(([k, c]) => ({ key: k, label: c.label, value: c.value, unit: c.unit, kind: c.kind, source: c.source, note: c.note }))} />} />
           {Object.entries(costs.data).map(([k, c]) => <CostRow key={k + c.value} k={k} c={c} onSave={save} />)}
         </Card>
         <div className="space-y-6">

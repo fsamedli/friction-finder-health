@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Info, X } from 'lucide-react'
+import { Download, Info, X } from 'lucide-react'
+import { downloadCsv } from '../lib/csv'
 import type { Status } from '../lib/api'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
@@ -202,4 +203,13 @@ export function Provenance({ kind }: { kind: 'computed' | 'model' | 'person' | '
     retrieved: { t: 'Quoted from source', tone: 'info' as Tone },
   }[kind]
   return <Badge tone={m.tone}>{m.t}</Badge>
+}
+
+export function CsvButton({ filename, rows, label = 'CSV' }: { filename: string; rows: () => Record<string, unknown>[]; label?: string }) {
+  return (
+    <button type="button" onClick={() => downloadCsv(filename, rows())} title={`Download ${filename}`}
+      className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-medium text-fg-mute ring-1 ring-border hover:bg-canvas hover:text-fg">
+      <Download size={14} /> {label}
+    </button>
+  )
 }

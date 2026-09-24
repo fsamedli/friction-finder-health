@@ -4,7 +4,7 @@ import { api, type Did, type Plan } from '../lib/api'
 import { longDate } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
 import { useLoad, useStore, visiblePlans } from '../lib/store'
-import { Badge, Button, Card, Empty, ErrorState, PageHeader, PageSkeleton } from '../components/ui'
+import { Badge, Button, Card, CsvButton, Empty, ErrorState, PageHeader, PageSkeleton } from '../components/ui'
 
 function StatusCell({ r }: { r: Did | undefined }) {
   if (!r) return <Badge tone="neutral">—</Badge>
@@ -28,7 +28,8 @@ export default function Plans() {
   return (
     <div>
       <PageHeader title="Action plans" sub="Each plan has one focus item, a few actions with owners, and a review date. At the review date the operating KPI is compared with similar teams that did not act."
-        actions={<Button variant="decide" icon={<Plus size={15} />} onClick={() => nav(`/teams/${teamId}?tab=plan`)}>New plan</Button>} />
+        actions={<><CsvButton filename="action_plans.csv" rows={() => rows.map((p) => ({ team: p.team_label, obstacle: p.obstacle, focus: p.focus, kpi: p.kpi, start: p.start, review: p.review,
+          status: results.data?.[p.id]?.status === 'ok' ? `reviewed: ${results.data?.[p.id]?.verdict}` : results.data?.[p.id]?.status ?? '', actions: p.actions.map((a) => `${a.text} (${a.owner}, ${a.due})`).join(' | ') }))} /><Button variant="decide" icon={<Plus size={15} />} onClick={() => nav(`/teams/${teamId}?tab=plan`)}>New plan</Button></>} />
       <Card pad={false}>
         {rows.length === 0 ? <Empty icon={<ClipboardList size={20} />} title="No plans yet" sub="Open a team that needs attention and draft a plan from its evidence." /> : (
           <div className="overflow-x-auto scroll-thin">

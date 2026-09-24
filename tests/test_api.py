@@ -160,3 +160,33 @@ def test_quality_reads_saved_files_and_feedback_starts_empty(monkeypatch, tmp_pa
     assert c.post("/api/useful", json={"target": "ask", "target_id": "x", "useful": False}).status_code == 422  # a reason is required
     assert c.post("/api/useful", json={"target": "plan", "target_id": "p1", "useful": False, "reason": "wrong owner"}).status_code == 200
     assert c.get("/api/quality").json()["feedback"] == {"file": "feedback.jsonl", "total": 1, "useful": 0, "not_useful": 1, "reasons": {"wrong owner": 1}}
+
+
+def test_ops_upload_validates_updates_board_and_resets(monkeypatch, tmp_path):
+    import app.impact as I
+    monkeypatch.setattr(I, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    I.reload()
+    try:
+        before = c.get("/api/board", params={"site_id": 1, "as_of": "2026-09-15"}).json()
+        night_a = next(t for t in before["teams"] if t["team_name"] == "Night A")
+        assert night_a["status"] == "red"
+        tpl = c.get("/api/ops-upload/template").text
+        assert tpl.splitlines()[0] == "month,team_id,absence_days,late_departures,quits,injuries,rework"
+        bad = "month,team_id,absence_days,late_departures,quits,injuries,rework\n2031-01,4,1,1,0,0,0\n2026-06,999,1,1,0,0,0\n2026-07,4,-2,1,0,0,0\n"
+        r = c.post("/api/ops-upload", files={"file": ("x.csv", bad, "text/csv")})
+        assert r.status_code == 422 and len(r.json()["detail"]["problems"]) == 3
+        assert c.post("/api/ops-upload", files={"file": ("x.csv", "a,b\n1,2\n", "text/csv")}).status_code == 422
+        # the client's own records say Night A's late departures were normal in Jun-Aug
+        good = "month,team_id,absence_days,late_departures,quits,injuries,rework\n" + "".join(
+            f"2026-0{m},4,8,14,0,0,4\n" for m in (6, 7, 8))
+        r = c.post("/api/ops-upload", files={"file": ("ops.csv", good, "text/csv")})
+        assert r.status_code == 200 and r.json()["rows"] == 3
+        after = c.get("/api/board", params={"site_id": 1, "as_of": "2026-09-15"}).json()
+        na = next(t for t in after["teams"] if t["team_name"] == "Night A")
+        assert na["excess_by_kpi"]["late_departures"]["observed"] == 42 and not na["excess_by_kpi"]["late_departures"]["flagged"]
+        assert c.delete("/api/ops-upload").json() == {"active": False}
+        back = c.get("/api/board", params={"site_id": 1, "as_of": "2026-09-15"}).json()
+        assert next(t for t in back["teams"] if t["team_name"] == "Night A")["status"] == "red"
+    finally:
+        I.reload()

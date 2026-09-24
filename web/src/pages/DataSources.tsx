@@ -1,11 +1,44 @@
 import { useRef, useState } from 'react'
-import { CircleDashed, Download, FileSpreadsheet, Lock, Upload } from 'lucide-react'
+import { CircleDashed, Download, FileSpreadsheet, Lock, RotateCcw, Upload } from 'lucide-react'
 import { api } from '../lib/api'
 import { longDate, num } from '../lib/format'
 import { useLoad } from '../lib/store'
 import { Badge, Button, Card, CardHeader, ErrorState, PageHeader, PageSkeleton } from '../components/ui'
 
 const TEMPLATE = 'date,site_id,shift,hour_band,departures,late_departures,rework_count\n2026-09-11,1,Night,06-07,24,4,1\n'
+
+function TeamOpsUpload({ onChange }: { onChange: () => void }) {
+  const status = useLoad(() => api.opsUpload(), [])
+  const file = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; lines: string[] } | null>(null)
+  const send = async (f: File) => {
+    setBusy(true); setMsg(null)
+    try { const r = await api.opsUploadSend(f); setMsg({ ok: true, lines: [r.message] }); status.setData(r); onChange(); window.dispatchEvent(new Event('ff:data-changed')) }
+    catch (e) { setMsg({ ok: false, lines: (e as { problems?: string[] }).problems ?? [String((e as Error).message)] }) }
+    finally { setBusy(false) }
+  }
+  const clear = async () => { status.setData(await api.opsUploadClear()); setMsg({ ok: true, lines: ['Back to the demo data.'] }); onChange(); window.dispatchEvent(new Event('ff:data-changed')) }
+  const s = status.data
+  return (
+    <Card>
+      <CardHeader title="Upload your operating records" sub="One row per team per month: absences, late departures, quits, injuries, rework. The board, team pages and impact reviews use it right away. It stays on this machine."
+        right={s?.active ? <Badge tone="info" dot>Your data · {s.rows} team-months</Badge> : <Badge tone="neutral">Demo data</Badge>} />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="primary" icon={<Upload size={15} />} disabled={busy} onClick={() => file.current?.click()}>{busy ? 'Checking…' : 'Upload CSV'}</Button>
+        <a href="/api/ops-upload/template"><Button variant="secondary" icon={<Download size={15} />}>Template</Button></a>
+        {s?.active && <Button variant="ghost" icon={<RotateCcw size={15} />} onClick={clear}>Back to demo data</Button>}
+        <input ref={file} type="file" accept=".csv,text/csv" className="hidden" aria-label="Operating records CSV" onChange={(e) => { const f = e.target.files?.[0]; if (f) send(f); e.target.value = '' }} />
+      </div>
+      <p className="mt-3 text-[12px] text-fg-mute">Columns: month (YYYY-MM), team_id, absence_days, late_departures, quits, injuries, rework. The template holds the demo rows for Richmond Night A. Uploaded rows replace the demo rows for the same team and month.</p>
+      {msg && (
+        <div className={`mt-3 rounded-lg px-3 py-2.5 text-[13px] ${msg.ok ? 'bg-ok-50 text-ok-700' : 'bg-crit-50 text-crit-700'}`} role={msg.ok ? 'status' : 'alert'}>
+          {msg.ok ? msg.lines[0] : <><b>The file was not loaded.</b><ul className="mt-1 list-disc pl-5">{msg.lines.map((l) => <li key={l}>{l}</li>)}</ul></>}
+        </div>
+      )}
+    </Card>
+  )
+}
 
 export default function DataSources() {
   const src = useLoad(() => api.sources(), [])
@@ -41,9 +74,10 @@ export default function DataSources() {
           </Card>
         ))}
       </div>
+      <div className="mt-6"><TeamOpsUpload onChange={() => api.sources().then(src.setData)} /></div>
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card>
-          <CardHeader title="Upload operating records" sub="A site can start with a CSV export — no integration project. Uploaded rows are used by the Ask flow in this session." />
+          <CardHeader title="Upload dispatch records (for Ask)" sub="Departures by date, shift and hour band. Used by the Ask evidence engine in this session." />
           <div className="rounded-xl border-2 border-dashed border-border-strong bg-canvas/50 px-6 py-8 text-center">
             <Upload size={22} className="mx-auto text-fg-mute" />
             <p className="mt-2 text-[13.5px]">Dispatch records by date, shift and hour band</p>

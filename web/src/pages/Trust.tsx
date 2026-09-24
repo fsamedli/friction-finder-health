@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api, type Quality } from '../lib/api'
 import { useLoad, useStore } from '../lib/store'
-import { Badge, Card, CardHeader, PageHeader, PageSkeleton, Tabs } from '../components/ui'
+import { Badge, Card, CardHeader, CsvButton, PageHeader, PageSkeleton, Tabs } from '../components/ui'
 
 type T = 'quality' | 'assumptions' | 'architecture' | 'evaluation' | 'feedback'
 
@@ -74,7 +74,8 @@ function QualityTab({ q }: { q: Quality }) {
   return (
     <div className="space-y-6">
       <Card pad={false}>
-        <div className="p-5 pb-0"><CardHeader title="Pass rate by test pack" sub="First recorded run vs the latest run. Every number is read from the saved result file shown under it." /></div>
+        <div className="p-5 pb-0"><CardHeader title="Pass rate by test pack" sub="First recorded run vs the latest run. Every number is read from the saved result file shown under it."
+          right={<CsvButton filename="quality_packs.csv" rows={() => q.packs.map((p) => ({ pack: p.pack, note: p.note, mode: p.mode ?? '', first_passed: p.first?.passed ?? '', first_total: p.first?.total ?? '', first_file: p.first?.file ?? '', now_passed: p.now?.passed ?? '', now_total: p.now?.total ?? '', now_file: p.now?.file ?? '' }))} />} /></div>
         <div className="overflow-x-auto scroll-thin">
           <table className="w-full min-w-[720px] text-[13.5px]">
             <thead><tr className="border-y border-border bg-canvas/60 text-left text-[12px] text-fg-mute"><th className="px-5 py-2.5 font-medium">Pack</th><th className="px-3 py-2.5 font-medium">Mode</th><th className="px-3 py-2.5 font-medium">First run</th><th className="px-3 py-2.5 font-medium">Now</th></tr></thead>

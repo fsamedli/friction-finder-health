@@ -59,6 +59,14 @@ SEGMENT = {"establishments": 23848, "employees": 1_840_000,
 @lru_cache(maxsize=1)
 def _data():
     ops = pd.read_csv(DATA_DIR / "team_ops_monthly.csv")
+    up = upload_path()
+    if up.exists():  # the client's uploaded team-months replace the demo rows for the same team and month
+        new = pd.read_csv(up)
+        key = ["month", "team_id"]
+        ops = ops.merge(new[key], on=key, how="left", indicator=True)
+        ops = ops[ops["_merge"] == "left_only"].drop(columns="_merge")
+        teams0 = pd.read_csv(DATA_DIR / "teams.csv")[["team_id", "site_id", "shift", "headcount"]]
+        ops = pd.concat([ops, new.merge(teams0, on="team_id")[ops.columns]], ignore_index=True).sort_values(key).reset_index(drop=True)
     teams = pd.read_csv(DATA_DIR / "teams.csv")
     sites = pd.read_csv(DATA_DIR / "sites.csv")
     items = pd.read_csv(DATA_DIR / "q12_items.csv")
@@ -66,6 +74,56 @@ def _data():
     resp["grand"] = resp[ITEM_CODES].mean(axis=1)
     tw = resp.groupby(["team_id", "wave_id"]).agg(n=("emp_id", "size"), **{c: (c, "mean") for c in ITEM_CODES + ["grand"]})
     return ops, teams, sites, dict(zip(items["item"], items["label"])), tw
+
+
+UPLOAD_COLUMNS = ["month", "team_id", "absence_days", "late_departures", "quits", "injuries", "rework"]
+
+
+def upload_path():
+    return CACHE_DIR / "team_ops_upload.csv"
+
+
+def reload() -> None:
+    """Drop cached data and results after an upload or a return to demo data."""
+    for f in (_data, _cells, quartile_link, association):
+        f.cache_clear()
+
+
+def validate_upload(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Check an uploaded team-month file. Returns the clean rows and a list of plain-language problems."""
+    problems: list[str] = []
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    missing = [c for c in UPLOAD_COLUMNS if c not in df.columns]
+    if missing:
+        return df, [f"Missing columns: {', '.join(missing)}. Download the template to see the expected columns."]
+    df = df[UPLOAD_COLUMNS].copy()
+    if df.empty:
+        return df, ["The file has no rows."]
+    teams = set(pd.read_csv(DATA_DIR / "teams.csv").team_id)
+    months = set(pd.read_csv(DATA_DIR / "team_ops_monthly.csv").month)
+    for i, r in df.iterrows():
+        row = i + 2  # header is line 1
+        if str(r["month"]) not in months:
+            problems.append(f"Line {row}: month '{r['month']}' is outside the data range (use YYYY-MM from {min(months)} to {max(months)}).")
+        try:
+            if int(r["team_id"]) not in teams:
+                problems.append(f"Line {row}: team_id {r['team_id']} does not exist.")
+        except (TypeError, ValueError):
+            problems.append(f"Line {row}: team_id must be a whole number.")
+        for c in UPLOAD_COLUMNS[2:]:
+            v = pd.to_numeric(r[c], errors="coerce")
+            if pd.isna(v) or v < 0 or v != int(v):
+                problems.append(f"Line {row}: {c} must be a whole number of 0 or more (got '{r[c]}').")
+        if len(problems) >= 8:
+            problems.append("Stopped after 8 problems.")
+            break
+    if not problems:
+        df["team_id"] = df["team_id"].astype(int)
+        for c in UPLOAD_COLUMNS[2:]:
+            df[c] = df[c].astype(int)
+        if df.duplicated(["month", "team_id"]).any():
+            problems.append("The same team and month appear more than once.")
+    return df, problems
 
 
 def item_labels() -> dict:

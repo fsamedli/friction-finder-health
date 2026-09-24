@@ -5,7 +5,7 @@ import { api, type Status, type TeamRow } from '../lib/api'
 import { money, monthRange, num, signed } from '../lib/format'
 import { useLoad, useStore } from '../lib/store'
 import { Spark } from '../components/charts'
-import { Badge, Card, ErrorState, Method, PageHeader, PageSkeleton, Segmented, StatusBadge, cx } from '../components/ui'
+import { Badge, Card, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, Segmented, StatusBadge, cx } from '../components/ui'
 
 type Filter = 'all' | 'attention' | 'normal'
 
@@ -43,7 +43,13 @@ export default function Teams() {
       <Card pad={false}>
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
           <Segmented value={f} onChange={setF} options={[{ id: 'all', label: `All ${b.teams.length}` }, { id: 'attention', label: `Needs attention ${nAtt}` }, { id: 'normal', label: 'Normal' }]} />
-          <label className="ml-auto flex h-9 items-center gap-2 rounded-lg border border-border-strong px-2.5 focus-within:ring-4 focus-within:ring-brand/10">
+          <span className="ml-auto" />
+          <CsvButton filename={`teams_${b.site}_${b.as_of}.csv`} rows={() => rows.map((t) => ({ team: t.team_name, shift: t.shift, headcount: t.headcount, status: t.status,
+            late_departures_observed: t.excess_by_kpi.late_departures?.observed ?? '', late_departures_expected: t.excess_by_kpi.late_departures?.expected ?? '',
+            absence_days_observed: t.excess_by_kpi.absence_days?.observed ?? '', absence_days_expected: t.excess_by_kpi.absence_days?.expected ?? '',
+            quits_observed: t.excess_by_kpi.quits?.observed ?? '', excess_cost_usd: t.excess_cost,
+            largest_item_change: t.engagement?.biggest_drop?.item ?? '', change_pts: t.engagement?.biggest_drop?.delta ?? '', window: monthRange(b.window) }))} />
+          <label className="flex h-9 items-center gap-2 rounded-lg border border-border-strong px-2.5 focus-within:ring-4 focus-within:ring-brand/10">
             <Search size={15} className="text-fg-faint" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search teams" className="w-40 bg-transparent text-[13px] focus:outline-none" />
           </label>

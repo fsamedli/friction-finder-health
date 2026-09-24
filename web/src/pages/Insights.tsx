@@ -4,7 +4,7 @@ import { num, per10, pval, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
 import { useLoad, useStore } from '../lib/store'
 import { LinkScatter, QuartileBars } from '../components/charts'
-import { Badge, Card, CardHeader, Empty, ErrorState, Method, PageHeader, PageSkeleton, cx } from '../components/ui'
+import { Badge, Card, CardHeader, CsvButton, Empty, ErrorState, Method, PageHeader, PageSkeleton, cx } from '../components/ui'
 
 const ITEMS = ['grand', 'q01', 'q02', 'q03', 'q04', 'q05', 'q06', 'q07', 'q08', 'q09', 'q10', 'q11', 'q12']
 
@@ -25,7 +25,7 @@ export default function Insights() {
         actions={<Badge tone="neutral">Association, not cause</Badge>} />
       <Card>
         <CardHeader title="Link map" sub={`${linked} of ${tested} pairs linked at 95% confidence · about ${Math.round(tested * 0.05)} would light up by chance, so treat a single cell as a lead, not a finding`}
-          right={<Method>For each KPI × item pair: OLS of the team-wave KPI rate (the quarter the survey closed in) on the item mean, standard errors clustered by team. A cell is "linked" when the 95% interval excludes zero. Injuries are too rare at this size to test.</Method>} />
+          right={<><CsvButton filename="engagement_x_operations_links.csv" rows={() => grid.data!.map((x) => ({ kpi: x.kpi, item: x.item, slope_per_head_month: x.slope, ci_low: x.ci_low, ci_high: x.ci_high, p: x.p, n_team_waves: x.n_cells, verdict: x.verdict }))} /><Method>For each KPI × item pair: OLS of the team-wave KPI rate (the quarter the survey closed in) on the item mean, standard errors clustered by team. A cell is "linked" when the 95% interval excludes zero. Injuries are too rare at this size to test.</Method></>} />
         <div className="overflow-x-auto scroll-thin">
           <table className="w-full min-w-[760px] border-separate border-spacing-1 text-[12px]">
             <thead><tr><th className="w-36" />{ITEMS.map((it) => <th key={it} title={meta?.items[it]} className={cx('pb-1 font-medium', it === sel.item ? 'text-brand-700' : 'text-fg-mute')}>{lbl(it)}</th>)}</tr></thead>

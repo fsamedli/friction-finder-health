@@ -129,6 +129,15 @@ export const api = {
   quality: () => j<Quality>('/api/quality'),
   useful: (target: 'ask' | 'plan', target_id: string, useful: boolean, reason?: string) =>
     j<Record<string, unknown>>('/api/useful', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target, target_id, useful, reason: reason ?? null }) }),
+  opsUpload: () => j<{ active: boolean; rows?: number; teams?: number; months?: string[] }>('/api/ops-upload'),
+  opsUploadSend: async (file: File) => {
+    const f = new FormData(); f.append('file', file)
+    const r = await fetch('/api/ops-upload', { method: 'POST', body: f })
+    const body = await r.json().catch(() => ({}))
+    if (!r.ok) throw Object.assign(new Error('upload rejected'), { problems: (body?.detail?.problems ?? [typeof body?.detail === 'string' ? body.detail : 'Upload failed']) as string[] })
+    return body as { active: boolean; rows: number; teams: number; months: string[]; message: string }
+  },
+  opsUploadClear: () => j<{ active: boolean }>('/api/ops-upload', { method: 'DELETE' }),
   sources: () => j<Source[]>('/api/sources'),
   upload: async (file: File) => { const f = new FormData(); f.append('file', file); return j<{ rows_added: number }>('/api/upload', { method: 'POST', body: f }) },
   reviewLog: () => j<Record<string, unknown>[]>('/api/review-log'),

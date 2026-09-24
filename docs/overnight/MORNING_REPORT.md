@@ -343,3 +343,28 @@ Gate: `126 passed, 0 failed`; pytest 94/94 (no key); lint 0.
 - Tests: `tests/test_study.py` (SUS extremes 0/50/100, task timing, endpoint validation).
 - The gate now also exercises study mode and checks "Useful?" is present:
   `140 passed, 0 failed`; pytest 97/97 (no key).
+
+### Phase 11: Output that leaves the app, and upload — **done**
+- **One-page report** (`GET /api/report/{plan_id}`, rewritten): the finding (observed vs expected, p, the item
+  drops), the obstacle, focus item, KPI, the actions with owners and dates, the review result for every KPI
+  (estimate, 95% CI, verdict, $ at the client-entered cost), and the caveats (directional, not causal;
+  associations; synthetic data; the AI does not produce numbers). Print-ready (`@media print`, a
+  "Print / Save as PDF" button) and downloadable (`?download=true`); linked from Impact and the plan tab.
+  Found and fixed: a raw `<` in "p < 0.001" could break the HTML.
+- **CSV export** on every data table: Teams, Action plans, Insights link map, Ask evidence register, Impact
+  series, unit costs, Trust quality packs (`web/src/lib/csv.ts`, `CsvButton`).
+- **Operating-data upload in the new UI** (Data sources): team-month CSV (month, team_id, absence_days,
+  late_departures, quits, injuries, rework).
+  - The **Template** button downloads the real demo rows for Richmond Night A.
+  - Validation messages are line by line (unknown team, month out of range, negative or non-whole counts,
+    missing columns, duplicates; stops after 8).
+  - Uploaded rows replace the demo rows for the same team and month, and the board, team pages and impact
+    reviews recompute at once.
+  - A blue banner shows while uploaded data is active; **Back to demo data** removes it, and so does Reset demo.
+  - The file stays in `data/cache/` on this machine.
+  - The old dispatch upload remains, labelled "for Ask".
+  - Found by the gate and fixed: the banner didn't appear until you navigated.
+- Tests: upload validation plus "the board updates, then goes back" (`tests/test_api.py`). The gate now covers
+  the report, a CSV download, a rejected bad file, a good file changing Night A's status, and the reset.
+
+Gate: `158 passed, 0 failed`; pytest 98/98 (no key); lint 0.

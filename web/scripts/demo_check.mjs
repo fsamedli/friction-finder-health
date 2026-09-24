@@ -16,8 +16,10 @@ for (const width of [1440, 390]) {
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(`page error: ${e.message}`))
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`) })
-  page.on('response', (r) => { if (r.url().includes('/api/') && r.status() >= 400) errors.push(`API ${r.status()} ${r.url().replace(base, '')}`) })
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('422')) errors.push(`console: ${m.text()}`) })
+  // the one expected failure: the deliberately bad upload below must be rejected with 422
+  const expected = (u, s) => u.endsWith('/api/ops-upload') && s === 422
+  page.on('response', (r) => { if (r.url().includes('/api/') && r.status() >= 400 && !expected(r.url(), r.status())) errors.push(`API ${r.status()} ${r.url().replace(base, '')}`) })
 
   const see = async (label, texts, timeout = 15000) => {
     for (const t of [].concat(texts)) {
@@ -81,6 +83,27 @@ for (const width of [1440, 390]) {
     await page.getByRole('button', { name: "Why did the Richmond night shift's scores drop and why are deliveries late?" }).first().click()
     await see('Ask (prepared)', ['Prepared answer', 'Run live'])
   } else log(true, width, 'Ask (prepared): no prepared answers on this machine; skipped')
+
+  // one-page report and CSV export
+  const rep = await (await fetch(base + '/api/report/plan-richmond-night-a')).text()
+  log(rep.includes('What we found') && rep.includes('Did it work?') && rep.includes('Directional, not causal') && rep.includes('&lt; 0.001'), width, 'One-page report: finding, plan, result, caveats')
+  await page.goto(base + '/teams', { waitUntil: 'networkidle' })
+  try {
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.getByRole('button', { name: 'CSV' }).locator('visible=true').first().click()])
+    log(/^teams_Richmond_.*\.csv$/.test(dl.suggestedFilename()), width, `CSV export: ${dl.suggestedFilename()}`)
+  } catch { log(false, width, 'CSV export: no download') }
+  // upload: a bad file shows problems; a good file updates the board; Back to demo data restores it
+  await page.goto(base + '/data', { waitUntil: 'networkidle' })
+  const input = page.getByLabel('Operating records CSV')
+  await input.setInputFiles({ name: 'bad.csv', mimeType: 'text/csv', buffer: Buffer.from('month,team_id\n2026-06,4\n') })
+  await see('Upload · bad file', ['The file was not loaded', 'Missing columns'])
+  const good = 'month,team_id,absence_days,late_departures,quits,injuries,rework\n' + [6, 7, 8].map((m) => `2026-0${m},4,8,14,0,0,4`).join('\n') + '\n'
+  await input.setInputFiles({ name: 'ops.csv', mimeType: 'text/csv', buffer: Buffer.from(good) })
+  await see('Upload · good file', ['3 team-months loaded', 'Showing your uploaded operating records'])
+  const b2 = await (await fetch(base + '/api/board?site_id=1&as_of=2026-09-15')).json()
+  log(b2.teams.find((t) => t.team_name === 'Night A')?.status !== 'red', width, 'Upload · board updated (Night A no longer flagged with normal late departures)')
+  await click('Upload', 'Back to demo data')
+  await see('Upload · reset', ['Back to the demo data'])
 
   // usability study mode (logs go to the scratch folder of this check)
   await page.goto(base + '/?study=1', { waitUntil: 'networkidle' })

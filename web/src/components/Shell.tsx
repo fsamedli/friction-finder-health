@@ -237,6 +237,24 @@ function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) 
   )
 }
 
+function UploadBanner() {
+  const loc = useLocation()
+  const [s, setS] = useState<{ active: boolean; rows?: number } | null>(null)
+  useEffect(() => {
+    const load = () => api.opsUpload().then(setS).catch(() => setS(null))
+    load()
+    window.addEventListener('ff:data-changed', load)
+    return () => window.removeEventListener('ff:data-changed', load)
+  }, [loc.pathname])
+  if (!s?.active) return null
+  return (
+    <div className="border-b border-info-100 bg-info-50 px-4 py-2 text-[12.5px] text-info-700 lg:px-8">
+      Showing your uploaded operating records ({s.rows} team-months) instead of the demo rows for those teams and months.{' '}
+      <NavLink to="/data" className="font-medium underline">Manage or go back to demo data</NavLink>
+    </div>
+  )
+}
+
 export default function Shell() {
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
@@ -258,6 +276,7 @@ export default function Shell() {
         </div>
       )}
       <Topbar onMenu={() => setMenu(true)} onDemo={startDemo} />
+      <UploadBanner />
       <main key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
         <Outlet />
       </main>

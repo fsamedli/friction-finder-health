@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowUp, Check, ChevronDown, Code2, Flag, Loader2, ShieldCheck, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { api, type AskResult, type Evidence } from '../lib/api'
 import { useStore } from '../lib/store'
-import { Badge, Button, Card, CardHeader, PageHeader, Provenance, cx } from '../components/ui'
+import { Badge, Button, Card, CardHeader, CsvButton, PageHeader, Provenance, cx } from '../components/ui'
 import Useful from '../components/Useful'
 
 const EXAMPLES = [
@@ -157,7 +157,8 @@ export default function Ask() {
             {r.status === 'ok' && <div className="mt-3"><Useful key={r.id} target="ask" id={r.id} /></div>}
           </Card>
           <Card>
-            <CardHeader title="Evidence register" sub={`${r.evidence.length} items the brief is allowed to use`} />
+            <CardHeader title="Evidence register" sub={`${r.evidence.length} items the brief is allowed to use`}
+              right={<CsvButton filename="evidence_register.csv" rows={() => r.evidence.map((e) => ({ id: e.id, kind: e.kind, origin: e.origin, statement: e.statement, sql: e.sql ?? '', source: e.source }))} />} />
             <ul className="max-h-[720px] overflow-y-auto scroll-thin pr-1">{r.evidence.map((e) => <EvidenceRow key={e.id} e={e} />)}</ul>
           </Card>
         </div>

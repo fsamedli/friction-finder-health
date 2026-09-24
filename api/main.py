@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -166,10 +166,50 @@ def create_plan(p: PlanIn):
 
 @app.delete("/api/demo")
 def reset_demo():
-    """Between rehearsals: remove plans created in the app and edited unit costs. Seeded data is untouched."""
-    for name in ("plans.jsonl", "costs.json"):
+    """Between rehearsals: remove plans created in the app, edited unit costs and uploaded operating data."""
+    for name in ("plans.jsonl", "costs.json", "team_ops_upload.csv"):
         (config.CACHE_DIR / name).unlink(missing_ok=True)
+    I.reload()
     return {"ok": True}
+
+
+@app.get("/api/ops-upload")
+def ops_upload_status():
+    p = I.upload_path()
+    if not p.exists():
+        return {"active": False}
+    df = pd.read_csv(p)
+    return {"active": True, "rows": int(len(df)), "teams": int(df.team_id.nunique()), "months": sorted(df.month.unique().tolist())}
+
+
+@app.get("/api/ops-upload/template", response_class=PlainTextResponse)
+def ops_upload_template():
+    """Template = the real demo rows for Richmond Night A, so the columns and scale are clear."""
+    ops = pd.read_csv(config.DATA_DIR / "team_ops_monthly.csv")
+    rows = ops[ops.team_id == 4][I.UPLOAD_COLUMNS]
+    return PlainTextResponse(rows.to_csv(index=False), headers={"Content-Disposition": "attachment; filename=team_ops_template.csv"})
+
+
+@app.post("/api/ops-upload")
+async def ops_upload(file: UploadFile):
+    try:
+        df = pd.read_csv(io.BytesIO(await file.read()))
+    except Exception as e:
+        raise HTTPException(422, f"Could not read that file as CSV: {e}")
+    clean, problems = I.validate_upload(df)
+    if problems:
+        raise HTTPException(422, {"problems": problems})
+    config.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    clean.to_csv(I.upload_path(), index=False)
+    I.reload()
+    return {**ops_upload_status(), "message": f"{len(clean)} team-months loaded. They replace the demo rows for the same teams and months."}
+
+
+@app.delete("/api/ops-upload")
+def ops_upload_clear():
+    I.upload_path().unlink(missing_ok=True)
+    I.reload()
+    return {"active": False}
 
 
 @app.get("/api/plans/{plan_id}/result")
@@ -556,32 +596,65 @@ async def upload(file: UploadFile):
 
 # ------------------------------------------------------------------ report
 @app.get("/api/report/{plan_id}", response_class=HTMLResponse)
-def report(plan_id: str, as_of: str = I.AS_OF_REVIEW):
+def report(plan_id: str, as_of: str = I.AS_OF_REVIEW, download: bool = False):
+    """One page, print-ready: the finding, the plan, the owners, the review result, the caveats. No scripts
+    except a print button; every number comes from the same functions the app uses."""
     plan = next((p for p in I.load_plans() if p["id"] == plan_id), None)
     if not plan:
         raise HTTPException(404, "unknown plan")
-    w = I.why(int(plan["team_id"]), I.AS_OF_DETECT, _costs())
-    r = I.did(plan, _check_as_of(as_of), _costs())
+    costs = _costs()
+    w = I.why(int(plan["team_id"]), I.AS_OF_DETECT, costs)
+    results = I.did_all(plan, _check_as_of(as_of), costs)
+    r = results[0]
     e = html.escape
+    kpi = plan.get("kpi", "late_departures")
+    ex = (w.get("excess") or {}).get(kpi) or {}
+    drops = [c for c in w.get("item_changes", []) if c["delta"] <= -0.30][:3]
+    finding = (f"In {', '.join(w.get('window') or [])}, {e(I.KPI_LABELS[kpi].lower())} on this team were {ex.get('observed', 0):.0f} "
+               f"against {ex.get('expected', 0):.1f} expected from comparable teams (Poisson p {'&lt; 0.001' if (ex.get('p') or 1) < 0.001 else '= ' + str(ex.get('p'))}). "
+               if ex else "")
+    if drops:
+        finding += "Survey items that fell between waves: " + "; ".join(f"{e(c['label'])} {c['delta']:+.2f} pts" for c in drops) + "."
     acts = "".join(f"<tr><td>{e(a['text'])}</td><td>{e(a['owner'])}</td><td>{e(a['due'])}</td></tr>" for a in plan["actions"])
     if r["status"] == "ok":
-        result = (f"<p><b>{e(r['kpi_label'])}:</b> {r['estimate']:+.2f} per person per month vs comparable teams "
-                  f"(95% CI {r['ci_low']:+.2f} to {r['ci_high']:+.2f}). Verdict: <b>{e(r['verdict'])}</b>. "
-                  f"Directional, not causal; follow-up months are synthetic.</p>")
+        rows = "".join(f"<tr><td>{e(x['kpi_label'])}</td><td>{x['estimate'] * 10:+.1f}</td><td>{x['ci_low'] * 10:+.1f} to {x['ci_high'] * 10:+.1f}</td><td><b>{e(x['verdict'])}</b></td></tr>"
+                       for x in results if x["status"] == "ok")
+        money = f" About ${r['dollars_per_quarter']:,.0f} a quarter at the client-entered unit cost." if r.get("dollars_per_quarter") and r["verdict"] == "worked" else ""
+        result = (f"<p>Compared with {e(', '.join(r['comparison']['teams']))} over the same months (before: {e(', '.join(r['pre_months']))}; after: {e(', '.join(r['post_months']))}).{money}</p>"
+                  f"<table><tr><th>KPI (per 10 people / month)</th><th>Change vs comparison</th><th>95% CI</th><th>Verdict</th></tr>{rows}</table>")
+    elif r["status"] == "not_reached":
+        result = f"<p>The review is on {e(plan['review'])}: {r['days_to_go']} days to go.</p>"
     else:
-        result = f"<p>Review on {e(plan['review'])}: {e(r.get('reason') or str(r.get('days_to_go', '')) + ' days to go')}.</p>"
-    return f"""<!doctype html><html><head><meta charset="utf-8"><title>Friction Finder plan</title>
-<style>body{{font-family:'Source Sans 3',Calibri,sans-serif;color:#1B3A4B;background:#FAF8F3;max-width:760px;margin:32px auto;padding:0 16px}}
-h1,h2{{font-family:Fraunces,Georgia,serif}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #E3DFD5;padding:6px;text-align:left}}
-.tag{{display:inline-block;background:#1F8FA8;color:#fff;border-radius:999px;padding:2px 10px;font-size:12px}}</style></head><body>
-<p class="tag">Friction Finder · Northline Logistics (fictional)</p>
-<h1>{e(w['team']['site'])} {e(w['team']['team_name'])}: plan and review</h1>
-<p><b>Obstacle:</b> {e(plan.get('obstacle', ''))}<br><b>Focus item:</b> {e(plan.get('focus', plan['item']))}<br>
-<b>Start:</b> {e(plan['start'])} · <b>Review:</b> {e(plan['review'])} · <b>Status:</b> {e(plan['status'])}</p>
-<h2>Actions</h2><table><tr><th>Action</th><th>Owner</th><th>Due</th></tr>{acts}</table>
+        result = f"<p>{e(r.get('reason', 'Not enough follow-up data yet.'))}</p>"
+    team = f"{w['team']['site']} {w['team']['team_name']}"
+    doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · {e(team)} · plan and review</title>
+<style>
+body{{font-family:Geist,'Source Sans 3',Calibri,sans-serif;color:#101828;background:#fff;max-width:780px;margin:28px auto;padding:0 20px;font-size:13.5px;line-height:1.45}}
+h1{{font-size:21px;margin:6px 0 2px}} h2{{font-size:14px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em;color:#344054}}
+table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E7EC;padding:5px 6px;text-align:left;vertical-align:top}} th{{font-size:12px;color:#667085;font-weight:600}}
+.tag{{display:inline-block;background:#E7F6F4;color:#0B6E65;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:600}}
+.muted{{color:#667085;font-size:12px}} .box{{border:1px solid #E4E7EC;border-radius:10px;padding:10px 12px;margin-top:6px}}
+.print{{float:right;border:1px solid #D0D5DD;background:#fff;border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}}
+@media print{{.print{{display:none}} body{{margin:0}} @page{{margin:14mm}}}}
+</style></head><body>
+<button class="print" onclick="window.print()">Print / Save as PDF</button>
+<span class="tag">Friction Finder · Northline Logistics (fictional) · synthetic data</span>
+<h1>{e(team)}: plan and review</h1>
+<div class="muted">{w['team']['shift']} shift · {w['team']['headcount']} people · report as of {e(as_of)}</div>
+<h2>What we found</h2><div class="box">{finding or 'No operating KPI beyond normal variation.'}</div>
+<h2>Obstacle and plan</h2>
+<p><b>Obstacle to test:</b> {e(plan.get('obstacle', ''))}<br><b>Focus item:</b> {e(plan.get('focus', plan['item']))} · <b>KPI to watch:</b> {e(I.KPI_LABELS[kpi])}<br>
+<b>Start:</b> {e(plan['start'])} · <b>Review:</b> {e(plan['review'])} · <b>Status:</b> {e(plan['status'])} (approved by a person)</p>
+<table><tr><th>Action</th><th>Owner</th><th>Due</th></tr>{acts}</table>
 <h2>Did it work?</h2>{result}
-<p style="font-size:12px;color:#5b6b75">Every number is computed by code from the client's survey export and operating records. The model does not produce numbers. A person approved this plan.</p>
+<h2>Read this before acting on it</h2>
+<ul class="muted"><li>Directional, not causal: another change at the same time could explain the result. The plan owner should confirm what else changed.</li>
+<li>Survey–KPI links are associations across teams, not causes. Teams under 4 people are never shown on their own.</li>
+<li>Northline Logistics is fictional and all data is synthetic; the follow-up months (Oct–Nov 2026) are synthetic.</li>
+<li>Every number is computed by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>
 </body></html>"""
+    headers = {"Content-Disposition": f'attachment; filename="friction_finder_{plan_id}.html"'} if download else None
+    return HTMLResponse(doc, headers=headers)
 
 
 # ------------------------------------------------------------------ static app

@@ -67,6 +67,15 @@ PASS  1440px  Ask (rules mode): "Useful?"
 PASS  1440px  Ask: no horizontal scroll
 PASS  1440px  Ask (prepared): "Prepared answer"
 PASS  1440px  Ask (prepared): "Run live"
+PASS  1440px  One-page report: finding, plan, result, caveats
+PASS  1440px  CSV export: teams_Richmond_2026-09-15.csv
+PASS  1440px  Upload · bad file: "The file was not loaded"
+PASS  1440px  Upload · bad file: "Missing columns"
+PASS  1440px  Upload · good file: "3 team-months loaded"
+PASS  1440px  Upload · good file: "Showing your uploaded operating records"
+PASS  1440px  Upload · board updated (Night A no longer flagged with normal late departures)
+PASS  1440px  Upload: clicked Back to demo data
+PASS  1440px  Upload · reset: "Back to the demo data"
 PASS  1440px  Study mode: "Study mode"
 PASS  1440px  Study mode: clicked Begin
 PASS  1440px  Study mode: clicked Task 1
@@ -137,6 +146,15 @@ PASS  390px  Ask (rules mode): "Useful?"
 PASS  390px  Ask: no horizontal scroll
 PASS  390px  Ask (prepared): "Prepared answer"
 PASS  390px  Ask (prepared): "Run live"
+PASS  390px  One-page report: finding, plan, result, caveats
+PASS  390px  CSV export: teams_Richmond_2026-09-15.csv
+PASS  390px  Upload · bad file: "The file was not loaded"
+PASS  390px  Upload · bad file: "Missing columns"
+PASS  390px  Upload · good file: "3 team-months loaded"
+PASS  390px  Upload · good file: "Showing your uploaded operating records"
+PASS  390px  Upload · board updated (Night A no longer flagged with normal late departures)
+PASS  390px  Upload: clicked Back to demo data
+PASS  390px  Upload · reset: "Back to the demo data"
 PASS  390px  Study mode: "Study mode"
 PASS  390px  Study mode: clicked Begin
 PASS  390px  Study mode: clicked Task 1
@@ -144,5 +162,5 @@ PASS  390px  Study mode: "Find the team that is costing the site the most"
 PASS  390px  Study mode: clicked Done
 PASS  390px  no console errors or failed API calls
 
-140 passed, 0 failed
+158 passed, 0 failed
 exit=0
