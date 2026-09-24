@@ -98,3 +98,17 @@ def test_ask_rules_mode_without_key(monkeypatch, tmp_path):
     d = r.json()
     assert d["mode"] == "rules" and d["status"] == "ok" and d["evidence"]
     assert c.post("/api/approve", json={"result_id": d["id"], "decision": "flagged", "note": "test"}).status_code == 200
+
+
+def test_ask_reports_grounding_and_trace(monkeypatch):
+    monkeypatch.setattr(config, "has_key", lambda: False)
+    d = c.post("/api/ask", json={"question": "Why did the Richmond night shift's scores drop and why are deliveries late?"}).json()
+    g = d["grounding"]
+    assert g["total"] > 0 and g["checked"] == g["total"] and g["unmatched"] == []
+    steps = [t["step"] for t in d["trace"]]
+    assert steps[0] == "Understand the question" and steps[-1] == "Check the brief"
+
+
+def test_sources():
+    s = c.get("/api/sources").json()
+    assert {x["id"] for x in s} >= {"survey", "timekeeping", "wms"} and all(x["rows"] >= 0 for x in s)

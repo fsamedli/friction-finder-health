@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 import io
 import json
+import re
 import threading
 import time
 import uuid
@@ -195,6 +196,33 @@ def value(headcount: int = 300):
     return I.value_case(_costs(), headcount)
 
 
+# ------------------------------------------------------------------ data sources
+@app.get("/api/sources")
+def sources():
+    d = config.DATA_DIR
+    resp = pd.read_csv(d / "responses.csv")
+    ops = pd.read_csv(d / "ops_daily.csv")
+    tom = pd.read_csv(d / "team_ops_monthly.csv")
+    com = pd.read_csv(d / "comments.csv")
+    docs = sorted(p.name for p in config.DOCS_DIR.glob("*")) if config.DOCS_DIR.exists() else []
+    up = _state["db"].uploaded_ops_rows if _state["db"] else 0
+    return [
+        {"id": "survey", "name": "Engagement survey export", "vendor": "Gallup Access (Q12-style CSV)", "owner": "HR / People analytics",
+         "status": "connected", "method": "CSV export, each wave", "rows": int(len(resp)), "detail": f"{resp.wave_id.nunique()} waves · {resp.team_id.nunique()} teams · respondent rows stay inside the database",
+         "last": "2026-09-10"},
+        {"id": "comments", "name": "Survey comments", "vendor": "Gallup Access (open text)", "owner": "HR / People analytics",
+         "status": "connected", "method": "CSV export, each wave", "rows": int(len(com)), "detail": "Indexed for retrieval; teams under 4 respondents never indexed", "last": "2026-09-10"},
+        {"id": "timekeeping", "name": "Timekeeping & attendance", "vendor": "e.g. UKG / Kronos", "owner": "Operations",
+         "status": "connected", "method": "Monthly CSV (team template)", "rows": int(len(tom)), "detail": "Absences, quits, injuries, late departures, rework by team-month", "last": "2026-11-30"},
+        {"id": "wms", "name": "Dispatch / WMS", "vendor": "e.g. Manhattan, Blue Yonder", "owner": "Operations",
+         "status": "connected", "method": "Daily CSV by shift and hour", "rows": int(len(ops)) + int(up), "detail": f"Departures and late departures by hour band{f' · {up} rows uploaded this session' if up else ''}", "last": "2026-09-10"},
+        {"id": "docs", "name": "Procedures & ownership directory", "vendor": "SharePoint / policy library", "owner": "Site operations",
+         "status": "connected", "method": "Document folder", "rows": len(docs), "detail": ", ".join(docs[:4]), "last": "2026-09-01"},
+        {"id": "hris", "name": "HRIS (tenure bands)", "vendor": "e.g. Workday", "owner": "HR",
+         "status": "available", "method": "Not connected in the demo", "rows": 0, "detail": "Tenure bands come with the survey export in this demo", "last": None},
+    ]
+
+
 # ------------------------------------------------------------------ under the hood
 @app.get("/api/assumptions")
 def assumptions():
@@ -275,9 +303,52 @@ def ask(q: AskIn):
     _state["results"][rid] = res
     return _jsonable({"id": rid, "status": res.status, "question": res.question, "message": res.message,
                       "mode": _brief_mode(res), "seconds": round(time.time() - t0, 1), "notes": res.notes,
+                      "grounding": _grounding(res), "trace": _trace(res, retriever),
                       "assessment": asdict(res.assessment) if res.assessment else None,
                       "brief": asdict(res.brief) if res.brief else None,
                       "evidence": [asdict(e) for e in res.evidence]})
+
+
+def _secs(notes: list[str], prefix: str) -> float | None:
+    for n in notes:
+        if n.startswith(prefix):
+            m = re.search(r"([0-9]+\.[0-9]+)s", n)
+            return float(m.group(1)) if m else None
+    return None
+
+
+def _grounding(res) -> dict:
+    """Every number in the written brief must already appear in the evidence (statements or SQL rows)."""
+    if not res.brief:
+        return {"checked": 0, "total": 0, "unmatched": []}
+    b = res.brief
+    text = " ".join([b.obstacle, b.owner, b.proposed_test, b.limits] + [i.get("claim", "") for i in b.evidence_for + b.evidence_against] + list(b.missing))
+    ctx = " ".join(e.statement + " " + json.dumps(e.rows, default=str) for e in res.evidence)
+    allowed = agent._numbers_in(ctx)
+    found = [m.group(1) for m in agent.NUM_RE.finditer(text)]
+    bad = [n for n in found if n not in allowed and (n.rstrip("0").rstrip(".") if "." in n else n) not in allowed]
+    return {"checked": len(found) - len(bad), "total": len(found), "unmatched": bad}
+
+
+def _trace(res, retriever) -> list[dict]:
+    """What happened, in order, from the run's own notes and evidence. No step is invented."""
+    sc = res.scope
+    ev = res.evidence
+    sql = [e for e in ev if e.sql]
+    rows = sum(len(e.rows) for e in ev)
+    retrieved = [e for e in ev if e.origin == "retrieved"]
+    steps = [{"step": "Understand the question", "detail": (f"{sc.intent.replace('_', ' ')}" + (f" · {sc.site or ''} {sc.team or ''}".rstrip() if sc and (sc.site or sc.team) else "")) if sc else "not in scope",
+              "mode": "model" if sc and sc.mode == "llm" else "rules", "seconds": _secs(res.notes, "scope mode")}]
+    if res.status != "refused":
+        steps.append({"step": "Query the database views", "detail": f"{len(sql)} SQL queries · {rows} rows · teams under {config.MIN_N} suppressed in SQL", "mode": "code", "seconds": _secs(res.notes, "analyze + retrieve")})
+        steps.append({"step": "Retrieve comments and documents", "detail": f"{len(retrieved)} passages · {retriever.mode.split(' ')[0]} search", "mode": "code", "seconds": None})
+    if res.assessment:
+        steps.append({"step": "Compute the verdict", "detail": res.assessment.label, "mode": "code", "seconds": None})
+    if res.brief:
+        g = _grounding(res)
+        steps.append({"step": "Write the brief", "detail": "from the evidence above only", "mode": "model" if res.brief.mode == "llm" else "template", "seconds": _secs(res.notes, "brief mode")})
+        steps.append({"step": "Check the brief", "detail": f"{g['checked']} of {g['total']} numbers found in the evidence" + (f"; {len(res.brief.check_notes)} repairs" if res.brief.check_notes else ""), "mode": "code", "seconds": None})
+    return steps
 
 
 class ApproveIn(BaseModel):
