@@ -8,6 +8,7 @@ import { api, type Board, type Plan } from '../lib/api'
 import { longDate } from '../lib/format'
 import { DETECT, PERSONA, REVIEW, useStore, visiblePlans, type Role } from '../lib/store'
 import { cx } from './ui'
+import DemoGuide, { StartDemo, useDemo } from './DemoGuide'
 
 /** The v1 mark, refined: an ink tile, a teal ring (computed) with a gap, and a rust dot (the decision). */
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
@@ -210,7 +211,7 @@ function UserMenu() {
   )
 }
 
-function Topbar({ onMenu }: { onMenu: () => void }) {
+function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) {
   const { meta, siteId, setSiteId, role } = useStore()
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-3 border-b border-border bg-surface px-4 lg:px-6">
@@ -225,6 +226,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
         {(meta?.sites ?? [{ site_id: 1, site_name: 'Richmond' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name} DC</option>)}
       </select>
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <StartDemo onStart={onDemo} />
         <DemoClock />
         <Notifications />
         <div className="hidden sm:block h-6 w-px bg-border mx-1" />
@@ -237,7 +239,10 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 export default function Shell() {
   const [menu, setMenu] = useState(false)
   const loc = useLocation()
-  const { asOf, siteId, role } = useStore()
+  const { asOf, siteId, role, setAsOf, setSiteId, setRole } = useStore()
+  const demo = useDemo()
+  const nav = useNavigate()
+  const startDemo = () => { setRole('manager'); setSiteId(1); setAsOf(DETECT); nav('/'); demo.set(0) }
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])  // the mobile menu closes itself via onNavigate
   return (
     <div className="min-h-full lg:pl-[248px]">
@@ -251,10 +256,11 @@ export default function Shell() {
           </div>
         </div>
       )}
-      <Topbar onMenu={() => setMenu(true)} />
+      <Topbar onMenu={() => setMenu(true)} onDemo={startDemo} />
       <main key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
         <Outlet />
       </main>
+      <DemoGuide step={demo.step} set={demo.set} />
     </div>
   )
 }

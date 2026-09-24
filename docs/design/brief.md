@@ -1,0 +1,29 @@
+# Friction Finder — UI design brief
+
+Researched Sept 23, 2026. Sources are public docs and help pages only. No branding is borrowed.
+
+## 1. Design principle
+
+Every screen answers three questions in this order: **what the code computed** (teal, with its number, comparison group, and data date), **how sure it is** (CI, n, placebo, or an explicit "inconclusive"), and **what a person must decide** (orange, one clear action, recorded with a name and a reason). Verdicts come before charts, and charts come before raw data. We never show a number without its provenance, and we never describe an association as a cause. When the honest answer is "we can't tell," the page says that in the same visual weight a success would get.
+
+## 2. Patterns to adopt
+
+| # | Pattern | Seen in (URL checked) | Why it fits | Our screens |
+|---|---|---|---|---|
+| 1 | **Verdict badge first.** Stacked badges (Significant / Not Significant / **Inconclusive**, plus Above/Below Control only when significant). The CI level is adjustable and defaults to 95%. | Amplitude Summary card: amplitude.com/docs/feature-experiment/workflow/experiment-learnings | "Inconclusive" becomes a real outcome, and the page makes no direction claim without significance. | Impact, Team › Evidence |
+| 2 | **A data-quality warning overrides the verdict.** An SRM banner appears on the summary card, and the docs say to treat such results "as suspect." | amplitude.com/docs/feature-experiment/troubleshooting/sample-ratio-mismatch (banner placement comes from a search snippet; the page itself doesn't show the UI) | A failed placebo check should visibly demote "it worked." | Impact |
+| 3 | **Triage queue with explicit dispositions.** Accept / Decline (with an optional comment) / Duplicate / Snooze until a date or new activity. Teams can require a field before an item leaves triage. | Linear: linear.app/docs/triage | A flag is a claim for a human to judge, not a to-do. Dismissing requires a reason, which feeds the feedback log. | Today, Teams |
+| 4 | **Machine score plus "why flagged" plus related cases, then a human decision.** The list shows the risk level. The detail view shows the top risk factors and "related payments." Radar also warns when missing inputs mean it "can't compute all of the data it needs." | Stripe Radar: docs.stripe.com/radar/reviews and /radar/reviews/risk-insights | Our flag works the same way: $ gap vs comparable teams, top KPI contributors, and similar teams, then an orange Approve / Dismiss. Low n or a missing month shows up next to the number. | Today, Team detail, Data sources |
+| 5 | **Recommend one focus item, chosen for stated reasons.** Culture Amp's Focus Agent suggests 3 questions using favorability, impact, and comparisons ("choosing one action area… reduces analysis paralysis"). Gallup "recommends focusing on one action plan at a time." | support.cultureamp.com/en/articles/7048697 (search snippet); Gallup manager guide PDF, andrews.edu/services/hr/gallupsurvey/managers/mgrsguide-results.pdf | This is direct precedent, including Gallup's own, for our one-card plan. Show the ranking reasons. | Team › Drivers, Plan |
+| 6 | **Keep "score" and "link strength" in separate columns, with scales labeled in plain words.** Culture Amp: the question score "is not directly related to the driver strength." Gallup: a mean of 5 = "consistently met," 4 = "often met, but not consistently." | Culture Amp "How Impact is Determined" (search snippet only; the article body didn't render); Gallup PDF (above) | Judges will assume the lowest item is the lever. It may not be. Gallup's vocabulary avoids unexplained indices. | Insights, Teams, Team › Drivers |
+| 7 | **The plan is a tracked object with an owner, a date, and a status.** Culture Amp tracks actions as in progress, overdue, or completed. Gallup Access: Actions › New Action Plan, PDF export, then "review and recalibrate." | Culture Amp search snippet (7048574); Gallup PDF (above) | Status shows follow-through without us claiming impact. | Action plans, Plan tab |
+| 8 | **Incident-style overview.** Condensed timeline, pending tasks, and a named commander, under "What happened / Why it happened." The postmortem is generated from the timeline. | Datadog: docs.datadoghq.com/incident_response/incident_management/investigate/ | Flag → plan approved → review date → verdict on one strip. The Impact page builds itself from that record. | Team › Overview, Impact |
+| 9 | **Freshness stamp.** Sigma data is read-only, and `data_load_time` shows the date data is available through. | docs.stripe.com/data/how-sigma-works | "Data through Sept 14" on every brief, and "read-only" backs up the no-write-access claim. | Ask, Data sources |
+
+## 3. Anti-patterns to avoid
+
+1. **A vanity KPI wall.** A grid of tiles with no verdict, comparison group, or next action. The judge's question will be "so what?" Today should lead with 1–3 decisions, not 12 metrics.
+2. **Causal labels on correlational output.** Culture Amp calls it "Impact" and "drivers." Gallup's guide says action-planning managers "statistically double their growth," which is an uncontrolled comparison. Copying either framing is exactly the overclaim judges punish. Say "associated with." Reserve "worked" for the DiD result that passes its placebo check.
+3. **Uncited AI numbers.** Any figure in an Ask brief that has no evidence-register entry and no "checked" tick undoes the grounding story in a single screenshot. If a number can't be verified, the brief shows it as unverified or leaves it out.
+
+**Could not verify:** the Gallup Help Center "Action Planning" article (HTTP 403). The Culture Amp FAQ and "How Impact is Determined" bodies didn't render, so I relied on search snippets. The Workday Peakon docs page described calculations, not UI. The Amplitude docs don't show guardrail-metric layout. I didn't review Stripe's home page or Sigma's assistant UI (I didn't confirm whether it shows the generated SQL).

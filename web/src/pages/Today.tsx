@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, ClipboardList, DollarSign, Eye, Users } from 'lucide-react'
 import { api, KPI_ORDER, type Board, type Did, type Plan, type TeamRow } from '../lib/api'
-import { longDate, money, monthRange, num, signed } from '../lib/format'
+import { dataThrough, longDate, money, monthRange, num, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
 import { PERSONA, useLoad, useStore, visiblePlans } from '../lib/store'
 import { Spark } from '../components/charts'
@@ -90,7 +90,7 @@ function ManagerToday() {
     <div>
       <Journey at="detect" teamId={top?.team_id ?? main?.p.team_id} planId={main?.p.id} />
       <PageHeader
-        crumbs={<>{b.site} DC · {role === 'manager' ? 'your site' : 'selected site'}</>}
+        crumbs={<>{b.site} DC · {role === 'manager' ? 'your site' : 'selected site'} · {dataThrough(b.window)}</>}
         title={<>Good morning, {PERSONA[role].name.split(' ')[0]}</>}
         sub={headline}
         actions={reviewReady

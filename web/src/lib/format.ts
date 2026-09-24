@@ -20,3 +20,8 @@ export const longDate = (d: string) => {
   return `${MONTHS[m - 1]} ${day}, ${y}`
 }
 export const pval = (p: number | null | undefined) => (p == null ? '—' : p < 0.001 ? 'p < 0.001' : `p = ${p.toFixed(3)}`)
+export const dataThrough = (months: string[]) => {
+  if (!months.length) return ''
+  const m = months[months.length - 1], y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7))
+  return `data through ${MONTHS[mo - 1]} ${new Date(y, mo, 0).getDate()}, ${y}`
+}

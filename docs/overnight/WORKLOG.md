@@ -20,21 +20,21 @@ The "Where in v2" column is filled in as items are verified. [x] = present in v2
 **Global**
 - [x] As-of switch Sept 15 / Nov 30 → top bar "demo clock" dropdown
 - [x] Site picker → top bar select (locked to Richmond in the Manager view, open in the HR view)
-- [ ] Detect → Explain → Act → Prove loop visible as a narrative device (v1 header stepper) → **missing in v2**
-- [ ] Colour legend "computed by code / needs a person" (v1 footer) → **missing as a legend**
-- [ ] "Ranks obstacles, not managers." visible on the board (v1 footer) → only on Data sources in v2
+- [x] Detect → Explain → Act → Prove loop → journey strip on Today, Team detail, Plan tab and Impact (`components/Journey.tsx`), plus the guided demo (`14b40c3`, next commit)
+- [x] Colour legend → sidebar demo box: teal computed, rust needs your decision, purple AI (`14b40c3`)
+- [x] "Ranks obstacles, not managers." → Today attention card and Teams table footer (`14b40c3`)
 - [x] Company "Northline Logistics (fictional) · synthetic data" → sidebar demo box and org chip
 
 **Detect (v1 `/`)**
 - [x] Headline sentence naming the team, the KPI, the excess and "engagement fell at the same time" → Today subtitle
 - [x] Stat: excess operating cost with window → Today
-- [ ] Stat: annualized excess ("if the pattern held for a year") → **missing in v2**
+- [x] Stat: annualized excess → Today excess card sub-line "$X a year if it held" (`14b40c3`)
 - [x] Stat: teams to look at → Today "Teams needing attention"
 - [x] Stat: rolled up for privacy → Today sub-line and Teams table rows
 - [x] "Where the excess sits" by KPI, count and $ → Today card
 - [x] "How computed" method text (Poisson p < 0.01, item drop 0.30 + Welch/Bonferroni, too rare to judge, n < 4) → Method popover on Today
 - [x] Every team listed with status, excess $, signal → Teams table
-- [~] Per team: sparklines for late departures, absence days, **quits** with "too rare to judge" → v2 Teams table has late departures and absences only; **quits and the "too rare to judge" label are missing**
+- [x] Per team: late departures, absence days, quits with "too rare to judge" → Teams table (`14b40c3`)
 - [x] Per team: biggest item change in points, significance → Teams table
 - [x] Rolled-up teams: "Fewer than 4 people … no one can be identified" → Teams table row
 - [x] Click a team → explain page → Teams row → `/teams/:id`
@@ -53,9 +53,9 @@ The "Where in v2" column is filled in as items are verified. [x] = present in v2
 - [x] Slope, 95% CI, p, n sentence and OLS/cluster method → Drivers tab
 - [x] "Association, not cause" → Drivers tab and Insights
 - [x] Evidence: verdict label, "Is the drop real?" (signal check), operating detail, employee comments, process owner, reasons → Evidence tab
-- [ ] Evidence card showing mode and seconds ("rules mode · 0s") → v2 shows a "Computed" badge but **no seconds**
+- [x] Evidence card mode and seconds → Evidence tab badge "rules mode · 0.1 s" (`14b40c3`)
 - [x] Primary action "Draft a plan for this team" → header "Create action plan"
-- [~] Suppressed team page with explanation → v2 has the explanation; **no "Back" button**
+- [x] Suppressed team page with explanation and a "Back to teams" button (`14b40c3`)
 
 **Act (v1 `/plan/4`)**
 - [x] Existing plan: obstacle, focus item, KPI to watch, numbered actions with owner and due date → Plan tab
@@ -103,4 +103,8 @@ The "Where in v2" column is filled in as items are verified. [x] = present in v2
 - [x] "You told us → we changed" table → Trust › feedback tab
 - [x] "AI-assisted workflow, not autonomous agents" wording → Trust › Architecture
 
-**Gaps to close in Phase 4:** loop narrative; colour legend; "ranks obstacles, not managers" on Detect; annualized stat; quits sparkline and "too rare to judge" in the Teams table; seconds on the Evidence tab; Back button on the suppressed team page.
+**Gaps to close in Phase 4 (all closed in `14b40c3`):** loop narrative; colour legend; "ranks obstacles, not managers" on Detect; annualized stat; quits sparkline and "too rare to judge" in the Teams table; seconds on the Evidence tab; Back button on the suppressed team page.
+
+| 00:40 | Phase 3: `docs/design/brief.md` (research agent: 9 patterns, 3 anti-patterns, with sources and what could not be verified); `docs/design/brand.md` written; colour roles applied (teal computed, rust decisions only, ink navigation, watch = amber-yellow); v1 logo mark restored and refined | build and lint clean; 92/92 tests without key | Phase 4 gaps |
+| 00:55 | Phase 4: parity gaps closed (journey strip, legend, ranks-obstacles note, annualized, quits column, evidence timing, back button) → every checklist item ticked; `14b40c3`. After-screenshots: 56 (14 routes × 2 widths × 2 dates) | 0 overflow, 0 JS errors on all 56 (`screens/after/report.json`) | Phase 5 |
+| 01:10 | Phase 5: grounding and Ask progress already done (evening); Prove moment verified; guided demo mode added (Start demo in top bar, 4 steps, narration without numbers); "data through" stamp on Today. `demo_walk.mjs`: real clicks Start demo → Next → Next → Approve plan → Fast-forward | 8/8 checks found, 0 console errors, plan approved live with review 2026-11-30; screenshots `after/demo_*.jpg` | Phase 6 |
