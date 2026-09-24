@@ -138,6 +138,106 @@ Screenshots: `docs/review/before-{board-1440,board-390,why-1440}.jpg` and
 
 ---
 
-## Overnight run (Sept 23–24): see sections below
+## Overnight run, Part 1 (Phases 0–6), Sept 24, 00:00–01:30
 
-_(filled in as the night goes on)_
+### 1. Open this first
+```bash
+cd "~/Desktop/DNSC 6317/prototype" && git checkout v0.7-saas-ui
+./run_demo.sh                      # rebuilds web/ if needed, serves http://127.0.0.1:8000, opens the browser
+```
+Then click **Start demo** in the top bar: 4 steps, Detect → Explain → Act → Prove. Use **Reset demo** in
+the user menu (top right) between rehearsals. **Press ⌘0 first**: your Chrome tab for 127.0.0.1 was at 125% zoom.
+
+Before/after screenshots: `docs/overnight/before_after.html` (open it in a browser; 28 pairs plus the guided-demo strip).
+
+### 2. What changed (overnight, on top of the evening work above)
+| Page / area | What was wrong | What changed | Commit |
+|---|---|---|---|
+| Data sources | Said "connected" next to UKG, Workday and others (breaks rule 6) | Every source reads **Demo CSV (synthetic)**; vendors read "Would connect to, e.g. …"; HRIS "Not connected"; test added | `bc16080` |
+| Whole app | Teal used for buttons; rust unused; v1 logo lost | Colour roles: teal only for computed things; rust only for human decisions (Create action plan, Approve plan, Approve in Ask, New plan); ink for navigation; "Watch" moved to amber-yellow so it can't be confused with rust; v1 mark restored; legend in the sidebar | `14b40c3` |
+| Today, Team detail, Impact | The Detect → Explain → Act → Prove loop from v1 was gone | Journey strip on the four loop screens; each step links to its screen | `14b40c3` |
+| Today | No annualized figure; "ranks obstacles, not managers" not visible | "$X a year if it held" under the excess figure; note under the attention list; "data through Aug 31, 2026" stamp | `14b40c3`, `43ec060` |
+| Teams | No quits column; no "too rare to judge" | Quits column showing "too rare to judge" when fewer than 3 are expected; footer explains observed / expected | `14b40c3` |
+| Team detail | Evidence tab without timing; small-team page had no way back | "rules mode · 0.1 s" badge; "Back to teams" button | `14b40c3` |
+| Top bar | No guided demo | **Start demo**: 4-step walkthrough with one sentence per step and no numbers in the narration; step 3 approves the plan live; step 4 fast-forwards to the review | `43ec060` |
+| Docs | — | `docs/design/brief.md` (9 patterns and 3 anti-patterns with sources; notes what could not be verified); `docs/design/brand.md` (tokens); README v0.7 section | `14b40c3`, `43ec060`, this commit |
+
+Phase 1 (privacy fix) was done in the evening (`260d248`) and re-verified. Phase 4's "delete `pages_v1/`" step had
+already happened in `676ff54`; the parity checklist was reconstructed from `004280d` and every item is ticked
+(WORKLOG.md).
+
+### 3. Verification (raw; captured at `43ec060`; files in `docs/overnight/_verify/`)
+`npm run build`:
+```
+✓ built in 510ms
+exit=0
+```
+`npm run lint`:
+```
+> web@0.0.0 lint
+> oxlint
+
+exit=0
+```
+`pytest tests -q`, no key: `92 passed in 5.40s` (exit 0). With the GW key present, the evening run gave
+`2 failed, 90 passed`; both failures are model-wording tests from v0.5 (see the evening section).
+
+`evals.run_evals --no-model`:
+```
+model: rules-only | retrieval: keyword | 12/12 passed in 0.2s
+confusion matrix over planted problems: TP=2 FN=0 FP=0 TN=5
+lookups: 5/5 | briefs regenerated or fallen back: 0
+exit=0
+```
+Screenshots: 28 before (v1 from a worktree at `004280d`) and 56 after (14 routes × 1440/390 × Sept 15/Nov 30).
+**All 56 after: no horizontal overflow, 0 JS or console errors** (`screens/after/report.json`). v1 overflowed
+at 390 px on `/` (500 px wide).
+
+Guided demo with **real mouse clicks** (headless Chrome at 100% zoom, `demo_walk.mjs`):
+```
+ok  step 1 detect: found "Night A needs attention"
+ok  guide: found "Step 1 of 4"
+ok  step 2 explain: found "what comparable teams predict"
+ok  step 3 act: found "Draft action plan"
+ok  approved: found "See if the plan worked"
+ok  step 4 prove: found "It worked"
+ok  ci: found "95% CI"
+ok  synthetic: found "Synthetic data"
+plans now: plan-richmond-night-a 2026-09-21->2026-11-30 | plan-accb0192 2026-09-21->2026-11-30
+console errors: 0 []
+```
+`./run_demo.sh` from a clean state (`web/dist` removed, PORT=8001): `added 148 packages`, `✓ built`,
+`Uvicorn running`, `GET / 200`, `GET /api/board 200`, `GET /impact/plan-richmond-night-a 200`
+(`_verify/run_demo.txt`).
+
+### 4. Parity checklist
+All items are ticked; the full list is in `docs/overnight/WORKLOG.md` under "v1 parity checklist". The 7 gaps
+found in Phase 2 were closed in `14b40c3`.
+
+### 5. Not done / broken / worried about (live-demo risks first)
+1. **Ask with the model takes about 15 s** (measured 14.6 s) and depends on GW Azure and the network. On
+   stage, run the guided demo, which makes no model calls, and use Ask only in Q&A. Without a key, Ask falls
+   back to rules mode and says so.
+2. Two v0.5 tests fail when the key is present because the model's wording varies
+   ("No test is proposed" vs "No test proposed"). Deterministic mode is 92/92. I did not change the tests.
+3. The v0.5 Ask engine refuses "absence", "turnover" and "safety" questions, while the new screens show
+   absences and quits. A judge could spot that contradiction; see question 3.
+4. The pricing figure is a hypothesis derived from our own value estimate, labelled as such. Simon should
+   validate it before it goes in the deck.
+5. The JS bundle is one 600 kB file (Vite warning). It loads in well under a second locally; not a demo risk.
+
+### 6. Decisions I made for you
+1. **Colour roles are strict:** only "decide" actions are rust, so "Investigate Night A" and "See the review"
+   are ink. Reversible in `components/ui.tsx`.
+2. **The review date snaps to the end of the second full month** after the start (Sept 21 → Nov 30), because
+   the operating data is monthly.
+3. **The seeded Night A plan is a fallback:** hidden before Sept 21 and whenever a plan was approved live, so
+   the demo shows the manager creating it.
+4. **Guided demo narration contains no numbers**, so it can never contradict the screen.
+5. **The v1 logo was restored** (as the prompt asked) instead of the evening's chart-line mark.
+
+### 7. Questions for me
+1. Pricing: keep the derived hypothesis on screen, or show no number until Simon has a validated one?
+2. Keep "Reset demo" in the user menu for the real presentation, or hide it?
+3. Update the v0.5 Ask rule so questions about absences and quits are answered from the new team-month
+   data now, or wait for your planned RAG/SQL phase?

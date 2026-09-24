@@ -1,7 +1,7 @@
 {
   "model": "rules-only",
   "retrieval": "keyword",
-  "ts": "2026-09-24T03:13:09+00:00",
+  "ts": "2026-09-24T03:57:02+00:00",
   "passed": 12,
   "total": 12,
   "matrix": {
@@ -14,7 +14,7 @@
   "lookups_passed": 5,
   "lookups_total": 5,
   "briefs_regenerated_or_fallback": 0,
-  "seconds": 0.1,
+  "seconds": 0.2,
   "rows": [
     {
       "id": "E1",

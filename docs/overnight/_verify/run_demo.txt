@@ -1,0 +1,45 @@
+
+added 148 packages, and audited 149 packages in 2s
+
+30 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> web@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 2478 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.75 kB │ gzip:   0.40 kB
+dist/assets/index-BN7XFe2Z.css   29.31 kB │ gzip:   6.26 kB
+dist/assets/index-DJknaWrs.js   811.68 kB │ gzip: 236.95 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 502ms
+INFO:     Started server process [40148]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:62181 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62181 - "GET /assets/index-DJknaWrs.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62182 - "GET /assets/index-BN7XFe2Z.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62182 - "GET /api/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62185 - "GET /api/plans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62184 - "GET /api/meta HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62181 - "GET /api/board?site_id=1&as_of=2026-09-15 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62184 - "GET /api/board?site_id=1&as_of=2026-09-15 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62216 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62218 - "GET /api/board?site_id=1&as_of=2026-09-15 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62220 - "GET /impact/plan-richmond-night-a HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [40148]

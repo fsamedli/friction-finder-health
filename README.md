@@ -18,6 +18,12 @@ Insights, Ask; Data sources, Business case, Trust & method), top bar with site s
 (Sept 15 = wave 2 results arrive; Nov 30 = review date), Manager/HR-leader role switch, notifications,
 and "Reset demo" in the user menu (removes plans approved in the app and edited unit costs).
 
+**v0.7 (overnight Sept 23–24, branch `v0.7-saas-ui`):** colour roles (teal = computed, rust = needs a
+person's decision, purple = AI-written and checked; legend in the sidebar), the v1 logo mark back, a
+Detect → Explain → Act → Prove journey strip, a **Start demo** button in the top bar (a 4-step guided
+walkthrough with one sentence of narration per step), "Demo CSV (synthetic)" on every data source.
+Before/after screenshots: `docs/overnight/before_after.html`. Brand tokens: `docs/design/brand.md`.
+
 **Demo path (about 4 minutes, no model call until step 6). Start with Reset demo, clock on Sept 15:**
 1. **Today** (`/`): "Night A needs attention: late departures are running 1.6x what comparable teams would
    predict, and engagement fell at the same time." 81 observed vs 51 expected (Poisson p < 0.001).
