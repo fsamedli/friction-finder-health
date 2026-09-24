@@ -37,6 +37,16 @@ app = FastAPI(title="Friction Finder", version="0.6")
 _state: dict = {"db": None, "retriever": None, "results": {}}
 
 
+@app.on_event("startup")
+def _warm() -> None:
+    """Compute the cross-team associations once at startup (about 0.8 s cold), so the first click on
+    Insights or Drivers during a demo is instant. Deterministic; no model call."""
+    try:
+        I.link_matrix()
+    except Exception:  # never block startup on a warm-up
+        pass
+
+
 def _db() -> DB:
     if _state["db"] is None:
         _state["db"] = DB()
