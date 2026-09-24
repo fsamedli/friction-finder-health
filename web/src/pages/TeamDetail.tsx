@@ -215,9 +215,9 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
       <div className="mt-4 space-y-2">
         {actions.map((a, i) => (
           <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_150px]">
-            <input value={a.text} onChange={(e) => set(i, 'text', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13.5px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
-            <input value={a.owner} onChange={(e) => set(i, 'owner', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
-            <input type="date" value={a.due} onChange={(e) => set(i, 'due', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
+            <input aria-label={`Action ${i + 1}`} value={a.text} onChange={(e) => set(i, 'text', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13.5px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
+            <input aria-label={`Action ${i + 1} owner`} value={a.owner} onChange={(e) => set(i, 'owner', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
+            <input aria-label={`Action ${i + 1} due date`} type="date" value={a.due} onChange={(e) => set(i, 'due', e.target.value)} className="rounded-lg border border-border-strong px-3 py-2 text-[13px] focus:outline-none focus:ring-4 focus:ring-brand/10" />
           </div>
         ))}
       </div>

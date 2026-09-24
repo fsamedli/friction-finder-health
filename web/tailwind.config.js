@@ -7,7 +7,7 @@ export default {
         canvas: '#F5F6F8',
         surface: '#FFFFFF',
         border: { DEFAULT: '#E4E7EC', strong: '#D0D5DD' },
-        fg: { DEFAULT: '#101828', soft: '#344054', mute: '#667085', faint: '#98A2B3' },
+        fg: { DEFAULT: '#101828', soft: '#344054', mute: '#525E70', faint: '#667085' },  // mute and faint meet WCAG AA (≥ 4.5:1) on white and canvas
         side: { DEFAULT: '#0B1B2B', hover: '#13283D', active: '#1B3550', line: '#1E3348', fg: '#C9D4E0', mute: '#7D8FA3' },
         brand: { DEFAULT: '#0E8A7E', 50: '#E7F6F4', 100: '#C9ECE7', 500: '#12A594', 600: '#0E8A7E', 700: '#0B6E65', 900: '#08433E' },
         crit: { DEFAULT: '#D92D20', 50: '#FEF3F2', 100: '#FEE4E2', 700: '#B42318' },

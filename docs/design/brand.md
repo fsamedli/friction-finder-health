@@ -10,7 +10,7 @@ This is the source of truth for the app, the deck and any website. The tokens li
 | **Computed by code** | `brand` / `brand-500` | `#0E8A7E` / `#12A594` (tints `#E7F6F4`, `#C9ECE7`) | numbers and badges the code computed, "Computed" provenance, links to a method, "linked" cells |
 | **Needs a human decision** | `act` | `#C4501E` (tints `#FDF1EC`, `#F9DCCF`; text `#9C3A12`) | Create action plan, Approve, "Needs your decision" |
 | **Written by AI, checked** | `ai` | `#6941C6` (tints `#F4F3FF`) | model-written text and the AI steps in a trace |
-| Navigation / primary UI | `fg` (ink) | `#101828`, soft `#344054`, mute `#667085`, faint `#98A2B3` | text, primary navigation buttons |
+| Navigation / primary UI | `fg` (ink) | `#101828`, soft `#344054`, mute `#525E70`, faint `#667085` (both ≥ 4.5:1, WCAG AA) | text, primary navigation buttons |
 | Sidebar | `side` | `#0B1B2B`, hover `#13283D`, active `#1B3550` | app chrome only |
 | Canvas / surface / border | | `#F5F6F8` / `#FFFFFF` / `#E4E7EC` (strong `#D0D5DD`) | backgrounds, cards, rules |
 

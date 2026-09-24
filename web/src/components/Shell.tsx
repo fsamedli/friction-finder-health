@@ -85,13 +85,13 @@ function useOutside(open: boolean, close: () => void) {
   return ref
 }
 
-function Dropdown({ trigger, children, align = 'right', width = 300 }: { trigger: (open: boolean) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; width?: number }) {
+function Dropdown({ trigger, children, align = 'right', width = 300, label }: { trigger: (open: boolean) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; width?: number; label: string }) {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
   const ref = useOutside(open, close)
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="focus:outline-none">{trigger(open)}</button>
+      <button onClick={() => setOpen((o) => !o)} aria-label={label} aria-expanded={open} aria-haspopup="menu" onKeyDown={(e) => { if (e.key === 'Escape') close() }}>{trigger(open)}</button>
       {open && (
         <div className={cx('absolute top-11 z-40 rounded-xl border border-border bg-surface shadow-pop animate-in', align === 'right' ? 'right-0' : 'left-0')} style={{ width: `min(${width}px, calc(100vw - 24px))` }}>
           {children(close)}
@@ -125,7 +125,7 @@ function Notifications() {
   }, [asOf, siteId])
   const dot = { crit: 'bg-crit', warn: 'bg-warn', brand: 'bg-brand' }
   return (
-    <Dropdown width={360} trigger={() => (
+    <Dropdown width={360} label={`Notifications${items.length ? `, ${items.length}` : ''}`} trigger={() => (
       <span className="relative flex h-9 w-9 items-center justify-center rounded-lg text-fg-mute hover:bg-canvas hover:text-fg">
         <Bell size={18} />
         {items.length > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-crit px-1 text-[10px] font-semibold text-white">{items.length}</span>}
@@ -156,7 +156,7 @@ function DemoClock() {
   const { asOf, setAsOf } = useStore()
   const opts = [{ v: DETECT, t: 'Sept 15, 2026', s: 'Wave 2 survey results arrive' }, { v: REVIEW, t: 'Nov 30, 2026', s: 'Night A plan review date' }]
   return (
-    <Dropdown width={300} trigger={(open) => (
+    <Dropdown width={300} label={`Demo clock: as of ${longDate(asOf)}`} trigger={(open) => (
       <span className={cx('flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] font-medium', open ? 'border-brand ring-4 ring-brand/10' : 'border-border-strong hover:bg-canvas')}>
         <CalendarClock size={15} className="text-brand-700" />
         <span className="hidden sm:inline text-fg-mute">As of</span> {longDate(asOf).replace(', 2026', '')}
@@ -185,7 +185,7 @@ function UserMenu() {
   const p = PERSONA[role]
   const pick = (r: Role) => { setRole(r); if (r === 'manager') setSiteId(1) }
   return (
-    <Dropdown width={280} trigger={() => (
+    <Dropdown width={280} label={`User menu: ${p.name}`} trigger={() => (
       <span className="flex items-center gap-2 rounded-lg p-1 sm:pr-2 hover:bg-canvas">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[12px] font-semibold text-brand-900">{p.initials}</span>
         <span className="hidden md:block text-left leading-tight"><span className="block text-[13px] font-medium">{p.name}</span><span className="block text-[11.5px] text-fg-mute">{role === 'manager' ? 'Site manager' : 'People analytics'}</span></span>
@@ -223,7 +223,7 @@ function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) 
       </div>
       <select value={siteId} onChange={(e) => setSiteId(Number(e.target.value))} disabled={role === 'manager'}
         title={role === 'manager' ? 'A site manager sees their own site' : 'Choose a site'}
-        className="h-9 min-w-0 max-w-[132px] sm:max-w-none rounded-lg border border-border-strong bg-surface px-2 sm:px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
+        aria-label="Site" className="h-9 min-w-0 max-w-[132px] sm:max-w-none rounded-lg border border-border-strong bg-surface px-2 sm:px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
         {(meta?.sites ?? [{ site_id: 1, site_name: 'Richmond' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name} DC</option>)}
       </select>
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
@@ -275,9 +275,10 @@ export default function Shell() {
           </div>
         </div>
       )}
+      <a href="#main" className="skip-link">Skip to content</a>
       <Topbar onMenu={() => setMenu(true)} onDemo={startDemo} />
       <UploadBanner />
-      <main key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
+      <main id="main" tabIndex={-1} key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
         <Outlet />
       </main>
       <DemoGuide step={demo.step} set={demo.set} />

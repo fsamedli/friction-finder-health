@@ -25,7 +25,7 @@ function Tip({ active, payload, label, unit }: { active?: boolean; payload?: { n
 
 export function Spark({ data, flagged }: { data: { month: string; rate: number; baseline: number }[]; flagged?: boolean }) {
   return (
-    <div className="h-8 w-28">
+    <div className="h-8 w-28" role="img" aria-label={`Trend over ${data.length} months${flagged ? ', above normal variation' : ''}`}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 3, right: 2, bottom: 3, left: 2 }}>
           <YAxis hide domain={[0, 'dataMax']} />
@@ -42,8 +42,10 @@ export function TrendChart({ data, k, window: win, marks = [], teamLabel, height
   data: Record<string, number | string>[]; k: string; window?: string[]; marks?: { m: string; label: string }[]; teamLabel: string; height?: number
 }) {
   const rows = data.map((d) => ({ month: d.month as string, team: Number(d[k]) * 10, base: Number(d['baseline_' + k]) * 10 }))
+  const last = rows[rows.length - 1]
+  const label = `Line chart, per 10 people per month: ${teamLabel} vs comparable teams, ${rows.length} months${last ? `; latest month ${last.team.toFixed(1)} vs ${last.base.toFixed(1)}` : ''}.`
   return (
-    <div style={{ height }}>
+    <div style={{ height }} role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={rows} margin={{ top: 22, right: 8, bottom: 0, left: -14 }}>
           <defs><linearGradient id="gTeam" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={C.crit} stopOpacity={0.16} /><stop offset="100%" stopColor={C.crit} stopOpacity={0} /></linearGradient></defs>
@@ -67,7 +69,7 @@ export function DidChart({ series, pre, post, start, compLabel, height = 300 }: 
 }) {
   const rows = series.map((s) => ({ month: s.month, team: s.treated * 10, comp: s.comparison * 10 }))
   return (
-    <div style={{ height }}>
+    <div style={{ height }} role="img" aria-label={`Line chart, per 10 people per month: this team vs ${compLabel}, before (${pre.join(', ')}) and after (${post.join(', ')}) the plan start ${start}.`}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={rows} margin={{ top: 22, right: 8, bottom: 0, left: -14 }}>
           <CartesianGrid stroke={C.grid} vertical={false} />
@@ -120,7 +122,7 @@ export function LinkScatter({ a, teamId, xLabel, yLabel, height = 280 }: { a: As
     line = [{ x: x0, y: my + b * (x0 - mx) }, { x: x1, y: my + b * (x1 - mx) }]
   }
   return (
-    <div style={{ height }}>
+    <div style={{ height }} role="img" aria-label={`Scatter plot of ${pts.length} team-waves: ${xLabel} against ${yLabel}${a.slope != null ? `; slope ${(a.slope * 10).toFixed(2)} per 10 people per point` : ''}.`}>
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 10, right: 12, bottom: 22, left: 4 }}>
           <CartesianGrid stroke={C.grid} />
@@ -141,7 +143,7 @@ export function LinkScatter({ a, teamId, xLabel, yLabel, height = 280 }: { a: As
 export function QuartileBars({ q, height = 220 }: { q: Quartile; height?: number }) {
   const data = q.quartiles.map((x) => ({ name: x.q === 1 ? 'Bottom 25%' : x.q === 4 ? 'Top 25%' : x.q === 2 ? '2nd' : '3rd', v: x.median_rate * 10, q: x.q }))
   return (
-    <div style={{ height }}>
+    <div style={{ height }} role="img" aria-label={`Bar chart, median per 10 people per month by engagement quartile: ${data.map((d) => `${d.name} ${d.v.toFixed(1)}`).join(', ')}.`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 4, bottom: 0, left: -18 }}>
           <CartesianGrid stroke={C.grid} vertical={false} />

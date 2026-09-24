@@ -24,7 +24,7 @@ export default function Insights() {
       <PageHeader title="Engagement × operations" sub={<>Which engagement items move with which operating KPIs, across every reportable team-wave at Northline. This is the comparison Gallup delivers today as a once-a-year Business Impact Analysis — here it runs on the client's own records, every month.</>}
         actions={<Badge tone="neutral">Association, not cause</Badge>} />
       <Card>
-        <CardHeader title="Link map" sub={`${linked} of ${tested} pairs linked at 95% confidence · about ${Math.round(tested * 0.05)} would light up by chance, so treat a single cell as a lead, not a finding`}
+        <CardHeader title="Link map" sub={`${linked} of ${tested} pairs linked at 95% confidence (dark cells: p < 0.001) · about ${Math.round(tested * 0.05)} would light up by chance, so treat a single cell as a lead, not a finding`}
           right={<><CsvButton filename="engagement_x_operations_links.csv" rows={() => grid.data!.map((x) => ({ kpi: x.kpi, item: x.item, slope_per_head_month: x.slope, ci_low: x.ci_low, ci_high: x.ci_high, p: x.p, n_team_waves: x.n_cells, verdict: x.verdict }))} /><Method>For each KPI × item pair: OLS of the team-wave KPI rate (the quarter the survey closed in) on the item mean, standard errors clustered by team. A cell is "linked" when the 95% interval excludes zero. Injuries are too rare at this size to test.</Method></>} />
         <div className="overflow-x-auto scroll-thin">
           <table className="w-full min-w-[760px] border-separate border-spacing-1 text-[12px]">
@@ -36,13 +36,12 @@ export default function Insights() {
                   {ITEMS.map((it) => {
                     const c = grid.data!.find((x) => x.kpi === k && x.item === it)
                     const on = k === sel.kpi && it === sel.item
-                    const strength = c?.p != null ? Math.min(1, -Math.log10(Math.max(c.p, 1e-6)) / 5) : 0
+                    const strong = c?.p != null && c.p < 0.001  // two solid shades keep text contrast at WCAG AA
                     return (
                       <td key={it}>
                         <button onClick={() => setSel({ kpi: k, item: it })} title={c ? `${c.verdict}${c.slope != null ? ` · ${pval(c.p)}` : ''}` : ''}
                           className={cx('h-9 w-full rounded-md text-[11px] font-medium transition', on ? 'ring-2 ring-fg ring-offset-1' : '',
-                            c?.verdict === 'association' ? 'text-white' : c?.verdict === 'too rare to test' ? 'bg-canvas text-fg-faint' : 'bg-surface text-fg-faint ring-1 ring-border')}
-                          style={c?.verdict === 'association' ? { background: `rgba(14,138,126,${0.45 + 0.55 * strength})` } : undefined}>
+                            c?.verdict === 'association' ? (strong ? 'bg-brand-700 text-white' : 'bg-brand-100 text-brand-900') : c?.verdict === 'too rare to test' ? 'bg-canvas text-fg-faint' : 'bg-surface text-fg-faint ring-1 ring-border')}>
                           {c?.verdict === 'association' ? 'linked' : c?.verdict === 'too rare to test' ? '·' : '—'}
                         </button>
                       </td>
