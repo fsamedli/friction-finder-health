@@ -67,7 +67,7 @@ for (const width of [1440, 390]) {
   await click('Under the hood', 'Assumptions')
   await see('Under the hood · assumptions', ['Minimum n', 'With real data we would need'])
   await click('Under the hood', 'Architecture')
-  await see('Under the hood · architecture', ['An AI-assisted workflow'])
+  await see('Under the hood · architecture', ['An AI-assisted workflow', 'Why these techniques', 'Farid to confirm'])
   await noOverflow('Under the hood')
 
   await page.goto(base + '/ask', { waitUntil: 'networkidle' })

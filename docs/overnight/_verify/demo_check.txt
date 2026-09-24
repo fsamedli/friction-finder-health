@@ -54,6 +54,8 @@ PASS  1440px  Under the hood · assumptions: "Minimum n"
 PASS  1440px  Under the hood · assumptions: "With real data we would need"
 PASS  1440px  Under the hood: clicked Architecture
 PASS  1440px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  1440px  Under the hood · architecture: "Why these techniques"
+PASS  1440px  Under the hood · architecture: "Farid to confirm"
 PASS  1440px  Under the hood: no horizontal scroll
 PASS  1440px  Ask (rules mode): clicked Ask
 PASS  1440px  Ask (rules mode): "Supported hypothesis"
@@ -115,6 +117,8 @@ PASS  390px  Under the hood · assumptions: "Minimum n"
 PASS  390px  Under the hood · assumptions: "With real data we would need"
 PASS  390px  Under the hood: clicked Architecture
 PASS  390px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  390px  Under the hood · architecture: "Why these techniques"
+PASS  390px  Under the hood · architecture: "Farid to confirm"
 PASS  390px  Under the hood: no horizontal scroll
 PASS  390px  Ask (rules mode): clicked Ask
 PASS  390px  Ask (rules mode): "Supported hypothesis"
@@ -126,5 +130,5 @@ PASS  390px  Ask (prepared): "Prepared answer"
 PASS  390px  Ask (prepared): "Run live"
 PASS  390px  no console errors or failed API calls
 
-122 passed, 0 failed
+126 passed, 0 failed
 exit=0

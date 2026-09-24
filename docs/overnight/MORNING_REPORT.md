@@ -309,3 +309,21 @@ pytest (no key): `93 passed in 5.41s`. Lint: exit 0.
 - Model-mode runs tonight: adversarial 2 (the limit), gold 1.
 
 Gate after Phase 8: `scripts/demo_check.sh` → `122 passed, 0 failed`; pytest (no key) `94 passed`; lint 0.
+
+### Phase 9: Architecture and why these techniques — **done**
+- `docs/ARCHITECTURE.md` is drawn from the code, with file:line references (mermaid diagram). It shows:
+  - where the model is used: exactly 2 calls (reading the question, `agent.py:243`; writing the brief,
+    `agent.py:1052`), plus embeddings for retrieval
+  - what is deterministic
+  - the guards: n ≥ 4 in SQL views, the sqlglot guard (`db.py:154`), the out-of-scope guard (`agent.py:984`),
+    and the brief checker
+  - where the person decides
+- It states plainly that **the model never writes SQL**: our "text-to-SQL" is question → fixed schema →
+  templated SQL. A judge will ask; this is the honest answer.
+- Technique table: pros, cons, alternatives, and why not used. Every reason comes from `SPEC.md`, the specs,
+  git history, or the Winner-repos note. **"Farid to confirm"** is used twice, where no reason was recorded:
+  why free-form model-written SQL wasn't used, and why the DiD CI moved from bootstrap to Poisson SEs.
+- On screen: Trust › Architecture has a new diagram that shows the guards and the person, plus the
+  technique table.
+
+Gate: `126 passed, 0 failed`; pytest 94/94 (no key); lint 0.

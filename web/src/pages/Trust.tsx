@@ -6,33 +6,60 @@ import { Badge, Card, CardHeader, PageHeader, PageSkeleton, Tabs } from '../comp
 type T = 'quality' | 'assumptions' | 'architecture' | 'evaluation' | 'feedback'
 
 function Architecture() {
-  const box = (x: number, y: number, w: number, title: string, sub: string, tone: 'plain' | 'code' | 'ai' | 'person' = 'plain') => {
-    const s = { plain: ['#FFFFFF', '#D0D5DD'], code: ['#E7F6F4', '#0E8A7E'], ai: ['#F4F3FF', '#6941C6'], person: ['#FFFAEB', '#DC6803'] }[tone]
+  type Tone = 'plain' | 'code' | 'ai' | 'person' | 'guard'
+  const box = (x: number, y: number, w: number, title: string, sub: string, tone: Tone = 'plain') => {
+    const c = { plain: ['#FFFFFF', '#D0D5DD'], code: ['#E7F6F4', '#0E8A7E'], ai: ['#F4F3FF', '#6941C6'], person: ['#FDF1EC', '#C4501E'], guard: ['#F5F6F8', '#101828'] }[tone]
     return (
       <g>
-        <rect x={x} y={y} width={w} height={56} rx={10} fill={s[0]} stroke={s[1]} strokeWidth={1.3} />
-        <text x={x + 12} y={y + 23} fontFamily="Geist, sans-serif" fontWeight={600} fontSize={13} fill="#101828">{title}</text>
-        <text x={x + 12} y={y + 41} fontFamily="Geist, sans-serif" fontSize={11} fill="#667085">{sub}</text>
+        <rect x={x} y={y} width={w} height={54} rx={10} fill={c[0]} stroke={c[1]} strokeWidth={tone === 'guard' ? 1.6 : 1.3} strokeDasharray={tone === 'guard' ? '4 3' : undefined} />
+        <text x={x + 11} y={y + 22} fontFamily="Geist, sans-serif" fontWeight={600} fontSize={12.5} fill="#101828">{title}</text>
+        <text x={x + 11} y={y + 39} fontFamily="Geist, sans-serif" fontSize={10.5} fill="#667085">{sub}</text>
       </g>
     )
   }
   const arrow = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#98A2B3" strokeWidth={1.3} markerEnd="url(#ah)" />
   return (
-    <svg viewBox="0 0 980 340" className="w-full h-auto" role="img" aria-label="Architecture">
+    <svg viewBox="0 0 1000 400" className="w-full h-auto min-w-[720px]" role="img" aria-label="Architecture: client data flows through suppressed views and a SQL guard into two computing engines; the AI reads the question and writes the brief; a checker verifies it; a person decides.">
       <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#98A2B3" /></marker></defs>
-      {box(20, 20, 210, 'Client data', 'Survey export (HR) · ops logs (CSV)')}
-      {box(20, 120, 210, 'DuckDB views', 'n ≥ 4 enforced in SQL', 'code')}
-      {box(20, 220, 210, 'Documents & comments', 'retrieval index (small teams excluded)')}
-      {box(300, 50, 270, 'Impact engine · detect / explain / prove', 'Poisson excess · OLS · DiD · no AI', 'code')}
-      {box(300, 160, 270, 'Evidence brief engine', 'SQL on views · retrieval · verdict rules', 'code')}
-      {box(300, 262, 270, 'Azure OpenAI (GW) · gpt-5-mini', 'reads the question · writes the brief', 'ai')}
-      {box(640, 110, 150, 'FastAPI', 'typed endpoints')}
-      {box(830, 50, 130, 'Web app', 'this product')}
-      {box(830, 170, 130, 'Manager', 'approves · flags', 'person')}
-      {arrow(125, 76, 125, 118)}{arrow(230, 148, 298, 82)}{arrow(230, 148, 298, 186)}{arrow(230, 248, 298, 196)}
-      {arrow(435, 216, 435, 260)}{arrow(570, 78, 638, 130)}{arrow(570, 188, 638, 146)}{arrow(790, 132, 828, 82)}{arrow(895, 106, 895, 168)}
-      <text x={300} y={40} fontSize={11} fill="#0B6E65" fontFamily="Geist, sans-serif">every number on screen comes from these two modules</text>
+      {box(10, 20, 190, 'Client data (synthetic)', 'survey export · ops CSVs · docs')}
+      {box(10, 110, 190, 'Suppressed views', 'n ≥ 4 enforced in SQL', 'guard')}
+      {box(10, 200, 190, 'SQL guard (sqlglot)', 'allowlist · no table functions', 'guard')}
+      {box(10, 300, 190, 'Question', 'from the manager')}
+      {box(250, 300, 200, 'Out-of-scope guard', 'no individuals, no judging people', 'guard')}
+      {box(250, 20, 230, 'Impact engine', 'Poisson excess · OLS · DiD · no AI', 'code')}
+      {box(250, 110, 230, 'Evidence engine', 'templated SQL · retrieval · counts', 'code')}
+      {box(250, 200, 230, 'Verdict rules', 'computed by code, not the AI', 'code')}
+      {box(510, 300, 200, 'AI · read the question', 'into a fixed schema (gpt-5-mini)', 'ai')}
+      {box(530, 200, 200, 'AI · write the brief', 'from the evidence only', 'ai')}
+      {box(530, 110, 200, 'Checker', 'every number & citation in evidence', 'guard')}
+      {box(780, 60, 200, 'Web app', 'board · team · plan · impact · ask')}
+      {box(780, 170, 200, 'Person decides', 'approve · reject · flag · plan', 'person')}
+      {arrow(105, 74, 105, 108)}{arrow(105, 164, 105, 198)}{arrow(200, 227, 248, 137)}{arrow(200, 137, 248, 47)}
+      {arrow(200, 327, 248, 327)}{arrow(450, 327, 508, 327)}{arrow(610, 300, 480, 164)}{arrow(365, 164, 365, 198)}
+      {arrow(480, 227, 528, 227)}{arrow(630, 200, 630, 166)}{arrow(730, 137, 778, 94)}{arrow(480, 47, 778, 80)}{arrow(880, 114, 880, 168)}
     </svg>
+  )
+}
+
+const TECHNIQUES = [
+  { t: 'Question → fixed schema → templated SQL on views, sqlglot guard', pro: 'The model never writes SQL; every query is auditable; suppression lives in the views', con: 'Only answers question types that have a template', alt: 'Free-form model-written SQL; vanna.ai; the earlier regex guard', why: 'vanna.ai archived (last release Feb 2, 2026); regex guard was bypassable, replaced Sept 23; free-form SQL: Farid to confirm' },
+  { t: 'Retrieval with citations (embeddings, keyword fallback)', pro: 'No extra service; every passage cited; works without a key', con: 'No reranker; retrieval quality not yet measured', alt: 'A vector database; RAGAS', why: 'Vector DB out of scope for this cut (SPEC); RAGAS development has slowed' },
+  { t: 'Rule-based verdict', pro: 'Transparent; the model cannot overclaim; tested on planted cases', con: 'Screening rules, not significance tests', alt: 'A trained classifier (EBM, as FraudLens); an agent framework', why: '24 teams × 2 waves is too small to train or report an AUC; agent frameworks out of scope (SPEC)' },
+  { t: 'Poisson excess vs comparable teams', pro: 'Flags only what exceeds normal variation; says "too rare to judge"', con: 'Assumes Poisson counts; about 1 false flag per site at p < 0.01', alt: 'Positive excess over the comparable-team median (first v0.6 design)', why: 'Tried Sept 23: flagged half the teams on noise; replaced' },
+  { t: 'Difference-in-differences + placebo', pro: 'Cancels site-wide and seasonal shifts; placebo shows how unusual the result is', con: 'One treated team, 4 comparisons; directional, not causal; synthetic follow-up', alt: 'Bootstrap CI over comparison teams; DoWhy', why: 'Bootstrap → Poisson SE: Farid to confirm; DoWhy: the data cannot defend causal claims' },
+]
+
+function Techniques() {
+  return (
+    <div className="mt-6 overflow-x-auto scroll-thin">
+      <table className="w-full min-w-[900px] text-[12.5px]">
+        <thead><tr className="border-b border-border text-left text-[12px] text-fg-mute"><th className="py-2 pr-3 font-medium">Technique</th><th className="py-2 pr-3 font-medium">Pros</th><th className="py-2 pr-3 font-medium">Cons</th><th className="py-2 pr-3 font-medium">Alternatives considered</th><th className="py-2 font-medium">Why not used</th></tr></thead>
+        <tbody>{TECHNIQUES.map((x) => (
+          <tr key={x.t} className="border-b border-border align-top last:border-0"><td className="py-2.5 pr-3 font-medium">{x.t}</td><td className="py-2.5 pr-3 text-fg-soft">{x.pro}</td><td className="py-2.5 pr-3 text-fg-soft">{x.con}</td><td className="py-2.5 pr-3 text-fg-soft">{x.alt}</td><td className="py-2.5 text-fg-soft">{x.why}</td></tr>
+        ))}</tbody>
+      </table>
+      <p className="mt-2 text-[11.5px] text-fg-faint">Full version with sources and file references: docs/ARCHITECTURE.md.</p>
+    </div>
   )
 }
 
@@ -117,13 +144,15 @@ export default function Trust() {
         {t === 'architecture' && (
           <Card>
             <CardHeader title="An AI-assisted workflow" sub="Fixed steps; the AI model at two of them; deterministic queries and statistical checks; a person at every decision. No autonomous actions."
-              right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI reads & writes</Badge><Badge tone="warn">person decides</Badge></>} />
-            <Architecture />
+              right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI reads & writes</Badge><Badge tone="act">person decides</Badge><Badge tone="neutral">guard</Badge></>} />
+            <div className="overflow-x-auto scroll-thin"><Architecture /></div>
             <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 text-[13px]">
               <div className="rounded-lg bg-canvas p-3"><b>What the AI does</b><p className="mt-1 text-fg-soft">Turns a question into a structured request, and writes the brief from evidence it is handed. Model: {meta?.model ?? 'none configured (rules mode)'}.</p></div>
               <div className="rounded-lg bg-canvas p-3"><b>What the AI never does</b><p className="mt-1 text-fg-soft">Produce a number, decide a verdict, see respondent rows, or approve a plan. Every number in a brief is checked against the evidence.</p></div>
               <div className="rounded-lg bg-canvas p-3"><b>Without a model key</b><p className="mt-1 text-fg-soft">Everything except the written brief still works: rules-based question reading, keyword retrieval, templated text.</p></div>
             </div>
+            <h4 className="mt-8 text-[14px] font-semibold">Why these techniques</h4>
+            <Techniques />
           </Card>
         )}
         {t === 'evaluation' && (!ev.data ? <PageSkeleton /> : (
