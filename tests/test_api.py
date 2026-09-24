@@ -93,7 +93,8 @@ def test_assumptions_evals_feedback():
 def test_ask_rules_mode_without_key(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "has_key", lambda: False)
     monkeypatch.setattr(config, "APPROVALS_PATH", tmp_path / "approvals.jsonl")
-    r = c.post("/api/ask", json={"question": "Why did the Richmond night shift's scores drop and why are deliveries late?"})
+    # live=True: a live run (the scripted question otherwise returns its labelled prepared answer)
+    r = c.post("/api/ask", json={"question": "Why did the Richmond night shift's scores drop and why are deliveries late?", "live": True})
     assert r.status_code == 200
     d = r.json()
     assert d["mode"] == "rules" and d["status"] == "ok" and d["evidence"]
@@ -102,7 +103,7 @@ def test_ask_rules_mode_without_key(monkeypatch, tmp_path):
 
 def test_ask_reports_grounding_and_trace(monkeypatch):
     monkeypatch.setattr(config, "has_key", lambda: False)
-    d = c.post("/api/ask", json={"question": "Why did the Richmond night shift's scores drop and why are deliveries late?"}).json()
+    d = c.post("/api/ask", json={"question": "Why did the Richmond night shift's scores drop and why are deliveries late?", "live": True}).json()
     g = d["grounding"]
     assert g["total"] > 0 and g["checked"] == g["total"] and g["unmatched"] == []
     steps = [t["step"] for t in d["trace"]]
@@ -128,3 +129,22 @@ def test_live_plan_on_demo_path_is_reviewable(tmp_path, monkeypatch):
     assert p["review"] == "2026-11-30"
     r = c.get(f"/api/plans/{p['id']}/result", params={"as_of": "2026-11-30"}).json()
     assert r["status"] == "ok" and r["verdict"] == "worked"
+
+
+def test_prepared_answer_is_labelled_and_live_bypasses_it(monkeypatch, tmp_path):
+    import api.main as M
+    q = "Why did the Richmond night shift's scores drop and why are deliveries late?"
+    monkeypatch.setattr(config, "has_key", lambda: False)
+    monkeypatch.setattr(config, "APPROVALS_PATH", tmp_path / "approvals.jsonl")
+    live = c.post("/api/ask", json={"question": q, "live": True}).json()
+    assert live["prepared"] is None and live["mode"] == "rules"
+    fake = {M._norm(q): {"generated_at": "2026-09-24T01:40:00+00:00", "model": "gpt-5-mini",
+                         "response": {k: v for k, v in live.items() if k not in ("id", "prepared")},
+                         "approval": {"question": q, "verdict": "supported", "brief_mode": "llm", "brief": None, "evidence_ids": []}}}
+    path = tmp_path / "answers.json"
+    path.write_text(__import__("json").dumps(fake))
+    monkeypatch.setattr(M, "PREPARED_PATH", path)
+    p = c.post("/api/ask", json={"question": q + " "}).json()
+    assert p["prepared"] == {"generated_at": "2026-09-24T01:40:00+00:00", "model": "gpt-5-mini"}
+    assert c.post("/api/approve", json={"result_id": p["id"], "decision": "approved"}).json()["prepared"] is True
+    assert c.post("/api/ask", json={"question": q, "live": True}).json()["prepared"] is None

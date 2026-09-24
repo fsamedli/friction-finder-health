@@ -241,3 +241,40 @@ found in Phase 2 were closed in `14b40c3`.
 2. Keep "Reset demo" in the user menu for the real presentation, or hide it?
 3. Update the v0.5 Ask rule so questions about absences and quits are answered from the new team-month
    data now, or wait for your planned RAG/SQL phase?
+
+---
+
+## Overnight run, Part 2 (Phases 7–14)
+
+Each phase is updated when it finishes. Gate for every commit from Phase 7 on: `./scripts/demo_check.sh`,
+build, lint and pytest.
+
+### Phase 7: Demo safety net — **done**
+- `scripts/demo_check.sh` (+ `web/scripts/demo_check.mjs`). It builds the web app, then starts a private
+  server on :8010 with **no model key** and a **scratch cache**, so your demo state is untouched. It walks
+  Detect → Explain (overview, drivers, evidence) → Act (approve) → Prove (fast-forward) → Business case →
+  Under the hood → Ask (rules mode and prepared) at **1440 and 390 px**. It fails on any console error, any
+  API response ≥ 400, a missing key number or label, or horizontal scroll.
+- On its first real run it caught a **real bug**: at 390 px the Architecture card title was squeezed to
+  0 px wide by its badges. Fixed in `CardHeader` (badges now wrap).
+- **Prepared answers** for Ask's 3 scripted questions, generated once in model mode with the GW key
+  (`scripts/prepare_answers.py` → `data/prepared/answers.json`):
+  ```
+   19.2s  14/14 numbers checked  Why did the Richmond night shift's scores drop and why are deliveries late?
+   10.4s  5/5 numbers checked  Did the Norfolk Day B team really decline?
+    1.7s  0/0 numbers checked  Who owns the shift handoff procedure at Richmond?
+  ```
+  On screen they are labelled **"Prepared answer · generated <time> with gpt-5-mini. Same question, same
+  data; not re-run now."**, with a **Run live** button. Any other question runs live. Approving a prepared
+  answer writes to the same review log, flagged `"prepared": true`.
+- New dev dependency: `playwright-core` 1.63.0 in `web/` (drives your installed Chrome; no browser download).
+- `app/config.py`: `FF_CACHE_DIR` / `FF_APPROVALS_PATH` environment overrides, used only by the check.
+- Two of my own tests in `tests/test_api.py` now pass `"live": true`. They test live rules mode, and the
+  scripted question now correctly returns its prepared answer. The assertions are unchanged.
+
+Raw `scripts/demo_check.sh` summary (full output: `docs/overnight/_verify/demo_check.txt`):
+```
+112 passed, 0 failed
+exit=0
+```
+pytest (no key): `93 passed in 5.41s`. Lint: exit 0.

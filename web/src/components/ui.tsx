@@ -10,15 +10,15 @@ export function Card({ children, className, pad = true }: { children: ReactNode;
 
 export function CardHeader({ title, sub, right, icon }: { title: ReactNode; sub?: ReactNode; right?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-4">
-      <div className="flex items-start gap-2.5 min-w-0">
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
+      <div className="flex items-start gap-2.5 min-w-[12rem] flex-1">
         {icon && <span className="mt-0.5 text-fg-mute">{icon}</span>}
         <div className="min-w-0">
           <h3 className="text-[15px] font-semibold text-fg leading-tight">{title}</h3>
           {sub && <p className="text-[13px] text-fg-mute mt-0.5">{sub}</p>}
         </div>
       </div>
-      {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
+      {right && <div className="flex flex-wrap items-center gap-2">{right}</div>}
     </div>
   )
 }

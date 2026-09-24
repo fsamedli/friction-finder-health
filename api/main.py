@@ -15,7 +15,7 @@ import threading
 import time
 import uuid
 from dataclasses import asdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -292,6 +292,23 @@ def feedback():
 class AskIn(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     rules: bool = False   # True: rules mode (no model call), used by the Why page so it stays under a second
+    live: bool = False    # True: skip a prepared answer and run the model now
+
+
+PREPARED_PATH = ROOT / "data" / "prepared" / "answers.json"
+
+
+def _norm(q: str) -> str:
+    return " ".join(q.lower().strip().rstrip("?.! ").split())
+
+
+def _prepared() -> dict:
+    """Answers generated once in model mode for the demo's scripted questions (scripts/prepare_answers.py).
+    Served labelled as prepared, with the time and model, never as live."""
+    try:
+        return json.loads(PREPARED_PATH.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 
 _rules_lock = threading.Lock()
@@ -304,6 +321,12 @@ def _brief_mode(res) -> str:
 
 @app.post("/api/ask")
 def ask(q: AskIn):
+    if not q.rules and not q.live:
+        hit = _prepared().get(_norm(q.question))
+        if hit:
+            rid = uuid.uuid4().hex[:10]
+            _state.setdefault("prepared", {})[rid] = hit["approval"]
+            return {**hit["response"], "id": rid, "prepared": {"generated_at": hit["generated_at"], "model": hit["model"]}}
     t0 = time.time()
     retriever = _retriever()  # build outside the rules switch, so model-mode retrieval keeps its embeddings
     if q.rules:
@@ -320,7 +343,7 @@ def ask(q: AskIn):
     _state["results"][rid] = res
     return _jsonable({"id": rid, "status": res.status, "question": res.question, "message": res.message,
                       "mode": _brief_mode(res), "seconds": round(time.time() - t0, 1), "notes": res.notes,
-                      "grounding": _grounding(res), "trace": _trace(res, retriever),
+                      "grounding": _grounding(res), "trace": _trace(res, retriever), "prepared": None,
                       "assessment": asdict(res.assessment) if res.assessment else None,
                       "brief": asdict(res.brief) if res.brief else None,
                       "evidence": [asdict(e) for e in res.evidence]})
@@ -376,6 +399,12 @@ class ApproveIn(BaseModel):
 
 @app.post("/api/approve")
 def approve(a: ApproveIn):
+    prep = _state.get("prepared", {}).get(a.result_id)
+    if prep:  # a prepared answer: record the decision in the same format agent.approve uses
+        rec = {"ts": datetime.now(timezone.utc).isoformat(), "who": "reviewer", "decision": a.decision, "note": a.note, **prep, "prepared": True}
+        with open(config.APPROVALS_PATH, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+        return rec
     res = _state["results"].get(a.result_id)
     if not res:
         raise HTTPException(404, "unknown result; ask the question again")

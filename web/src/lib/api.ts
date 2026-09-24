@@ -82,6 +82,7 @@ export interface AskResult {
   evidence: Evidence[]
   grounding: { checked: number; total: number; unmatched: string[] }
   trace: { step: string; detail: string; mode: 'model' | 'rules' | 'code' | 'template'; seconds: number | null }[]
+  prepared: { generated_at: string; model: string } | null
 }
 
 export interface Source { id: string; name: string; vendor: string; owner: string; status: 'demo_csv' | 'not_connected'; method: string; rows: number; detail: string; last: string | null }
@@ -119,8 +120,8 @@ export const api = {
   sources: () => j<Source[]>('/api/sources'),
   upload: async (file: File) => { const f = new FormData(); f.append('file', file); return j<{ rows_added: number }>('/api/upload', { method: 'POST', body: f }) },
   reviewLog: () => j<Record<string, unknown>[]>('/api/review-log'),
-  ask: (question: string, rules = false) =>
-    j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, rules }) }),
+  ask: (question: string, rules = false, live = false) =>
+    j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, rules, live }) }),
   approve: (result_id: string, decision: 'approved' | 'rejected' | 'flagged', note = '') =>
     j<Record<string, unknown>>('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result_id, decision, note }) }),
 }

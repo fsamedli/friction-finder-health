@@ -47,5 +47,6 @@ EMBED_MODEL = os.environ.get("OPENAI_EMBED_MODEL", "").strip() or "text-embeddin
 MIN_N = 4
 DATA_DIR = ROOT / "data" / "generated"
 DOCS_DIR = ROOT / "data" / "docs"
-CACHE_DIR = ROOT / "data" / "cache"
-APPROVALS_PATH = ROOT / "approvals.jsonl"
+# overridable so scripts/demo_check.sh can run against a scratch cache without touching the demo state
+CACHE_DIR = Path(os.environ["FF_CACHE_DIR"]) if os.environ.get("FF_CACHE_DIR") else ROOT / "data" / "cache"
+APPROVALS_PATH = Path(os.environ["FF_APPROVALS_PATH"]) if os.environ.get("FF_APPROVALS_PATH") else ROOT / "approvals.jsonl"

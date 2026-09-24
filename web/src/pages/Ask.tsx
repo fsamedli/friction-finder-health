@@ -66,7 +66,7 @@ function Trace({ r }: { r: AskResult }) {
   return (
     <div className="mt-5 rounded-lg border border-border">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-3.5 py-2.5 text-[13px] font-medium">
-        <span>How this answer was produced · {r.trace.length} steps · {r.seconds} s</span><ChevronDown size={16} className={cx('text-fg-faint transition-transform', open && 'rotate-180')} />
+        <span>How this answer was produced · {r.trace.length} steps · {r.seconds} s{r.prepared ? ' (when it was generated)' : ''}</span><ChevronDown size={16} className={cx('text-fg-faint transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
         <ol className="border-t border-border px-3.5 py-3 space-y-2.5">
@@ -94,9 +94,9 @@ export default function Ask() {
   const [err, setErr] = useState<string | null>(null)
   const [decided, setDecided] = useState<string | null>(null)
   const model = !!meta?.model
-  const go = async (text: string) => {
+  const go = async (text: string, live = false) => {
     setQ(text); setStarted(Date.now()); setErr(null); setR(null); setDecided(null)
-    try { setR(await api.ask(text)) } catch (e) { setErr(String((e as Error).message)) } finally { setStarted(null) }
+    try { setR(await api.ask(text, false, live)) } catch (e) { setErr(String((e as Error).message)) } finally { setStarted(null) }
   }
   const decide = async (d: 'approved' | 'rejected' | 'flagged') => { if (r) { await api.approve(r.id, d); setDecided(d) } }
   const b = r?.brief
@@ -121,6 +121,12 @@ export default function Ask() {
       {r && (
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_1fr] animate-in">
           <Card>
+            {r.prepared && (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-info-50 px-3 py-2 text-[12.5px] text-info-700 ring-1 ring-inset ring-info-100">
+                <span><b>Prepared answer</b> · generated {new Date(r.prepared.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} with {r.prepared.model}. Same question, same data; not re-run now.</span>
+                <Button size="sm" variant="secondary" onClick={() => go(r.question, true)}>Run live</Button>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <Provenance kind={r.mode === 'model' ? 'model' : 'computed'} />
               {r.assessment && <Badge tone="brand">Verdict computed by code</Badge>}
