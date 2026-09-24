@@ -148,3 +148,15 @@ def test_prepared_answer_is_labelled_and_live_bypasses_it(monkeypatch, tmp_path)
     assert p["prepared"] == {"generated_at": "2026-09-24T01:40:00+00:00", "model": "gpt-5-mini"}
     assert c.post("/api/approve", json={"result_id": p["id"], "decision": "approved"}).json()["prepared"] is True
     assert c.post("/api/ask", json={"question": q, "live": True}).json()["prepared"] is None
+
+
+def test_quality_reads_saved_files_and_feedback_starts_empty(monkeypatch, tmp_path):
+    import api.main as M
+    monkeypatch.setattr(M, "FEEDBACK_PATH", tmp_path / "feedback.jsonl")
+    q = c.get("/api/quality").json()
+    assert all(p["now"] is None or p["now"]["file"].startswith("evals/") for p in q["packs"])
+    assert any(p["pack"] == "Holdout" for p in q["packs"])
+    assert q["feedback"]["total"] == 0
+    assert c.post("/api/useful", json={"target": "ask", "target_id": "x", "useful": False}).status_code == 422  # a reason is required
+    assert c.post("/api/useful", json={"target": "plan", "target_id": "p1", "useful": False, "reason": "wrong owner"}).status_code == 200
+    assert c.get("/api/quality").json()["feedback"] == {"file": "feedback.jsonl", "total": 1, "useful": 0, "not_useful": 1, "reasons": {"wrong owner": 1}}

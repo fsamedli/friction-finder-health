@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { api } from '../lib/api'
+import { api, type Quality } from '../lib/api'
 import { useLoad, useStore } from '../lib/store'
 import { Badge, Card, CardHeader, PageHeader, PageSkeleton, Tabs } from '../components/ui'
 
-type T = 'assumptions' | 'architecture' | 'evaluation' | 'feedback'
+type T = 'quality' | 'assumptions' | 'architecture' | 'evaluation' | 'feedback'
 
 function Architecture() {
   const box = (x: number, y: number, w: number, title: string, sub: string, tone: 'plain' | 'code' | 'ai' | 'person' = 'plain') => {
@@ -36,17 +36,74 @@ function Architecture() {
   )
 }
 
+const d = (ts?: string) => (ts ? new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—')
+const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : '—')
+
+function Src({ file, ts }: { file: string; ts?: string }) {
+  return <span className="font-mono text-[11px] text-fg-faint break-all">{file}{ts ? ` · ${d(ts)}` : ''}</span>
+}
+
+function QualityTab({ q }: { q: Quality }) {
+  return (
+    <div className="space-y-6">
+      <Card pad={false}>
+        <div className="p-5 pb-0"><CardHeader title="Pass rate by test pack" sub="First recorded run vs the latest run. Every number is read from the saved result file shown under it." /></div>
+        <div className="overflow-x-auto scroll-thin">
+          <table className="w-full min-w-[720px] text-[13.5px]">
+            <thead><tr className="border-y border-border bg-canvas/60 text-left text-[12px] text-fg-mute"><th className="px-5 py-2.5 font-medium">Pack</th><th className="px-3 py-2.5 font-medium">Mode</th><th className="px-3 py-2.5 font-medium">First run</th><th className="px-3 py-2.5 font-medium">Now</th></tr></thead>
+            <tbody>{q.packs.map((p, i) => (
+              <tr key={i} className="border-b border-border last:border-0 align-top">
+                <td className="px-5 py-3"><div className="font-medium">{p.pack}</div><div className="text-[12px] text-fg-mute">{p.note}</div></td>
+                <td className="px-3 py-3">{p.mode ?? '—'}</td>
+                <td className="px-3 py-3">{p.first ? <><div className="tnum font-medium">{p.first.passed}/{p.first.total} <span className="text-fg-mute font-normal">({pct(p.first.passed, p.first.total)})</span></div><Src file={p.first.file} ts={p.first.ts} /></> : <Badge tone="neutral">pending</Badge>}</td>
+                <td className="px-3 py-3">{p.now ? <><div className="tnum font-semibold">{p.now.passed}/{p.now.total} <span className="text-fg-mute font-normal">({pct(p.now.passed, p.now.total)})</span></div><Src file={p.now.file} ts={p.now.ts} /></> : <Badge tone="neutral">pending</Badge>}</td>
+              </tr>))}</tbody>
+          </table>
+        </div>
+      </Card>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader title="Declines when it should" sub="Cases that must refuse, suppress or say 'insufficient' (rules mode)" />
+          {q.declines.map((x) => <div key={x.file} className="flex items-baseline justify-between border-t border-border py-2.5 first:border-0"><Src file={x.file} ts={x.ts} /><span className="tnum font-semibold">{x.correct}/{x.total}</span></div>)}
+        </Card>
+        <Card>
+          <CardHeader title="Numbers checked against the evidence" sub="Every number in a model-written brief must appear in the SQL results or evidence" />
+          {q.grounding ? <><div className="text-[26px] font-semibold tnum">{q.grounding.checked} of {q.grounding.total}</div><p className="text-[12.5px] text-fg-mute">across {q.grounding.briefs} model-written briefs (the prepared answers)</p><Src file={q.grounding.file} ts={q.grounding.generated[0]} /></> : <p className="text-fg-mute">No model-written briefs saved yet.</p>}
+        </Card>
+        <Card>
+          <CardHeader title="Time per question" sub="From the latest saved runs (gold + adversarial)" />
+          {q.latency.map((l) => (
+            <div key={l.mode} className="border-t border-border py-2.5 first:border-0">
+              <div className="flex items-baseline justify-between"><span className="font-medium">{l.mode}</span><span className="tnum">p50 {l.p50 ?? '—'} s · p95 {l.p95 ?? '—'} s <span className="text-fg-mute">(n={l.n})</span></span></div>
+              <div className="mt-0.5">{l.files.map((f) => <div key={f}><Src file={f} /></div>)}</div>
+            </div>))}
+        </Card>
+        <Card>
+          <CardHeader title="Was it useful?" sub="Yes / no from users on Ask briefs and plans" />
+          {q.feedback.total === 0 ? <p className="text-[13.5px] text-fg-mute">No data yet. Counts appear here as people answer "Useful?" in the app.</p> : (
+            <><div className="text-[26px] font-semibold tnum">{q.feedback.useful} of {q.feedback.total} useful</div>
+              <ul className="mt-2 text-[12.5px] text-fg-soft">{Object.entries(q.feedback.reasons).map(([k, v]) => <li key={k}>{k}: {v}</li>)}</ul></>)}
+          <Src file={q.feedback.file} />
+        </Card>
+      </div>
+      <p className="text-[12px] text-fg-mute">The gold and adversarial packs were written by the builder, so they are not independent. The holdout pack is for a teammate who has not seen the planted answers.</p>
+    </div>
+  )
+}
+
 export default function Trust() {
   const { meta } = useStore()
-  const [t, setT] = useState<T>('assumptions')
+  const [t, setT] = useState<T>('quality')
+  const q = useLoad(() => api.quality(), [])
   const a = useLoad(() => api.assumptions(), [])
   const ev = useLoad(() => api.evals(), [])
   const fb = useLoad(() => api.feedback(), [])
   return (
     <div>
       <PageHeader title="Trust & method" sub="What we assumed, how the system works, how we know it's right, and what the judges changed. The company is fictional and the data is synthetic; the methods are what we're showing." />
-      <Tabs value={t} onChange={setT} tabs={[{ id: 'assumptions', label: 'Assumptions' }, { id: 'architecture', label: 'Architecture' }, { id: 'evaluation', label: 'Evaluation' }, { id: 'feedback', label: 'You told us → we changed', count: fb.data?.length }]} />
+      <Tabs value={t} onChange={setT} tabs={[{ id: 'quality', label: 'Quality' }, { id: 'assumptions', label: 'Assumptions' }, { id: 'architecture', label: 'Architecture' }, { id: 'evaluation', label: 'Evaluation' }, { id: 'feedback', label: 'You told us → we changed', count: fb.data?.length }]} />
       <div className="mt-6">
+        {t === 'quality' && (!q.data ? <PageSkeleton /> : <QualityTab q={q.data} />)}
         {t === 'assumptions' && (!a.data ? <PageSkeleton /> : (
           <Card pad={false}>
             <table className="w-full text-[13.5px]">

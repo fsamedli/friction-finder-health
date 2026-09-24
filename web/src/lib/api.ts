@@ -85,6 +85,15 @@ export interface AskResult {
   prepared: { generated_at: string; model: string } | null
 }
 
+export interface PackRun { file: string; ts: string; model: string; passed: number; total: number }
+export interface Quality {
+  packs: { pack: string; note: string; mode: string | null; first: PackRun | null; now: PackRun | null }[]
+  declines: { file: string; ts: string; correct: number; total: number }[]
+  grounding: { file: string; briefs: number; checked: number; total: number; generated: string[] } | null
+  latency: { mode: string; n: number; p50: number | null; p95: number | null; files: string[] }[]
+  feedback: { file: string; total: number; useful: number; not_useful: number; reasons: Record<string, number> }
+}
+
 export interface Source { id: string; name: string; vendor: string; owner: string; status: 'demo_csv' | 'not_connected'; method: string; rows: number; detail: string; last: string | null }
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
@@ -117,6 +126,9 @@ export const api = {
   evals: () => j<{ file: string; model: string; passed: number; total: number; matrix: Record<string, number>; ts: string; rows: { id: string; class: string; question: string; status: string; verdict: string; passed: boolean; outcome: string }[] }[]>('/api/evals/latest'),
   feedback: () => j<{ who: string; when: string; said: string; changed: string }[]>('/api/feedback'),
   resetDemo: () => j<{ ok: boolean }>('/api/demo', { method: 'DELETE' }),
+  quality: () => j<Quality>('/api/quality'),
+  useful: (target: 'ask' | 'plan', target_id: string, useful: boolean, reason?: string) =>
+    j<Record<string, unknown>>('/api/useful', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target, target_id, useful, reason: reason ?? null }) }),
   sources: () => j<Source[]>('/api/sources'),
   upload: async (file: File) => { const f = new FormData(); f.append('file', file); return j<{ rows_added: number }>('/api/upload', { method: 'POST', body: f }) },
   reviewLog: () => j<Record<string, unknown>[]>('/api/review-log'),

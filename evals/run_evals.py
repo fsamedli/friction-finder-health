@@ -118,11 +118,12 @@ def _outcome(q: dict, res, passed: bool) -> str:
     return "pass" if passed else "fail"
 
 
-def evaluate(db: DB | None = None, retriever: Retriever | None = None, save: bool = True, label: str | None = None) -> dict:
+def evaluate(db: DB | None = None, retriever: Retriever | None = None, save: bool = True, label: str | None = None,
+             questions_path: Path | None = None, results_dir: Path | None = None) -> dict:
     db = db or DB()
     retriever = retriever or Retriever(db)
     truth = json.loads(TRUTH.read_text())["patterns"]
-    questions = json.loads((HERE / "questions.json").read_text())
+    questions = json.loads((questions_path or HERE / "questions.json").read_text())
     rows = []
     t_all = time.time()
     for q in questions:
@@ -143,10 +144,11 @@ def evaluate(db: DB | None = None, retriever: Retriever | None = None, save: boo
                "lookups_passed": sum(r["passed"] for r in lookups), "lookups_total": len(lookups),
                "briefs_regenerated_or_fallback": regenerated, "seconds": round(time.time() - t_all, 1), "rows": rows}
     if save:
-        RESULTS.mkdir(exist_ok=True)
+        out_dir = results_dir or RESULTS
+        out_dir.mkdir(parents=True, exist_ok=True)
         safe = re.sub(r"[^a-z0-9.-]+", "_", model.lower())
-        (RESULTS / f"latest_{safe}.json").write_text(json.dumps(summary, indent=2))
-        (RESULTS / f"{summary['ts'].replace(':', '')}_{safe}.json").write_text(json.dumps(summary, indent=2))
+        (out_dir / f"latest_{safe}.json").write_text(json.dumps(summary, indent=2))
+        (out_dir / f"{summary['ts'].replace(':', '')}_{safe}.json").write_text(json.dumps(summary, indent=2))
     return summary
 
 

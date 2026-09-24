@@ -1,0 +1,17 @@
+[
+  {
+    "id": "H01",
+    "author": "your initials",
+    "class": "positive | negative | lookup",
+    "question": "Write the question the way a site manager would ask it.",
+    "expect": {
+      "status": "ok | refused | suppressed",
+      "verdict": "supported | insufficient | no_material_change | suppressed_insufficient (positive/negative only)",
+      "obstacle_matches": "optional regex for the obstacle you expect, e.g. handoff|equipment",
+      "owner_contains": "optional: text the owner line must contain",
+      "owner_not_assigned": "optional: true if no owner should be named",
+      "message_contains": "optional: text a refusal must mention"
+    },
+    "why": "One sentence: what you expect and why, from the screens or DATA_SPEC.md, NOT from truth.json."
+  }
+]

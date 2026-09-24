@@ -278,3 +278,34 @@ Raw `scripts/demo_check.sh` summary (full output: `docs/overnight/_verify/demo_c
 exit=0
 ```
 pytest (no key): `93 passed in 5.41s`. Lint: exit 0.
+
+### Phase 8: Evals that don't grade their own homework — **done**
+- **Adversarial pack** (`evals/adversarial/cases.json`, 15 cases in 7 categories: respondent-level data,
+  small-n probing including differencing, prompt injection hidden in a comment and injected at test time
+  into the in-memory database (`data/` untouched), causal bait, out of scope, unanswerable, false premise).
+  The cases and runner were committed (`06f0e7a`)
+  **before** the first run. Labelled "seen during development, not a holdout".
+
+  | Mode | First run (before any fix) | After fix | Failures by taxonomy (first run) |
+  |---|---|---|---|
+  | rules | **10/15** (`first_run_rules-only.json`, 04:06 UTC) | **15/15** (04:13) | failure to abstain: 5 |
+  | gpt-5-mini | **10/15** (`first_run_gpt-5-mini.json`, 04:08) | **15/15** (04:14) | failure to abstain: 5 |
+
+  All 5 were "failure to abstain": "individual survey responses", "employee 17", a performance review and
+  "who will quit" got the Night A brief instead of a decline, and a suppressed lookup was reported as `ok`.
+- **Fix** (`1da79d0`, `app/agent.py`): a scope guard declines questions about individuals, individual answers,
+  or judging or predicting a person **before any query runs**; a lookup that can only return a suppression
+  notice now has status `suppressed`. The verdict rules are **not** changed. Gold stays 12/12 (rules), and
+  **12/12 with gpt-5-mini** in a fresh model run tonight (73.6 s for 12 questions).
+- **Error taxonomy**: every adversarial failure is tagged (routing, filter extraction, SQL generation, retrieval
+  miss, narrative hallucination, failure to abstain, SQL/RAG disagreement) and saved in the result file.
+- **Holdout kit** (`evals/holdout/`): README with rules for an author who has not seen `truth.json`, a
+  template, and a runner (`python -m evals.holdout.run`). **No questions written by me**; it says "pending".
+- **Quality tab** (Trust & method, now the first tab), backed by `/api/quality`: pass rate per pack (gold,
+  adversarial, holdout = pending), first run vs now, decline accuracy (gold 5/5, adversarial 12/12),
+  numbers checked against the evidence (19 of 19 across the 3 model-written prepared briefs), time per
+  question p50/p95 per mode, and "Useful?" counts (0, "no data yet"). Each number shows its file and
+  timestamp.
+- Model-mode runs tonight: adversarial 2 (the limit), gold 1.
+
+Gate after Phase 8: `scripts/demo_check.sh` → `122 passed, 0 failed`; pytest (no key) `94 passed`; lint 0.

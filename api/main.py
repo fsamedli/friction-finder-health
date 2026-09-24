@@ -273,6 +273,109 @@ def evals_latest():
     return out
 
 
+def _pct(xs: list[float], q: float) -> float | None:
+    xs = sorted(x for x in xs if x is not None)
+    if not xs:
+        return None
+    k = (len(xs) - 1) * q
+    lo, hi = int(k), min(int(k) + 1, len(xs) - 1)
+    return round(xs[lo] + (xs[hi] - xs[lo]) * (k - lo), 2)
+
+
+def _load(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+@app.get("/api/quality")
+def quality():
+    """Every number here is read from a saved result file; the file name and run date travel with it."""
+    ev = ROOT / "evals"
+    def summ(d: dict | None, path: Path) -> dict | None:
+        if not d:
+            return None
+        return {"file": str(path.relative_to(ROOT)), "ts": d.get("ts"), "model": d.get("model"), "passed": d.get("passed"), "total": d.get("total")}
+    packs = []
+    # gold: first run = the earliest saved file for that mode
+    for mode in ("rules-only", "gpt-5-mini"):
+        files = sorted(p for p in (ev / "results").glob(f"*_{mode}.json") if not p.name.startswith("latest"))
+        latest = ev / "results" / f"latest_{mode}.json"
+        if files:
+            packs.append({"pack": "Gold questions", "note": "written by the builder, planted answers", "mode": mode,
+                          "first": summ(_load(files[0]), files[0]), "now": summ(_load(latest), latest)})
+    for mode in ("rules-only", "gpt-5-mini"):
+        first, latest = ev / "adversarial" / "results" / f"first_run_{mode}.json", ev / "adversarial" / "results" / f"latest_{mode}.json"
+        if first.exists():
+            packs.append({"pack": "Adversarial", "note": "seen during development, not a holdout", "mode": mode,
+                          "first": summ(_load(first), first), "now": summ(_load(latest), latest)})
+    hq = ev / "holdout" / "questions.json"
+    hold = []
+    for mode in ("rules-only", "gpt-5-mini"):
+        first, latest = ev / "holdout" / "results" / f"first_run_{mode}.json", ev / "holdout" / "results" / f"latest_{mode}.json"
+        if first.exists():
+            hold.append({"pack": "Holdout", "note": "written by a teammate who has not seen the answers", "mode": mode,
+                         "first": summ(_load(first), first), "now": summ(_load(latest), latest)})
+    packs += hold or [{"pack": "Holdout", "note": "pending: " + ("questions written, not run yet" if hq.exists() else "no questions yet (evals/holdout/README.md)"),
+                       "mode": None, "first": None, "now": None}]
+    # decline accuracy: cases that should decline, suppress or say 'insufficient'
+    declines = []
+    for path in [ev / "results" / "latest_rules-only.json", ev / "adversarial" / "results" / "latest_rules-only.json"]:
+        d = _load(path)
+        if not d:
+            continue
+        if "matrix" in d:
+            neg = [r for r in d["rows"] if r.get("class") == "negative"]
+        else:
+            neg = [r for r in d["rows"] if any(k in r["checks"] for k in ("status_in", "verdict_in", "owner_not_assigned", "no_team_values"))]
+        declines.append({"file": str(path.relative_to(ROOT)), "ts": d.get("ts"), "correct": sum(r["passed"] for r in neg), "total": len(neg)})
+    # numbers checked against the evidence: the model-written briefs saved tonight (prepared answers)
+    prep = _load(PREPARED_PATH) or {}
+    g = [v["response"].get("grounding", {}) for v in prep.values()]
+    grounding = {"file": str(PREPARED_PATH.relative_to(ROOT)), "briefs": len(g), "checked": sum(x.get("checked", 0) for x in g),
+                 "total": sum(x.get("total", 0) for x in g), "generated": sorted(v["generated_at"] for v in prep.values())[:1]} if prep else None
+    # latency per question, from the latest saved runs
+    lat = []
+    for mode in ("rules-only", "gpt-5-mini"):
+        secs, files = [], []
+        for path in [ev / "results" / f"latest_{mode}.json", ev / "adversarial" / "results" / f"latest_{mode}.json"]:
+            d = _load(path)
+            if d:
+                secs += [r.get("seconds") for r in d["rows"]]
+                files.append(str(path.relative_to(ROOT)))
+        if secs:
+            lat.append({"mode": mode, "n": len(secs), "p50": _pct(secs, 0.5), "p95": _pct(secs, 0.95), "files": files})
+    fb_path = FEEDBACK_PATH
+    fb = [json.loads(l) for l in fb_path.read_text().splitlines() if l.strip()] if fb_path.exists() else []
+    feedback = {"file": str(fb_path.name), "total": len(fb), "useful": sum(1 for x in fb if x.get("useful")),
+                "not_useful": sum(1 for x in fb if not x.get("useful")),
+                "reasons": {r: sum(1 for x in fb if x.get("reason") == r) for r in sorted({x.get("reason") for x in fb if x.get("reason")})}}
+    return {"packs": packs, "declines": declines, "grounding": grounding, "latency": lat, "feedback": feedback}
+
+
+FEEDBACK_PATH = config.APPROVALS_PATH.parent / "feedback.jsonl"
+
+
+class FeedbackIn(BaseModel):
+    target: str = Field(pattern="^(ask|plan)$")
+    target_id: str = Field(min_length=1, max_length=80)
+    useful: bool
+    reason: str | None = Field(default=None, pattern="^(wrong number|wrong owner|not actionable|other)$")
+    note: str = Field(default="", max_length=500)
+
+
+@app.post("/api/useful")
+def post_feedback(f: FeedbackIn):
+    """'Useful? yes / no' on an Ask brief or a plan. Appended next to approvals.jsonl; starts empty."""
+    if not f.useful and not f.reason:
+        raise HTTPException(422, "say why it was not useful")
+    rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), **f.model_dump()}
+    with open(FEEDBACK_PATH, "a") as fh:
+        fh.write(json.dumps(rec) + "\n")
+    return rec
+
+
 FEEDBACK = [
     {"who": "O'Neal Keegan, Gallup", "when": "Sept 18", "said": "Access shows what moved; what we don't have is comparisons to business operations. Action planning breaks down because managers are busy.", "changed": "Why page links engagement to the client's operating data; the plan is one card, one click."},
     {"who": "Taher Jamshidi, Promontory AI", "when": "Sept 18", "said": "Start from the KPIs the site manager cares about, one signal; show pricing and a feedback loop.", "changed": "Site board opens on operating KPIs in dollars; Business case page; approve/flag log."},

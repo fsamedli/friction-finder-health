@@ -63,7 +63,9 @@ for (const width of [1440, 390]) {
   await noOverflow('Business case')
 
   await page.goto(base + '/trust', { waitUntil: 'networkidle' })
-  await see('Under the hood', ['Trust & method', 'Minimum n', 'With real data we would need'])
+  await see('Under the hood · quality', ['Trust & method', 'Pass rate by test pack', 'Adversarial', 'Holdout', 'Numbers checked against the evidence'])
+  await click('Under the hood', 'Assumptions')
+  await see('Under the hood · assumptions', ['Minimum n', 'With real data we would need'])
   await click('Under the hood', 'Architecture')
   await see('Under the hood · architecture', ['An AI-assisted workflow'])
   await noOverflow('Under the hood')
