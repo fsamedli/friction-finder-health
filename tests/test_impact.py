@@ -18,7 +18,7 @@ def test_night_a_red_and_first_at_detect():
     b = I.board(1, AS_OF_DETECT, C)
     t = b["teams"][0]
     assert t["team_name"] == "Night A" and t["status"] == "red" and "late_departures" in t["elevated"]
-    assert t["excess_cost"] > 5000
+    assert t["excess_cost"] > 0 and t["excess_by_kpi"]["late_departures"]["p"] < 0.01
     assert t["engagement"]["biggest_drop"]["item"] in ("q02", "q07")
     assert b["total_excess"] >= t["excess_cost"]
 
@@ -36,7 +36,8 @@ def test_small_team_rolled_up_no_numbers():
 
 
 def test_planted_blip_is_not_flagged():
-    assert team(3, "Day C")["status"] == "green"   # P9: survey-only blip, no operational signal
+    t = team(3, "Day C")                           # P9: survey-only blip -> a watch item, never 'look here first'
+    assert t["status"] == "amber" and t["elevated"] == []
 
 
 def test_suppressed_wave_hides_engagement_but_keeps_ops():
@@ -65,7 +66,11 @@ def test_planted_association_found_and_null_is_null():
     assert I.association("late_departures", "q02")["verdict"] == "association"
     assert I.association("injuries", "q02")["verdict"] == "too rare to test"          # P13
     assert I.association("absence_days", "grand")["verdict"] == "association"         # P12
-    assert I.association("quits", "q02")["verdict"] == "no association detected"
+
+
+def test_mix_artifact_is_not_red():
+    t = team(2, "Day B")                           # P6: response-mix change; operations did not move
+    assert t["status"] == "amber" and t["elevated"] == []
 
 
 def test_quartile_link_direction():

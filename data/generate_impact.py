@@ -21,7 +21,6 @@ import pandas as pd
 OUT = Path(__file__).resolve().parent / "generated"
 SEED = 4242
 MONTHS = [f"2026-{m:02d}" for m in range(1, 12)]
-WAVE2_FROM = "2026-06"      # engagement state switches to wave 2 when the obstacle appears
 CENTER = 3.85               # generator's team-item baseline mean
 PLAN_START, PLAN_REVIEW = "2026-09-21", "2026-11-30"
 
@@ -96,10 +95,10 @@ def run(teams: pd.DataFrame, responses: pd.DataFrame, truth: dict) -> dict:
     rows = []
     for t in teams.itertuples():
         for m in MONTHS:
-            wave = 2 if m >= WAVE2_FROM else 1
-            if t.team_id == night_a:
-                wave = 1  # P11 multipliers carry Night A's operational effect; avoid double counting
-            s = state(t, wave)
+            # Operating outcomes follow each team's underlying engagement, which the generator holds stable:
+            # wave 2 survey moves are either planted with their own operational effect (P11, via multipliers)
+            # or survey-only artifacts (P6 response mix, P9 blip) that must NOT show up in operations.
+            s = state(t, 1)
             rec = {"month": m, "team_id": int(t.team_id), "site_id": int(t.site_id), "shift": t.shift,
                    "headcount": int(t.headcount)}
             for k, base in BASE.items():

@@ -5,3 +5,5 @@ __pycache__/
 data/generated/
 data/cache/
 approvals.jsonl
+web/node_modules/
+web/dist/

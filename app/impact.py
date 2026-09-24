@@ -144,6 +144,9 @@ def _baseline(team, months, kpi) -> float:
 
 
 def _engagement(team_id: int) -> dict | None:
+    """Wave 1 vs wave 2 for one team. The change that counts is adjusted for who responded: each answer is
+    compared with the company-wide mean for that respondent's tenure band (both waves pooled), so a wave in
+    which new hires stopped responding does not look like a decline (the v0.5 signal check, same idea)."""
     tw = _data()[4]
     n1 = int(tw.loc[(team_id, 1), "n"]) if (team_id, 1) in tw.index else 0
     n2 = int(tw.loc[(team_id, 2), "n"]) if (team_id, 2) in tw.index else 0
@@ -153,20 +156,25 @@ def _engagement(team_id: int) -> dict | None:
     if n2 >= MIN_N:
         out["grand_w2"] = round(float(tw.loc[(team_id, 2), "grand"]), 2)
     if n1 >= MIN_N and n2 >= MIN_N:
-        deltas = {c: float(tw.loc[(team_id, 2), c] - tw.loc[(team_id, 1), c]) for c in ITEM_CODES}
-        worst = min(deltas, key=deltas.get)
-        p = _item_p(team_id, worst)
-        out["biggest_drop"] = {"item": worst, "label": item_labels()[worst], "delta": round(deltas[worst], 2),
-                               "p": round(p, 4), "significant": bool(deltas[worst] <= ITEM_DROP and p < ITEM_P)}
+        res = _residuals()
+        a, b = res[(res.team_id == team_id) & (res.wave_id == 1)], res[(res.team_id == team_id) & (res.wave_id == 2)]
+        adj = {c: float(b[c].mean() - a[c].mean()) for c in ITEM_CODES}
+        worst = min(adj, key=adj.get)
+        p = float(stats.ttest_ind(a[worst], b[worst], equal_var=False).pvalue)
+        raw = float(tw.loc[(team_id, 2), worst] - tw.loc[(team_id, 1), worst])
+        out["biggest_drop"] = {"item": worst, "label": item_labels()[worst], "delta": round(adj[worst], 2), "raw_delta": round(raw, 2),
+                               "p": round(p, 4), "significant": bool(adj[worst] <= ITEM_DROP and p < ITEM_P)}
     return out
 
 
-def _item_p(team_id: int, item: str) -> float:
-    """Welch t-test, wave 1 vs wave 2 answers on one item for one team (respondent rows stay in here)."""
-    resp = _responses()
-    a = resp[(resp.team_id == team_id) & (resp.wave_id == 1)][item]
-    b = resp[(resp.team_id == team_id) & (resp.wave_id == 2)][item]
-    return float(stats.ttest_ind(a, b, equal_var=False).pvalue)
+@lru_cache(maxsize=1)
+def _residuals() -> pd.DataFrame:
+    """Respondent answers minus the company-wide mean for their tenure band. Respondent rows never leave this module."""
+    resp = _responses().merge(pd.read_csv(DATA_DIR / "employees.csv")[["emp_id", "tenure_band"]], on="emp_id")
+    band = resp.groupby("tenure_band")[ITEM_CODES].transform("mean")
+    out = resp[["team_id", "wave_id"]].copy()
+    out[ITEM_CODES] = resp[ITEM_CODES] - band
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -175,7 +183,7 @@ def _responses() -> pd.DataFrame:
 
 
 def _elevation(team_id: int, team, months: list[str], kpi: str) -> dict:
-    """Observed count vs the count comparable teams' median rate predicts; Poisson upper tail."""
+    """Observed count vs the count comparable teams' pooled rate predicts; Poisson upper tail."""
     r, count, exposure = _rate([team_id], months, kpi)
     b = _baseline(team, months, kpi)
     expected = b * exposure
