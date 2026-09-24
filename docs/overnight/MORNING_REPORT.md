@@ -368,3 +368,17 @@ Gate: `126 passed, 0 failed`; pytest 94/94 (no key); lint 0.
   the report, a CSV download, a rejected bad file, a good file changing Night A's status, and the reset.
 
 Gate: `158 passed, 0 failed`; pytest 98/98 (no key); lint 0.
+
+### Phase 12: TEVV evidence map — **done**
+- `docs/risk/TEVV_EVIDENCE.md`: one row per NIST AI RMF characteristic (7). Each row has the product-specific
+  risk (with its NIST 600-1 GAI risk name), the control in code (file:line), the test or eval, **the current
+  result from tonight's runs**, the gap, and a tier.
+- It follows `jphall663/gai_risk_management`, which I was able to read (characteristic ↔ GAI-risk crosswalk,
+  5×5 tiering matrix, testing scaled to the tier). Proposed system tier: **Medium** (model testing plus
+  red-teaming, both present). Farid and Yukari to confirm.
+- **New finding while building it (a real gap, not an exposure in this data):** complementary suppression is
+  not enforced. Site mean minus the visible team means gives the pooled mean of the suppressed teams. I
+  checked all 6 site-waves; the pool is always n ≥ 4 (4 to 8 people), so no single team is revealed in this
+  dataset. With other data, a site-wave with exactly one suppressed team could be backed out. The fix is
+  described in the map; **not implemented** (it changes suppression logic, which the rules say to report,
+  not change).
