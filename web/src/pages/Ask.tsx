@@ -17,14 +17,14 @@ function Progress({ started, model }: { started: number; model: boolean }) {
   const [now, setNow] = useState(started)
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 250); return () => clearInterval(t) }, [])
   const s = (now - started) / 1000
-  // expected shares of a ~30 s model run; rules mode finishes almost instantly
-  const marks = model ? [0, 4, 6, 7, 8, 28] : [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+  // step starts measured on gpt-5-mini (Sept 23: 2.8 s to read, 0.5 s to query, 11.2 s to write); rules mode is near-instant
+  const marks = model ? [0, 2.8, 3.1, 3.4, 3.6, 14.5] : [0, 0.1, 0.2, 0.3, 0.4, 0.5]
   const at = marks.filter((m) => s >= m).length - 1
   return (
     <Card className="mt-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 font-medium"><Loader2 size={16} className="animate-spin text-brand" /> Working on it</div>
-        <span className="tnum text-[12.5px] text-fg-mute">{s.toFixed(0)} s{model ? ' · usually about 30 s with the model' : ''}</span>
+        <span className="tnum text-[12.5px] text-fg-mute">{s.toFixed(0)} s{model ? ' · usually 15–30 s with the model' : ''}</span>
       </div>
       <ol className="space-y-2">
         {STAGES.map((st, i) => (

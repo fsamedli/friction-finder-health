@@ -2,11 +2,12 @@
 read-only query function. The suppression rule lives here, in SQL, not in prompts."""
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
 import duckdb
 import pandas as pd
+import sqlglot
+from sqlglot import exp
 
 from app.config import DATA_DIR, MIN_N
 
@@ -150,6 +151,37 @@ class QueryResult:
         return self.rows.to_dict(orient="records")
 
 
+def _check_query(s: str) -> None:
+    """Raise ValueError unless s is one read-only SELECT over allowlisted tables and views only."""
+    try:
+        statements = [x for x in sqlglot.parse(s, read="duckdb") if x is not None]
+    except sqlglot.errors.ParseError as e:
+        raise ValueError(f"Could not parse the query: {e}") from e
+    if len(statements) != 1:
+        raise ValueError("Only single SELECT statements are allowed.")
+    tree = statements[0]
+    if not isinstance(tree, exp.Query):
+        raise ValueError("Query must be a SELECT (or WITH ... SELECT).")
+    if any(isinstance(n, (exp.Insert, exp.Update, exp.Delete, exp.Create, exp.Drop, exp.Alter, exp.Command, exp.Copy)) for n in tree.walk()):
+        raise ValueError("Only read-only SELECT statements are allowed.")
+    ctes = {c.alias_or_name.lower() for c in tree.find_all(exp.CTE)}
+    shadow = ctes & {t.lower() for t in TABLES}
+    if shadow:  # WITH responses AS (SELECT * FROM responses) would read the real table under a CTE's name
+        raise ValueError(f"CTE names may not reuse table names: {sorted(shadow)}")
+    for t in tree.find_all(exp.Table):
+        if not isinstance(t.this, exp.Identifier):  # read_csv(...), glob(...), any table function
+            raise ValueError(f"Table functions are not allowed: {t.this.sql(dialect='duckdb')[:60]}")
+        if t.args.get("db") or t.args.get("catalog"):
+            raise ValueError(f"Schema-qualified names are not allowed: {t.sql(dialect='duckdb')}")
+        name = t.name.lower()
+        if name not in ALLOWED and name not in ctes:
+            raise ValueError(f"Query touches non-allowed tables: ['{name}']. Respondent rows are never exposed.")
+    for f in tree.find_all(exp.Func):
+        fname = (f.sql_name() if not isinstance(f, exp.Anonymous) else str(f.this)).lower()
+        if fname.startswith(("read_", "glob", "scan_", "sniff_")):
+            raise ValueError(f"File-reading functions are not allowed: {fname}")
+
+
 class DB:
     def __init__(self):
         self.con = duckdb.connect(database=":memory:")
@@ -161,19 +193,14 @@ class DB:
         self.uploaded_ops_rows = 0
 
     # ---- guarded query -------------------------------------------------
-    _forbidden = re.compile(r"\b(insert|update|delete|drop|alter|create|copy|attach|pragma|export|import)\b", re.I)
-    _from_pat = re.compile(r"\b(?:from|join)\s+([a-zA-Z_][a-zA-Z0-9_]*)", re.I)
+    # The query is parsed (sqlglot, DuckDB dialect), not pattern-matched: every table it references,
+    # in any FROM, JOIN, comma join, subquery, CTE or UNION, must be an allowlisted view or table, and
+    # table functions that read files (read_csv, read_parquet, glob, ...) are refused outright.
+    # Replaces a regex that only checked the first name after FROM/JOIN (bypass found Sept 23, 2026).
 
     def run_sql(self, sql: str) -> QueryResult:
-        s = sql.strip().rstrip(";")
-        if self._forbidden.search(s) or ";" in s:
-            raise ValueError("Only single SELECT statements are allowed.")
-        refs = {m.lower() for m in self._from_pat.findall(s)}
-        bad = refs - ALLOWED
-        if bad:
-            raise ValueError(f"Query touches non-allowed tables: {sorted(bad)}. Respondent rows are never exposed.")
-        if not re.match(r"^\s*(select|with)\b", s, re.I):
-            raise ValueError("Query must start with SELECT or WITH.")
+        s = sql.strip().rstrip(";").strip()
+        _check_query(s)
         rows = self.con.execute(f"SELECT * FROM ({s}) LIMIT {ROW_CAP}").df()
         return QueryResult(sql=s, rows=rows)
 
