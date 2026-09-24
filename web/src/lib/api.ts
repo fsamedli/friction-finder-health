@@ -84,7 +84,7 @@ export interface AskResult {
   trace: { step: string; detail: string; mode: 'model' | 'rules' | 'code' | 'template'; seconds: number | null }[]
 }
 
-export interface Source { id: string; name: string; vendor: string; owner: string; status: 'connected' | 'available'; method: string; rows: number; detail: string; last: string | null }
+export interface Source { id: string; name: string; vendor: string; owner: string; status: 'demo_csv' | 'not_connected'; method: string; rows: number; detail: string; last: string | null }
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)

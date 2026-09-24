@@ -112,6 +112,9 @@ def test_ask_reports_grounding_and_trace(monkeypatch):
 def test_sources():
     s = c.get("/api/sources").json()
     assert {x["id"] for x in s} >= {"survey", "timekeeping", "wms"} and all(x["rows"] >= 0 for x in s)
+    # never claim a live connection to a vendor system (overnight rule 6)
+    assert all(x["status"] in ("demo_csv", "not_connected") for x in s)
+    assert all(x["vendor"].startswith("Would") for x in s)
 
 
 def test_live_plan_on_demo_path_is_reviewable(tmp_path, monkeypatch):

@@ -222,20 +222,21 @@ def sources():
     com = pd.read_csv(d / "comments.csv")
     docs = sorted(p.name for p in config.DOCS_DIR.glob("*")) if config.DOCS_DIR.exists() else []
     up = _state["db"].uploaded_ops_rows if _state["db"] else 0
+    demo = "demo_csv"  # nothing is connected to a live system; every source here is a synthetic CSV
     return [
-        {"id": "survey", "name": "Engagement survey export", "vendor": "Gallup Access (Q12-style CSV)", "owner": "HR / People analytics",
-         "status": "connected", "method": "CSV export, each wave", "rows": int(len(resp)), "detail": f"{resp.wave_id.nunique()} waves · {resp.team_id.nunique()} teams · respondent rows stay inside the database",
+        {"id": "survey", "name": "Engagement survey export", "vendor": "Would come from: a Gallup Access export (Q12-style CSV)", "owner": "HR / People analytics",
+         "status": demo, "method": "CSV per survey wave", "rows": int(len(resp)), "detail": f"{resp.wave_id.nunique()} waves · {resp.team_id.nunique()} teams · respondent rows stay inside the database",
          "last": "2026-09-10"},
-        {"id": "comments", "name": "Survey comments", "vendor": "Gallup Access (open text)", "owner": "HR / People analytics",
-         "status": "connected", "method": "CSV export, each wave", "rows": int(len(com)), "detail": "Indexed for retrieval; teams under 4 respondents never indexed", "last": "2026-09-10"},
-        {"id": "timekeeping", "name": "Timekeeping & attendance", "vendor": "e.g. UKG / Kronos", "owner": "Operations",
-         "status": "connected", "method": "Monthly CSV (team template)", "rows": int(len(tom)), "detail": "Absences, quits, injuries, late departures, rework by team-month", "last": "2026-11-30"},
-        {"id": "wms", "name": "Dispatch / WMS", "vendor": "e.g. Manhattan, Blue Yonder", "owner": "Operations",
-         "status": "connected", "method": "Daily CSV by shift and hour", "rows": int(len(ops)) + int(up), "detail": f"Departures and late departures by hour band{f' · {up} rows uploaded this session' if up else ''}", "last": "2026-09-10"},
-        {"id": "docs", "name": "Procedures & ownership directory", "vendor": "SharePoint / policy library", "owner": "Site operations",
-         "status": "connected", "method": "Document folder", "rows": len(docs), "detail": ", ".join(docs[:4]), "last": "2026-09-01"},
-        {"id": "hris", "name": "HRIS (tenure bands)", "vendor": "e.g. Workday", "owner": "HR",
-         "status": "available", "method": "Not connected in the demo", "rows": 0, "detail": "Tenure bands come with the survey export in this demo", "last": None},
+        {"id": "comments", "name": "Survey comments", "vendor": "Would come from: the same Gallup Access export (open text)", "owner": "HR / People analytics",
+         "status": demo, "method": "CSV per survey wave", "rows": int(len(com)), "detail": "Indexed for retrieval; teams under 4 respondents never indexed", "last": "2026-09-10"},
+        {"id": "timekeeping", "name": "Timekeeping & attendance", "vendor": "Would connect to, e.g., UKG / Kronos", "owner": "Operations",
+         "status": demo, "method": "Monthly CSV (team template)", "rows": int(len(tom)), "detail": "Absences, quits, injuries, late departures, rework by team-month", "last": "2026-11-30"},
+        {"id": "wms", "name": "Dispatch / WMS", "vendor": "Would connect to, e.g., Manhattan, Blue Yonder", "owner": "Operations",
+         "status": demo, "method": "Daily CSV by shift and hour", "rows": int(len(ops)) + int(up), "detail": f"Departures and late departures by hour band{f' · {up} rows uploaded this session' if up else ''}", "last": "2026-09-10"},
+        {"id": "docs", "name": "Procedures & ownership directory", "vendor": "Would connect to, e.g., a SharePoint policy library", "owner": "Site operations",
+         "status": demo, "method": "Document folder", "rows": len(docs), "detail": ", ".join(docs[:4]), "last": "2026-09-01"},
+        {"id": "hris", "name": "HRIS (tenure bands)", "vendor": "Would connect to, e.g., Workday", "owner": "HR",
+         "status": "not_connected", "method": "Not used in the demo", "rows": 0, "detail": "Tenure bands come with the survey export in this demo", "last": None},
     ]
 
 

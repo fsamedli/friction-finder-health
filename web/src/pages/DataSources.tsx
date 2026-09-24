@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { CheckCircle2, CircleDashed, Download, Lock, Upload } from 'lucide-react'
+import { CircleDashed, Download, FileSpreadsheet, Lock, Upload } from 'lucide-react'
 import { api } from '../lib/api'
 import { longDate, num } from '../lib/format'
 import { useLoad } from '../lib/store'
@@ -22,14 +22,14 @@ export default function DataSources() {
   const templateHref = URL.createObjectURL(new Blob([TEMPLATE], { type: 'text/csv' }))
   return (
     <div>
-      <PageHeader title="Data sources" sub="The client owns both halves: the survey export from Gallup Access and its own operating records. Friction Finder runs on the client's side; operating data never goes to Gallup."
-        actions={<Badge tone="ok" dot>{src.data.filter((s) => s.status === 'connected').length} connected</Badge>} />
+      <PageHeader title="Data sources" sub="The client owns both halves: the survey export and its own operating records. In this demo every source is a synthetic CSV; nothing is connected to a live system. In a deployment, Friction Finder runs on the client's side and operating data never goes to Gallup."
+        actions={<Badge tone="info" dot>{src.data.filter((s) => s.status === 'demo_csv').length} sources · synthetic demo files</Badge>} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 stagger">
         {src.data.map((s) => (
           <Card key={s.id}>
             <div className="flex items-start justify-between gap-3">
               <div><div className="font-semibold">{s.name}</div><div className="text-[12.5px] text-fg-mute">{s.vendor}</div></div>
-              {s.status === 'connected' ? <Badge tone="ok"><CheckCircle2 size={12} /> Connected</Badge> : <Badge tone="neutral"><CircleDashed size={12} /> Available</Badge>}
+              {s.status === 'demo_csv' ? <Badge tone="info"><FileSpreadsheet size={12} /> Demo CSV (synthetic)</Badge> : <Badge tone="neutral"><CircleDashed size={12} /> Not connected</Badge>}
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-y-2 text-[12.5px]">
               <dt className="text-fg-mute">Data owner</dt><dd className="text-right">{s.owner}</dd>
