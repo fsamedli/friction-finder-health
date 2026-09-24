@@ -38,7 +38,7 @@ def test_unit_costs_have_sources():
     assert c["quit"]["value"] == 10704 and c["quit"]["kind"] == "sourced"
     assert c["injury"]["value"] == 48000
     assert c["absence_day"]["kind"] == "assumption"
-    assert c["late_departure"]["value"] == 0 and c["late_departure"]["kind"] == "none"
+    assert c["late_departure"]["kind"] == "client_entered" and "fictional" in c["late_departure"]["source"]
     assert all(v["source"] for v in c.values())
 
 

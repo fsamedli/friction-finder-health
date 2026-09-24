@@ -50,9 +50,10 @@ def unit_costs() -> dict:
         "absence_day": {"label": "One unplanned absence day", "value": round(hourly * 8, 2), "unit": "per day", "kind": "assumption",
                         "source": f"Assumption: one day's pay (8 x BLS ${hourly}/hr). Ignores overtime premium for backfill.",
                         "note": "Replace with the client's backfill cost."},
-        "late_departure": {"label": "One late outbound departure", "value": 0, "unit": "per departure", "kind": "none",
-                           "source": "No credible public source found; vendor figures only.",
-                           "note": "Shown as a count. The client can enter its own cost (e.g., SLA penalty)."},
+        "late_departure": {"label": "One late outbound departure", "value": 150, "unit": "per departure", "kind": "client_entered",
+                           "source": "Client-entered figure: Northline Logistics (fictional) SLA credit plus dock overtime per late truck. "
+                                     "Not a market statistic; no credible public source exists.",
+                           "note": "In a real deployment the client enters its own number here."},
     }
 
 
