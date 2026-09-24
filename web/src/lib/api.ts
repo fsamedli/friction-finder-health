@@ -80,7 +80,11 @@ export interface AskResult {
   assessment: { verdict: string; label: string; level: string; reasons: string[]; n: Record<string, unknown> } | null
   brief: { obstacle: string; evidence_for: { claim: string; evidence_ids?: string[] }[]; evidence_against: { claim: string; evidence_ids?: string[] }[]; missing: string[]; owner: string; proposed_test: string; limits: string; mode: string; check_notes: string[] } | null
   evidence: Evidence[]
+  grounding: { checked: number; total: number; unmatched: string[] }
+  trace: { step: string; detail: string; mode: 'model' | 'rules' | 'code' | 'template'; seconds: number | null }[]
 }
+
+export interface Source { id: string; name: string; vendor: string; owner: string; status: 'connected' | 'available'; method: string; rows: number; detail: string; last: string | null }
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
@@ -111,6 +115,10 @@ export const api = {
   assumptions: () => j<{ rows: { k: string; v: string; why: string }[]; with_real_data: string[] }>('/api/assumptions'),
   evals: () => j<{ file: string; model: string; passed: number; total: number; matrix: Record<string, number>; ts: string; rows: { id: string; class: string; question: string; status: string; verdict: string; passed: boolean; outcome: string }[] }[]>('/api/evals/latest'),
   feedback: () => j<{ who: string; when: string; said: string; changed: string }[]>('/api/feedback'),
+  resetDemo: () => j<{ ok: boolean }>('/api/demo', { method: 'DELETE' }),
+  sources: () => j<Source[]>('/api/sources'),
+  upload: async (file: File) => { const f = new FormData(); f.append('file', file); return j<{ rows_added: number }>('/api/upload', { method: 'POST', body: f }) },
+  reviewLog: () => j<Record<string, unknown>[]>('/api/review-log'),
   ask: (question: string, rules = false) =>
     j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, rules }) }),
   approve: (result_id: string, decision: 'approved' | 'rejected' | 'flagged', note = '') =>

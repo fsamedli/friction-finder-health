@@ -138,6 +138,14 @@ class PlanIn(BaseModel):
     note: str = ""
 
 
+def _default_review(start: date) -> date:
+    """Operating data is monthly, so a review needs two complete months after the plan starts:
+    the review date is the last day of the second full month after the start (Sept 21 -> Nov 30)."""
+    y, m = start.year, start.month + 3  # first day of the month after the second full month
+    y, m = (y + 1, m - 12) if m > 12 else (y, m)
+    return date(y, m, 1) - timedelta(days=1)
+
+
 @app.get("/api/plans")
 def plans():
     teams = pd.read_csv(config.DATA_DIR / "teams.csv").merge(pd.read_csv(config.DATA_DIR / "sites.csv"), on="site_id")
@@ -151,9 +159,17 @@ def create_plan(p: PlanIn):
         raise HTTPException(422, "unknown kpi")
     start = date.fromisoformat(p.start)
     plan = p.model_dump()
-    plan["review"] = p.review or (start + timedelta(days=60)).isoformat()
+    plan["review"] = p.review or _default_review(start).isoformat()
     plan["id"] = f"plan-{uuid.uuid4().hex[:8]}"
     return I.save_plan(plan)
+
+
+@app.delete("/api/demo")
+def reset_demo():
+    """Between rehearsals: remove plans created in the app and edited unit costs. Seeded data is untouched."""
+    for name in ("plans.jsonl", "costs.json"):
+        (config.CACHE_DIR / name).unlink(missing_ok=True)
+    return {"ok": True}
 
 
 @app.get("/api/plans/{plan_id}/result")

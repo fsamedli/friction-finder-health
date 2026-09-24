@@ -72,7 +72,7 @@ def test_create_plan_live_then_insufficient(tmp_path, monkeypatch):
     body = {"team_id": 4, "item": "q02", "kpi": "late_departures", "start": "2026-11-20",
             "actions": [{"text": "Fix the handoff log", "owner": "Priya Singh", "due": "2026-11-27"}]}
     p = c.post("/api/plans", json=body).json()
-    assert p["review"] == "2027-01-19"
+    assert p["review"] == "2027-01-31"   # end of the second full month after the start
     r = c.get(f"/api/plans/{p['id']}/result", params={"as_of": "2026-11-30"}).json()
     assert r["status"] == "not_reached"
     assert c.post("/api/plans", json={**body, "actions": []}).status_code == 422
@@ -112,3 +112,16 @@ def test_ask_reports_grounding_and_trace(monkeypatch):
 def test_sources():
     s = c.get("/api/sources").json()
     assert {x["id"] for x in s} >= {"survey", "timekeeping", "wms"} and all(x["rows"] >= 0 for x in s)
+
+
+def test_live_plan_on_demo_path_is_reviewable(tmp_path, monkeypatch):
+    """The demo: approve a Night A plan at Sept 15 (start Sept 21), fast-forward to Nov 30 -> a verdict, not 'insufficient'."""
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    import app.impact as I
+    monkeypatch.setattr(I, "CACHE_DIR", tmp_path)
+    body = {"team_id": 4, "item": "q02", "kpi": "late_departures", "start": "2026-09-21",
+            "actions": [{"text": "Fix the handoff log", "owner": "Priya Singh", "due": "2026-09-28"}]}
+    p = c.post("/api/plans", json=body).json()
+    assert p["review"] == "2026-11-30"
+    r = c.get(f"/api/plans/{p['id']}/result", params={"as_of": "2026-11-30"}).json()
+    assert r["status"] == "ok" and r["verdict"] == "worked"

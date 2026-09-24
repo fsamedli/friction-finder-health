@@ -1,15 +1,28 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api, type Meta } from './api'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { api, type Meta, type Plan } from './api'
 
 export const DETECT = '2026-09-15'
 export const REVIEW = '2026-11-30'
 export const SEED_PLAN = 'plan-richmond-night-a'
+
+/** Plans as they exist on the demo clock. The seeded Night A plan is a fallback: it appears once the clock passes
+ *  its start date, unless a plan for that team was approved live in the app (the demo path). */
+export function visiblePlans(plans: Plan[], asOf: string): Plan[] {
+  const live = plans.filter((p) => p.id !== SEED_PLAN && p.status === 'approved')
+  return plans.filter((p) => p.status === 'approved' && (p.id !== SEED_PLAN || (asOf >= p.start && !live.some((l) => l.team_id === p.team_id))))
+}
 
 interface Ctx {
   meta: Meta | null
   siteId: number; setSiteId: (n: number) => void
   asOf: string; setAsOf: (d: string) => void
   teamId: number; setTeamId: (n: number) => void
+  role: Role; setRole: (r: Role) => void
+}
+export type Role = 'manager' | 'hr'
+export const PERSONA: Record<Role, { name: string; title: string; initials: string }> = {
+  manager: { name: 'Priya Singh', title: 'Site Operations Manager · Richmond', initials: 'PS' },
+  hr: { name: 'Jordan Ellis', title: 'Director, People Analytics · all sites', initials: 'JE' },
 }
 const C = createContext<Ctx | null>(null)
 
@@ -21,6 +34,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [siteId, setSite] = useState(Number(read('ff.site', '1')))
   const [asOf, setAs] = useState(read('ff.asof', DETECT))
   const [teamId, setTeam] = useState(Number(read('ff.team', '4')))
+  const [role, setRoleS] = useState<Role>((read('ff.role', 'manager') as Role))
   useEffect(() => { api.meta().then(setMeta).catch(() => setMeta(null)) }, [])
   return (
     <C.Provider value={{
@@ -28,6 +42,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       siteId, setSiteId: (n) => { setSite(n); write('ff.site', String(n)) },
       asOf, setAsOf: (d) => { setAs(d); write('ff.asof', d) },
       teamId, setTeamId: (n) => { setTeam(n); write('ff.team', String(n)) },
+      role, setRole: (r) => { setRoleS(r); write('ff.role', r) },
     }}>{children}</C.Provider>
   )
 }
@@ -38,17 +53,19 @@ export const useStore = () => {
   return c
 }
 
-/** Fetch helper: re-runs when deps change; exposes loading and error. */
+/** Fetch helper: re-runs when deps change; exposes loading and error. Keeps the last data while reloading. */
 export function useLoad<T>(fn: () => Promise<T>, deps: unknown[]) {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const key = JSON.stringify(deps)
+  const fnRef = useRef(fn)
+  useEffect(() => { fnRef.current = fn })
+  const [st, setSt] = useState<{ key: string | null; data: T | null; error: string | null }>({ key: null, data: null, error: null })
   useEffect(() => {
     let live = true
-    setLoading(true); setError(null)
-    fn().then((d) => { if (live) setData(d) }).catch((e) => { if (live) setError(String(e.message ?? e)) }).finally(() => { if (live) setLoading(false) })
+    fnRef.current()
+      .then((d) => { if (live) setSt({ key, data: d, error: null }) })
+      .catch((e) => { if (live) setSt((p) => ({ key, data: p.data, error: String(e?.message ?? e) })) })
     return () => { live = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
-  return { data, error, loading, setData }
+  }, [key])
+  const setData = (d: T | null) => setSt((p) => ({ ...p, data: d }))
+  return { data: st.data, error: st.error, loading: st.key !== key, setData }
 }
