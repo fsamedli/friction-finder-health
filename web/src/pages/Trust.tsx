@@ -23,8 +23,8 @@ function Architecture() {
       {box(20, 20, 210, 'Client data', 'Survey export (HR) · ops logs (CSV)')}
       {box(20, 120, 210, 'DuckDB views', 'n ≥ 4 enforced in SQL', 'code')}
       {box(20, 220, 210, 'Documents & comments', 'retrieval index (small teams excluded)')}
-      {box(300, 50, 270, 'impact.py · detect / explain / prove', 'Poisson excess · OLS · DiD · no AI', 'code')}
-      {box(300, 160, 270, 'agent.py · evidence brief', 'SQL on views · retrieval · verdict rules', 'code')}
+      {box(300, 50, 270, 'Impact engine · detect / explain / prove', 'Poisson excess · OLS · DiD · no AI', 'code')}
+      {box(300, 160, 270, 'Evidence brief engine', 'SQL on views · retrieval · verdict rules', 'code')}
       {box(300, 262, 270, 'Azure OpenAI (GW) · gpt-5-mini', 'reads the question · writes the brief', 'ai')}
       {box(640, 110, 150, 'FastAPI', 'typed endpoints')}
       {box(830, 50, 130, 'Web app', 'this product')}

@@ -48,7 +48,7 @@ export default function DataSources() {
             <Upload size={22} className="mx-auto text-fg-mute" />
             <p className="mt-2 text-[13.5px]">Dispatch records by date, shift and hour band</p>
             <div className="mt-4 flex justify-center gap-2">
-              <Button variant="brand" disabled={busy} onClick={() => file.current?.click()}>{busy ? 'Uploading…' : 'Choose CSV'}</Button>
+              <Button variant="primary" disabled={busy} onClick={() => file.current?.click()}>{busy ? 'Uploading…' : 'Choose CSV'}</Button>
               <a href={templateHref} download="ops_template.csv"><Button variant="secondary" icon={<Download size={15} />}>Template</Button></a>
             </div>
             <input ref={file} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = '' }} />

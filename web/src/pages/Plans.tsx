@@ -28,7 +28,7 @@ export default function Plans() {
   return (
     <div>
       <PageHeader title="Action plans" sub="Each plan has one focus item, a few actions with owners, and a review date. At the review date the operating KPI is compared with similar teams that did not act."
-        actions={<Button variant="brand" icon={<Plus size={15} />} onClick={() => nav(`/teams/${teamId}?tab=plan`)}>New plan</Button>} />
+        actions={<Button variant="decide" icon={<Plus size={15} />} onClick={() => nav(`/teams/${teamId}?tab=plan`)}>New plan</Button>} />
       <Card pad={false}>
         {rows.length === 0 ? <Empty icon={<ClipboardList size={20} />} title="No plans yet" sub="Open a team that needs attention and draft a plan from its evidence." /> : (
           <div className="overflow-x-auto scroll-thin">

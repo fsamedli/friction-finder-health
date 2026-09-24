@@ -9,9 +9,10 @@ import { Badge, Card, ErrorState, Method, PageHeader, PageSkeleton, Segmented, S
 
 type Filter = 'all' | 'attention' | 'normal'
 
-function Kpi({ t, k }: { t: TeamRow; k: 'late_departures' | 'absence_days' }) {
+function Kpi({ t, k }: { t: TeamRow; k: 'late_departures' | 'absence_days' | 'quits' }) {
   const e = t.excess_by_kpi[k]
   if (!e) return <span className="text-fg-faint">—</span>
+  if (!e.judgeable) return <span className="text-[12px] text-fg-faint whitespace-nowrap" title={`${e.observed} observed, ${e.expected} expected: fewer than 3 expected in three months`}>too rare to judge</span>
   return (
     <div className="flex items-center gap-2">
       <Spark data={t.spark[k] ?? []} flagged={e.flagged} />
@@ -48,13 +49,14 @@ export default function Teams() {
           </label>
         </div>
         <div className="overflow-x-auto scroll-thin">
-          <table className="w-full min-w-[920px] text-[13.5px]">
+          <table className="w-full min-w-[1040px] text-[13.5px]">
             <thead>
               <tr className="border-b border-border bg-canvas/60 text-left text-[12px] font-medium text-fg-mute">
                 <th className="px-4 py-2.5 font-medium">Team</th>
                 <th className="px-3 py-2.5 font-medium">Status</th>
                 <th className="px-3 py-2.5 font-medium">Late departures <span className="text-fg-faint">obs / exp</span></th>
                 <th className="px-3 py-2.5 font-medium">Absence days <span className="text-fg-faint">obs / exp</span></th>
+                <th className="px-3 py-2.5 font-medium">Quits</th>
                 <th className="px-3 py-2.5 font-medium">Largest survey change</th>
                 <th className="px-3 py-2.5 font-medium text-right">Excess cost</th>
                 <th className="w-8" />
@@ -73,10 +75,11 @@ export default function Teams() {
                     </td>
                     <td className="px-3 py-3"><StatusBadge s={t.status} /></td>
                     {locked ? (
-                      <td colSpan={4} className="px-3 py-3 text-[12.5px]"><span className="inline-flex items-center gap-1.5"><Lock size={13} /> Fewer than 4 people. Included in site totals only, so no one can be identified.</span></td>
+                      <td colSpan={5} className="px-3 py-3 text-[12.5px]"><span className="inline-flex items-center gap-1.5"><Lock size={13} /> Fewer than 4 people. Included in site totals only, so no one can be identified.</span></td>
                     ) : (<>
                       <td className="px-3 py-3"><Kpi t={t} k="late_departures" /></td>
                       <td className="px-3 py-3"><Kpi t={t} k="absence_days" /></td>
+                      <td className="px-3 py-3"><Kpi t={t} k="quits" /></td>
                       <td className="px-3 py-3">
                         {d ? <div className="max-w-[240px]"><div className="truncate text-fg-soft" title={d.label}>{d.label}</div>
                           <div className="flex items-center gap-2 text-[12px]"><span className={cx('tnum font-medium', d.significant ? 'text-crit-700' : 'text-fg-mute')}>{signed(d.delta)} pts</span>{d.significant ? <Badge tone="crit">beyond noise</Badge> : <span className="text-fg-faint">within noise</span>}</div></div>
@@ -91,6 +94,7 @@ export default function Teams() {
             </tbody>
           </table>
         </div>
+        <p className="border-t border-border px-4 py-3 text-[12px] text-fg-faint">Ranks obstacles, not managers. Observed / expected over the last three full months; expected = comparable teams' rate × this team's size.</p>
       </Card>
     </div>
   )

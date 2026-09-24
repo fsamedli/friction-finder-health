@@ -36,7 +36,7 @@ export function PageHeader({ title, sub, crumbs, actions }: { title: ReactNode; 
   )
 }
 
-type Tone = 'crit' | 'warn' | 'ok' | 'info' | 'ai' | 'brand' | 'neutral'
+type Tone = 'crit' | 'warn' | 'ok' | 'info' | 'ai' | 'brand' | 'act' | 'neutral'
 const TONE: Record<Tone, string> = {
   crit: 'bg-crit-50 text-crit-700 ring-crit-100',
   warn: 'bg-warn-50 text-warn-700 ring-warn-100',
@@ -44,9 +44,10 @@ const TONE: Record<Tone, string> = {
   info: 'bg-info-50 text-info-700 ring-info-100',
   ai: 'bg-ai-50 text-ai-700 ring-ai-100',
   brand: 'bg-brand-50 text-brand-700 ring-brand-100',
+  act: 'bg-act-50 text-act-700 ring-act-100',
   neutral: 'bg-canvas text-fg-soft ring-border',
 }
-const DOT: Record<Tone, string> = { crit: 'bg-crit', warn: 'bg-warn', ok: 'bg-ok', info: 'bg-info', ai: 'bg-ai', brand: 'bg-brand', neutral: 'bg-fg-faint' }
+const DOT: Record<Tone, string> = { crit: 'bg-crit', warn: 'bg-warn', ok: 'bg-ok', info: 'bg-info', ai: 'bg-ai', brand: 'bg-brand', act: 'bg-act', neutral: 'bg-fg-faint' }
 
 export function Badge({ tone = 'neutral', children, dot, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
   return (
@@ -65,12 +66,12 @@ export const STATUS: Record<Status, { label: string; tone: Tone }> = {
 export const StatusBadge = ({ s }: { s: Status }) => <Badge tone={STATUS[s].tone} dot>{STATUS[s].label}</Badge>
 
 export function Button({ children, onClick, variant = 'primary', size = 'md', disabled, type = 'button', icon, className }: {
-  children?: ReactNode; onClick?: () => void; variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'brand'; size?: 'sm' | 'md'
+  children?: ReactNode; onClick?: () => void; variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'decide'; size?: 'sm' | 'md'
   disabled?: boolean; type?: 'button' | 'submit'; icon?: ReactNode; className?: string
 }) {
   const v = {
     primary: 'bg-fg text-white hover:bg-fg-soft shadow-xs',
-    brand: 'bg-brand text-white hover:bg-brand-700 shadow-xs',
+    decide: 'bg-act text-white hover:bg-act-700 shadow-xs',  // rust: a person decides (approve, create a plan)
     secondary: 'bg-surface text-fg-soft border border-border-strong hover:bg-canvas shadow-xs',
     ghost: 'text-fg-soft hover:bg-canvas',
     danger: 'bg-surface text-crit-700 border border-crit-100 hover:bg-crit-50',
@@ -196,7 +197,7 @@ export function Provenance({ kind }: { kind: 'computed' | 'model' | 'person' | '
   const m = {
     computed: { t: 'Computed', tone: 'brand' as Tone },
     model: { t: 'AI-written · checked', tone: 'ai' as Tone },
-    person: { t: 'Needs a decision', tone: 'warn' as Tone },
+    person: { t: 'Needs your decision', tone: 'act' as Tone },
     synthetic: { t: 'Synthetic data', tone: 'neutral' as Tone },
     retrieved: { t: 'Quoted from source', tone: 'info' as Tone },
   }[kind]

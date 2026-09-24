@@ -5,6 +5,7 @@ import { longDate, money, monthRange, num, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
 import { PERSONA, useLoad, useStore, visiblePlans } from '../lib/store'
 import { Spark } from '../components/charts'
+import Journey from '../components/Journey'
 import { Badge, Button, Card, CardHeader, Empty, ErrorState, Method, PageHeader, PageSkeleton, Stat, StatusBadge, cx } from '../components/ui'
 
 function AttentionRow({ t, site, onOpen }: { t: TeamRow; site?: string; onOpen: () => void }) {
@@ -87,18 +88,19 @@ function ManagerToday() {
 
   return (
     <div>
+      <Journey at="detect" teamId={top?.team_id ?? main?.p.team_id} planId={main?.p.id} />
       <PageHeader
         crumbs={<>{b.site} DC · {role === 'manager' ? 'your site' : 'selected site'}</>}
         title={<>Good morning, {PERSONA[role].name.split(' ')[0]}</>}
         sub={headline}
         actions={reviewReady
-          ? <Button variant="brand" onClick={() => nav(`/impact/${main?.p.id}`)} icon={<CheckCircle2 size={16} />}>See the review</Button>
-          : top ? <Button variant="brand" onClick={() => nav(`/teams/${top.team_id}`)} icon={<Eye size={16} />}>Investigate {top.team_name}</Button> : undefined}
+          ? <Button variant="primary" onClick={() => nav(`/impact/${main?.p.id}`)} icon={<CheckCircle2 size={16} />}>See the review</Button>
+          : top ? <Button variant="primary" onClick={() => nav(`/teams/${top.team_id}`)} icon={<Eye size={16} />}>Investigate {top.team_name}</Button> : undefined}
       />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
         <Stat label="Excess operating cost" value={money(b.total_excess)} icon={<DollarSign size={16} />} tone={b.total_excess > 0 ? 'crit' : undefined}
-          sub={<>{monthRange(b.window)} · vs comparable teams</>} />
+          sub={<>{monthRange(b.window)} · {money(b.annualized, true)} a year if it held</>} />
         <Stat label="Teams needing attention" value={<>{reds.length}<span className="text-fg-faint text-[18px]"> / {b.teams.length}</span></>} icon={<AlertTriangle size={16} />} tone={reds.length ? 'crit' : 'ok'}
           sub={<>{attention.length - reds.length} to watch · {b.teams.filter((t) => t.status === 'rolled_up').length} rolled up for privacy</>} />
         <Stat label="Active action plans" value={active.length} icon={<ClipboardList size={16} />} sub="approved by a person" />
@@ -120,6 +122,7 @@ function ManagerToday() {
           ) : (
             <div className="space-y-3">{attention.map((t) => <AttentionRow key={t.team_id} t={t} onOpen={() => nav(`/teams/${t.team_id}`)} />)}</div>
           )}
+          <p className="mt-4 text-[12px] text-fg-faint">Ranks obstacles, not managers. Teams under 4 people are counted in site totals only.</p>
         </Card>
 
         <div className="space-y-6">

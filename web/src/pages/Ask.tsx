@@ -108,7 +108,7 @@ export default function Ask() {
       <Card>
         <form onSubmit={(e) => { e.preventDefault(); if (q.trim() && !started) go(q) }} className="flex items-center gap-2 rounded-xl border border-border-strong p-1.5 pl-4 focus-within:ring-4 focus-within:ring-brand/10">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Why did the Richmond night shift's scores drop?" className="flex-1 bg-transparent text-[14.5px] focus:outline-none" />
-          <Button type="submit" variant="brand" disabled={!q.trim() || !!started} icon={<ArrowUp size={16} />}>Ask</Button>
+          <Button type="submit" variant="primary" disabled={!q.trim() || !!started} icon={<ArrowUp size={16} />}>Ask</Button>
         </form>
         <div className="mt-3 flex flex-wrap gap-2">
           {EXAMPLES.map((x) => <button key={x} disabled={!!started} onClick={() => go(x)} className="rounded-full border border-border px-3 py-1 text-[12.5px] text-fg-soft hover:bg-canvas disabled:opacity-40">{x}</button>)}
@@ -142,7 +142,7 @@ export default function Ask() {
               <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
                 {decided ? <Badge tone={decided === 'approved' ? 'ok' : 'warn'} dot>Recorded in the review log: {decided}</Badge> : (<>
                   <span className="mr-1 text-[12.5px] text-fg-mute">Your decision:</span>
-                  <Button size="sm" variant="brand" icon={<ThumbsUp size={14} />} onClick={() => decide('approved')}>Approve</Button>
+                  <Button size="sm" variant="decide" icon={<ThumbsUp size={14} />} onClick={() => decide('approved')}>Approve</Button>
                   <Button size="sm" variant="secondary" icon={<ThumbsDown size={14} />} onClick={() => decide('rejected')}>Reject</Button>
                   <Button size="sm" variant="ghost" icon={<Flag size={14} />} onClick={() => decide('flagged')}>This doesn't sound right</Button></>)}
               </div>

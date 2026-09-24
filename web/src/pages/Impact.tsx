@@ -4,6 +4,7 @@ import { api, type Did } from '../lib/api'
 import { longDate, money, month, num, per10, signed } from '../lib/format'
 import { REVIEW, SEED_PLAN, useLoad, useStore, visiblePlans } from '../lib/store'
 import { DidChart } from '../components/charts'
+import Journey from '../components/Journey'
 import { Badge, Button, Card, CardHeader, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Stat } from '../components/ui'
 
 function Placebo({ r }: { r: Did }) {
@@ -47,13 +48,14 @@ export default function Impact() {
   if (r.status === 'not_reached') {
     return (
       <div>
+        <Journey at="prove" teamId={p?.team_id} planId={planId} />
         <PageHeader crumbs={crumbs} title="Impact review" sub={`${p?.obstacle ?? ''} · started ${longDate(r.start)}`} actions={actions} />
         <Card className="py-14 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-info-50 text-info-700"><CalendarClock size={22} /></div>
           <div className="mt-4 text-[44px] font-semibold tracking-tight tnum">{r.days_to_go} days</div>
           <p className="text-fg-mute">until the review on {longDate(r.review)}</p>
           <p className="mx-auto mt-3 max-w-lg text-[13.5px] text-fg-soft">On the review date, {r.kpi_label.toLowerCase()} for this team before and after the plan are compared with similar teams that did not act.</p>
-          <div className="mt-6"><Button variant="brand" icon={<FastForward size={15} />} onClick={() => setAsOf(REVIEW)}>Fast-forward to the review date</Button></div>
+          <div className="mt-6"><Button variant="primary" icon={<FastForward size={15} />} onClick={() => setAsOf(REVIEW)}>Fast-forward to the review date</Button></div>
           <p className="mt-3 text-[12px] text-fg-faint">Demo clock: moves the workspace to Nov 30, 2026. Follow-up months are synthetic.</p>
         </Card>
       </div>
@@ -66,6 +68,7 @@ export default function Impact() {
   const worked = r.verdict === 'worked'
   return (
     <div>
+      <Journey at="prove" teamId={p?.team_id} planId={planId} />
       <PageHeader crumbs={crumbs}
         title={<span className="flex flex-wrap items-center gap-3">Impact review {worked ? <Badge tone="ok" dot>It worked</Badge> : <Badge tone="warn" dot>{r.verdict}</Badge>}</span>}
         sub={worked

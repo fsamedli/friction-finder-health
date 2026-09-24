@@ -9,12 +9,14 @@ import { longDate } from '../lib/format'
 import { DETECT, PERSONA, REVIEW, useStore, visiblePlans, type Role } from '../lib/store'
 import { cx } from './ui'
 
+/** The v1 mark, refined: an ink tile, a teal ring (computed) with a gap, and a rust dot (the decision). */
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <rect width="32" height="32" rx="8" fill="#12A594" />
-      <path d="M9 21.5 L14 15 L18 18.5 L23.5 10.5" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="23.5" cy="10.5" r="2.4" fill="#FEF0C7" />
+      <rect width="32" height="32" rx="8" fill="#1B3A4B" />
+      <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="none" stroke="#2F5468" />
+      <circle cx="16" cy="16" r="8.5" fill="none" stroke="#12A594" strokeWidth="3" strokeLinecap="round" strokeDasharray="40 14" transform="rotate(-40 16 16)" />
+      <circle cx="23.5" cy="10.5" r="2.7" fill="#E0703E" />
     </svg>
   )
 }
@@ -60,7 +62,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
       <div className="m-3 rounded-xl border border-side-line bg-side-hover/60 p-3 text-[12px] text-side-mute">
         <div className="flex items-center gap-1.5 text-side-fg font-medium"><BookOpenCheck size={14} /> Demo workspace</div>
-        <p className="mt-1 leading-snug">Northline Logistics is fictional. All data is synthetic. Numbers are computed by code; the AI only reads and writes text.</p>
+        <p className="mt-1 leading-snug">Northline Logistics is fictional. All data is synthetic.</p>
+        <ul className="mt-2.5 space-y-1.5">
+          <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-500" />Teal: computed by code</li>
+          <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-act" />Rust: needs your decision</li>
+          <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-ai" />Purple: written by AI, checked</li>
+        </ul>
       </div>
     </div>
   )

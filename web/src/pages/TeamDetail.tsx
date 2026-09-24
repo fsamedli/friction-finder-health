@@ -6,6 +6,7 @@ import { longDate, money, monthRange, num, per10, pval, signed } from '../lib/fo
 import { KPI_SHORT } from '../lib/labels'
 import { DETECT, useLoad, useStore, visiblePlans } from '../lib/store'
 import { ItemChanges, LinkScatter, QuartileBars, TrendChart } from '../components/charts'
+import Journey from '../components/Journey'
 import { Badge, Button, Card, CardHeader, Empty, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Segmented, Stat, StatusBadge, Tabs } from '../components/ui'
 
 type Tab = 'overview' | 'drivers' | 'evidence' | 'plan'
@@ -118,7 +119,7 @@ function Evidence({ ev }: { ev: { r: AskResult | null; err: string | null } }) {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
       <Card>
-        <CardHeader title={r.assessment?.label ?? r.message} sub="Verdict computed by rules from survey, operating records and comments" right={<Provenance kind="computed" />} />
+        <CardHeader title={r.assessment?.label ?? r.message} sub="Verdict computed by rules from survey, operating records and comments" right={<><Provenance kind="computed" /><Badge tone="neutral">rules mode · {r.seconds.toFixed(1)} s</Badge></>} />
         <ul className="space-y-2 text-[13.5px]">
           {(r.assessment?.reasons ?? []).map((x) => <li key={x} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand shrink-0" /><span className="text-fg-soft">{x}</span></li>)}
         </ul>
@@ -179,7 +180,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
             ))}
           </ol>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant="brand" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if it worked</Button>
+            <Button variant="primary" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if it worked</Button>
             <a href={`/api/report/${existing.id}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
           </div>
         </Card>
@@ -219,7 +220,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
         ))}
       </div>
       {err && <p className="mt-3 text-[13px] text-crit-700">{err}</p>}
-      <div className="mt-5 flex items-center gap-2"><Button variant="brand" onClick={approve} disabled={busy || !obstacle.trim()} icon={<ClipboardPlus size={15} />}>{busy ? 'Saving…' : 'Approve plan'}</Button></div>
+      <div className="mt-5 flex items-center gap-2"><Button variant="decide" onClick={approve} disabled={busy || !obstacle.trim()} icon={<ClipboardPlus size={15} />}>{busy ? 'Saving…' : 'Approve plan'}</Button></div>
     </Card>
   )
 }
@@ -246,7 +247,8 @@ export default function TeamDetail() {
     return (
       <div>
         <PageHeader crumbs={crumbs} title={`${w.team.site} ${w.team.team_name}`} sub={`${w.team.shift} shift · ${w.team.headcount} people`} />
-        <Card><Empty icon={<Lock size={20} />} title="Too small to report on its own" sub={`Fewer than 4 people. Survey answers and operating counts are included in the ${w.team.site} site totals only, so no one on this team can be identified. Gallup's reporting threshold is 4.`} /></Card>
+        <Card><Empty icon={<Lock size={20} />} title="Too small to report on its own" sub={`Fewer than 4 people. Survey answers and operating counts are included in the ${w.team.site} site totals only, so no one on this team can be identified. Gallup's reporting threshold is 4.`}
+          action={<Button variant="secondary" onClick={() => nav('/teams')}>Back to teams</Button>} /></Card>
       </div>
     )
   }
@@ -255,12 +257,13 @@ export default function TeamDetail() {
   const drop = w.engagement?.biggest_drop
   return (
     <div>
+      <Journey at={tab === 'plan' ? 'act' : 'explain'} teamId={w.team.team_id} planId={existing?.id} />
       <PageHeader crumbs={crumbs}
         title={<span className="flex flex-wrap items-center gap-3">{w.team.site} {w.team.team_name} {w.status && <StatusBadge s={w.status} />}</span>}
         sub={<>{w.team.shift} shift · {w.team.headcount} people · {monthRange(w.window ?? [])}. <span className="text-fg">{conclusion(w)}</span></>}
         actions={existing
-          ? <Button variant="brand" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
-          : <Button variant="brand" onClick={() => setTab('plan')} icon={<ClipboardPlus size={15} />}>Create action plan</Button>} />
+          ? <Button variant="primary" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
+          : <Button variant="decide" onClick={() => setTab('plan')} icon={<ClipboardPlus size={15} />}>Create action plan</Button>} />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6 stagger">
         <Stat label={e ? `${KPI_SHORT[flagged[0]]} · 3 months` : 'Operating KPIs'} value={e ? <>{num(e.observed)}<span className="text-[16px] text-fg-faint"> vs {num(e.expected)}</span></> : 'Normal'} tone={e ? 'crit' : 'ok'} sub={e ? `expected from comparable teams · ${pval(e.p)}` : 'within normal variation'} />
