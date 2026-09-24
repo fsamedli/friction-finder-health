@@ -1,0 +1,46 @@
+..........F.........F................................................... [ 78%]
+....................                                                     [100%]
+=================================== FAILURES ===================================
+______________________ test_blip_is_insufficient_no_owner ______________________
+
+db = <app.db.DB object at 0x121f0f230>
+retriever = <app.retrieval.Retriever object at 0x121f0f4d0>
+truth = {'P1': {'what': 'Richmond Night A q02 drop', 'team_id': 4, 'item': 'q02', 'wave1_mean': 3.73, ...}, 'P2': {'what': 'Ri... {'what': 'Richmond Night staffing shortage March 2026', 'site_id': 1, 'shift': 'Night', 'month': '2026-03', ...}, ...}
+
+    def test_blip_is_insufficient_no_owner(db, retriever, truth):
+        """Judge Lederman's red-team case (P9): the survey moved, nothing else did."""
+        res = run("Why did the Roanoke Day C team's scores drop?", db, retriever)
+        a = res.assessment
+        assert res.status == "ok" and a.verdict == "insufficient"
+        assert a.survey_signal and not a.ops_signal and not a.comment_signal
+        assert "owner" not in {e.kind for e in res.evidence}
+        assert res.brief.obstacle.lower().startswith("insufficient")
+        assert res.brief.owner.lower().startswith("not assigned")
+>       assert "no test proposed" in res.brief.proposed_test.lower()
+E       assert 'no test proposed' in 'no test is proposed; instead collect daily swap requests, recognition instances, and comments for 30 days. success = no further material drop in q04/q10/q03; review date 2026-10-24.'
+E        +  where 'no test is proposed; instead collect daily swap requests, recognition instances, and comments for 30 days. success = no further material drop in q04/q10/q03; review date 2026-10-24.' = <built-in method lower of str object at 0x1247e0810>()
+E        +    where <built-in method lower of str object at 0x1247e0810> = 'No test is proposed; instead collect daily swap requests, recognition instances, and comments for 30 days. Success = no further material drop in q04/q10/q03; review date 2026-10-24.'.lower
+E        +      where 'No test is proposed; instead collect daily swap requests, recognition instances, and comments for 30 days. Success = no further material drop in q04/q10/q03; review date 2026-10-24.' = Brief(obstacle='Insufficient evidence: survey items fell but supporting operational and comment data are limited and n....', mode='llm', check_notes=['passed: every citation exists, every number appears in the evidence, verdict respected']).proposed_test
+E        +        where Brief(obstacle='Insufficient evidence: survey items fell but supporting operational and comment data are limited and n....', mode='llm', check_notes=['passed: every citation exists, every number appears in the evidence, verdict respected']) = Result(status='ok', question="Why did the Roanoke Day C team's scores drop?", scope=Scope(intent='diagnose_drop', site..., "Comments: top theme 'scheduling and staffing' with 1 of 1 comments (below the breadth rule of 3; single source)."])).brief
+
+tests/test_agent.py:129: AssertionError
+________________________ test_chat_fallback_is_grounded ________________________
+
+main_result = Result(status='ok', question="Why did the Richmond night shift's scores drop and why are deliveries late?", scope=Scop...ith 4 of 6 comments (corroborating).", 'Staffing: a shortage month exists and is listed as a competing explanation.']))
+
+    def test_chat_fallback_is_grounded(main_result):
+        """Without a model the follow-up chat returns evidence lines; it never invents numbers."""
+        from app.agent import chat_answer, chat_context, _numbers_in
+        out = chat_answer("Why is the handoff the likely obstacle?", main_result)
+>       assert out["mode"] == "fallback" and "evidence" in out["answer"].lower()
+E       AssertionError: assert ('llm' == 'fallback'
+E         
+E         - fallback
+E         + llm)
+
+tests/test_agent.py:242: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_agent.py::test_blip_is_insufficient_no_owner - assert 'no t...
+FAILED tests/test_agent.py::test_chat_fallback_is_grounded - AssertionError: ...
+2 failed, 90 passed in 116.73s (0:01:56)
+exit=1

@@ -1,0 +1,17 @@
+PASS  E1 TP   [ok, supported, fallback] Why did the Richmond night shift's scores drop and why are del   0.0s
+PASS  E2 TN   [suppressed, suppressed_insufficient, fallback] Why did the Richmond Dispatch Day team's scores drop?            0.0s
+PASS  E3 TN   [refused] Why did the Denver site drop?                                    0.0s
+PASS  E4 TN   [refused] What caused turnover on the Norfolk night shift?                 0.0s
+PASS  E5 pass [ok] How do scores vary by tenure?                                    0.0s
+PASS  E6 pass [ok] Is the Norfolk Day B decline real or did different people resp   0.0s
+PASS  E7 pass [ok] Who owns the shift handoff process at Richmond?                  0.0s
+PASS  E8 pass [ok] What was the Richmond Night A score on materials and equipment   0.0s
+PASS  E9 TN   [ok, insufficient, fallback] Why did the Roanoke Day C team's scores drop?                    0.0s
+PASS E10 TN   [ok, no_material_change, fallback] Why did the Norfolk night shift's scores drop?                   0.0s
+PASS E11 pass [ok] Where did scores drop across Richmond?                           0.0s
+PASS E12 TP   [ok, supported, fallback] Why did the Richmond Night A team's scores drop?                 0.0s
+
+model: rules-only | retrieval: keyword | 12/12 passed in 0.2s
+confusion matrix over planted problems: TP=2 FN=0 FP=0 TN=5
+lookups: 5/5 | briefs regenerated or fallen back: 0
+exit=0
