@@ -9,6 +9,7 @@ import { longDate } from '../lib/format'
 import { DETECT, PERSONA, REVIEW, useStore, visiblePlans, type Role } from '../lib/store'
 import { cx } from './ui'
 import DemoGuide, { StartDemo, useDemo } from './DemoGuide'
+import StudyBar, { studyOn } from './Study'
 
 /** The v1 mark, refined: an ink tile, a teal ring (computed) with a gap, and a rust dot (the decision). */
 export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
@@ -261,6 +262,7 @@ export default function Shell() {
         <Outlet />
       </main>
       <DemoGuide step={demo.step} set={demo.set} />
+      {studyOn() && <StudyBar />}
     </div>
   )
 }

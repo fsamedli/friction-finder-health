@@ -376,6 +376,31 @@ def post_feedback(f: FeedbackIn):
     return rec
 
 
+STUDY_PATH = config.APPROVALS_PATH.parent / "study.jsonl"
+
+
+class StudyIn(BaseModel):
+    participant: str = Field(pattern=r"^P\d{1,3}$")
+    event: str = Field(pattern="^(task_start|task_finish|sus)$")
+    task: int | None = Field(default=None, ge=1, le=3)
+    success: bool | None = None
+    answers: list[int] | None = None       # SUS: 10 answers, 1..5
+    open_answers: list[str] | None = None  # the 2 open questions
+
+
+@app.post("/api/study")
+def study(e: StudyIn):
+    """Usability study log (docs/usability/). Only written when a session runs with ?study=1; starts empty."""
+    if e.event == "sus" and (not e.answers or len(e.answers) != 10 or any(a < 1 or a > 5 for a in e.answers)):
+        raise HTTPException(422, "SUS needs 10 answers from 1 to 5")
+    if e.event.startswith("task") and e.task is None:
+        raise HTTPException(422, "task number required")
+    rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"), **e.model_dump(exclude_none=True)}
+    with open(STUDY_PATH, "a") as fh:
+        fh.write(json.dumps(rec) + "\n")
+    return rec
+
+
 FEEDBACK = [
     {"who": "O'Neal Keegan, Gallup", "when": "Sept 18", "said": "Access shows what moved; what we don't have is comparisons to business operations. Action planning breaks down because managers are busy.", "changed": "Why page links engagement to the client's operating data; the plan is one card, one click."},
     {"who": "Taher Jamshidi, Promontory AI", "when": "Sept 18", "said": "Start from the KPIs the site manager cares about, one signal; show pricing and a feedback loop.", "changed": "Site board opens on operating KPIs in dollars; Business case page; approve/flag log."},

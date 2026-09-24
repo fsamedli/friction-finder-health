@@ -3,6 +3,7 @@ import { ArrowUp, Check, ChevronDown, Code2, Flag, Loader2, ShieldCheck, Sparkle
 import { api, type AskResult, type Evidence } from '../lib/api'
 import { useStore } from '../lib/store'
 import { Badge, Button, Card, CardHeader, PageHeader, Provenance, cx } from '../components/ui'
+import Useful from '../components/Useful'
 
 const EXAMPLES = [
   "Why did the Richmond night shift's scores drop and why are deliveries late?",
@@ -153,6 +154,7 @@ export default function Ask() {
                   <Button size="sm" variant="ghost" icon={<Flag size={14} />} onClick={() => decide('flagged')}>This doesn't sound right</Button></>)}
               </div>
             )}
+            {r.status === 'ok' && <div className="mt-3"><Useful key={r.id} target="ask" id={r.id} /></div>}
           </Card>
           <Card>
             <CardHeader title="Evidence register" sub={`${r.evidence.length} items the brief is allowed to use`} />

@@ -7,6 +7,7 @@ import { KPI_SHORT } from '../lib/labels'
 import { DETECT, useLoad, useStore, visiblePlans } from '../lib/store'
 import { ItemChanges, LinkScatter, QuartileBars, TrendChart } from '../components/charts'
 import Journey from '../components/Journey'
+import Useful from '../components/Useful'
 import { Badge, Button, Card, CardHeader, Empty, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Segmented, Stat, StatusBadge, Tabs } from '../components/ui'
 
 type Tab = 'overview' | 'drivers' | 'evidence' | 'plan'
@@ -183,6 +184,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
             <Button variant="primary" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if it worked</Button>
             <a href={`/api/report/${existing.id}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
           </div>
+          <div className="mt-4 border-t border-border pt-3"><Useful target="plan" id={existing.id} /></div>
         </Card>
         <Card>
           <CardHeader title="Review date" sub={`Plan starts ${longDate(existing.start)}`} />

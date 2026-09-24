@@ -50,7 +50,7 @@ for (const width of [1440, 390]) {
   await page.goto(base + '/teams/4?tab=plan', { waitUntil: 'networkidle' })
   await see('Act', ['Draft action plan', 'Needs your decision', 'reviewed Nov 30'])
   await click('Act', 'Approve plan')
-  await see('Act · approved', ['See if the plan worked', 'Approved'])
+  await see('Act · approved', ['See if the plan worked', 'Approved', 'Useful?'])
   await noOverflow('Act')
   await click('Act → Prove', 'See if the plan worked')
   await see('Prove · countdown', ['76 days', 'Fast-forward to the review date'])
@@ -73,7 +73,7 @@ for (const width of [1440, 390]) {
   await page.goto(base + '/ask', { waitUntil: 'networkidle' })
   await page.getByPlaceholder("Why did the Richmond night shift's scores drop?").fill("Why did the Richmond Night A team's scores drop?")
   await click('Ask (rules mode)', 'Ask')
-  await see('Ask (rules mode)', ['Supported hypothesis', 'numbers checked against the evidence', 'Evidence register', 'How this answer was produced'], 30000)
+  await see('Ask (rules mode)', ['Supported hypothesis', 'numbers checked against the evidence', 'Evidence register', 'How this answer was produced', 'Useful?'], 30000)
   await noOverflow('Ask')
   // a scripted question is served as a labelled prepared answer when data/prepared/answers.json exists
   const prepared = await (await fetch(base + '/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: "Why did the Richmond night shift's scores drop and why are deliveries late?" }) })).json()
@@ -81,6 +81,16 @@ for (const width of [1440, 390]) {
     await page.getByRole('button', { name: "Why did the Richmond night shift's scores drop and why are deliveries late?" }).first().click()
     await see('Ask (prepared)', ['Prepared answer', 'Run live'])
   } else log(true, width, 'Ask (prepared): no prepared answers on this machine; skipped')
+
+  // usability study mode (logs go to the scratch folder of this check)
+  await page.goto(base + '/?study=1', { waitUntil: 'networkidle' })
+  await see('Study mode', ['Study mode'])
+  await page.getByLabel('Participant id').fill('P9')
+  await click('Study mode', 'Begin')
+  await click('Study mode', 'Task 1')
+  await see('Study mode', ['Find the team that is costing the site the most'])
+  await click('Study mode', 'Done')
+  await page.evaluate(() => { try { sessionStorage.clear() } catch {} })
 
   const uniq = [...new Set(errors)]
   log(uniq.length === 0, width, `no console errors or failed API calls${uniq.length ? ': ' + uniq.slice(0, 3).join(' | ') : ''}`)

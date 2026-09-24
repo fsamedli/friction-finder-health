@@ -327,3 +327,19 @@ Gate after Phase 8: `scripts/demo_check.sh` → `122 passed, 0 failed`; pytest (
   technique table.
 
 Gate: `126 passed, 0 failed`; pytest 94/94 (no key); lint 0.
+
+### Phase 10: User feedback loop and usability kit — **done (ships empty)**
+- **"Useful? yes / no"** plus a reason (wrong number, wrong owner, not actionable, other) on every Ask brief
+  and on an approved action plan. `POST /api/useful` appends to `feedback.jsonl` next to `approvals.jsonl`
+  (git-ignored). Counts show on Trust › Quality, currently **0 ("no data yet")**. Not seeded.
+- **Usability kit** `docs/usability/PROTOCOL.md`: 5 people playing the Richmond site manager, 3 tasks (find
+  the costliest team; explain why; approve a plan and check whether it worked), success criteria, and
+  moderator rules.
+  - `?study=1` mode: a study bar for the participant id, Task 1–3 start and finish (Done / Gave up), logged
+    to `study.jsonl` via `POST /api/study`.
+  - `/study/sus`: the standard 10-item SUS (Brooke, 1996) plus the 2 open questions.
+  - `scripts/score_study.py`: task success, time on task, SUS 0–100. It currently prints
+    `no data yet (…/study.jsonl)`.
+- Tests: `tests/test_study.py` (SUS extremes 0/50/100, task timing, endpoint validation).
+- The gate now also exercises study mode and checks "Useful?" is present:
+  `140 passed, 0 failed`; pytest 97/97 (no key).

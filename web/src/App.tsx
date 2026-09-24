@@ -11,6 +11,7 @@ import Ask from './pages/Ask'
 import DataSources from './pages/DataSources'
 import Value from './pages/Value'
 import Trust from './pages/Trust'
+import Sus from './pages/Sus'
 
 // v0.6 URLs from the README and earlier demos keep working.
 const ToTeam = ({ tab }: { tab?: string }) => { const { teamId } = useParams(); return <Navigate to={`/teams/${teamId}${tab ? `?tab=${tab}` : ''}`} replace /> }
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="data" element={<DataSources />} />
             <Route path="value" element={<Value />} />
             <Route path="trust" element={<Trust />} />
+            <Route path="study/sus" element={<Sus />} />
             <Route path="why/:teamId" element={<ToTeam />} />
             <Route path="plan/:teamId" element={<ToTeam tab="plan" />} />
             <Route path="proof/:planId" element={<ToImpact />} />
