@@ -2,18 +2,20 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CalendarClock, CheckCircle2, FastForward, FileText } from 'lucide-react'
 import { api, type Did } from '../lib/api'
 import { longDate, money, month, num, per10, signed } from '../lib/format'
+import { reviewTone, reviewWord } from '../lib/labels'
 import { REVIEW, SEED_PLAN, useLoad, useStore, visiblePlans } from '../lib/store'
 import { DidChart } from '../components/charts'
 import Journey from '../components/Journey'
-import { Badge, Button, Card, CardHeader, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Stat } from '../components/ui'
+import { Badge, Button, Card, CardHeader, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, Provenance, Stat, StateNote } from '../components/ui'
 
 function Placebo({ r }: { r: Did }) {
   const all = [...(r.placebo ?? []).map((p) => ({ ...p, mine: false })), { team_id: -1, team: 'This team', estimate: r.estimate!, mine: true }]
   const m = Math.max(0.5, ...all.map((x) => Math.abs(x.estimate))) * 1.2
   const pos = (v: number) => `${50 + (v / m) * 50}%`
+  const beyond = (r.placebo ?? []).filter((p) => Math.abs(p.estimate) >= Math.abs(r.estimate ?? 0)).length
   return (
     <div>
-      <div className="relative h-20">
+      <div className="relative h-20" role="img" aria-label={`Placebo estimates per 10 people per month: ${all.map((x) => `${x.team} ${signed(x.estimate * 10, 1)}`).join(', ')}`}>
         <div className="absolute left-0 right-0 top-10 h-px bg-border-strong" />
         <div className="absolute top-5 h-10 w-px bg-fg-faint" style={{ left: '50%' }} />
         <span className="absolute top-14 -translate-x-1/2 text-[11px] text-fg-mute" style={{ left: '50%' }}>no change</span>
@@ -23,22 +25,37 @@ function Placebo({ r }: { r: Did }) {
         ))}
         <span className="absolute top-0 -translate-x-1/2 text-[11.5px] font-medium text-crit-700 whitespace-nowrap" style={{ left: pos(r.estimate!) }}>this team {signed(r.estimate! * 10, 1)}</span>
       </div>
-      <p className="text-[12.5px] text-fg-mute">Each grey dot is a comparison team run through the same test as if it had acted. None moves as far as the team that did.</p>
+      <p className="text-[12.5px] text-fg-mute">Each grey dot is a comparison team run through the same test as if it had acted. {beyond === 0 ? 'None moves as far as the team that did.' : `${beyond} of ${r.placebo?.length ?? 0} move at least as far, so this result is less unusual than it looks.`}</p>
     </div>
   )
 }
 
-export default function Impact() {
+function Limits() {
+  return (
+    <Card className="mt-6">
+      <CardHeader title="Read this before acting on it" sub="What this review can and cannot say" />
+      <ul className="space-y-2 text-[13.5px] text-fg-soft">
+        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Directional, not causal.</b> Something else that changed at the same time could explain the result; the plan owner should confirm what else changed.</span></li>
+        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Synthetic follow-up data.</b> Northline Logistics is fictional and the months after the plan started are synthetic, planted so the method can be shown.</span></li>
+        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Assumption for a pilot:</b> a two-month follow-up pulse survey on the plan's focus item would show whether engagement moved too. It is not in the demo data, so this review judges the operating number only.</span></li>
+        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span>One team that acted, compared with a handful of teams that did not. Rare events (quits, injuries) need a longer window than two months.</span></li>
+      </ul>
+    </Card>
+  )
+}
+
+export default function Review() {
   const { planId } = useParams()
   const { asOf, setAsOf } = useStore()
   const nav = useNavigate()
   const plans = useLoad(() => api.plans(), [])
   const res = useLoad(() => api.result(planId ?? SEED_PLAN, asOf), [planId, asOf])
   if (!planId) {
+    if (plans.error) return <ErrorState error={plans.error} onRetry={() => window.location.reload()} />
     const latest = plans.data ? visiblePlans(plans.data, asOf).slice(-1)[0] : undefined
     return plans.data ? <Navigate to={`/review/${latest?.id ?? SEED_PLAN}`} replace /> : <PageSkeleton />
   }
-  if (res.error) return <ErrorState error={res.error} />
+  if (res.error) return <ErrorState error={res.error} onRetry={() => window.location.reload()} />
   if (!res.data || !plans.data) return <PageSkeleton />
   const r = res.data
   const p = plans.data.find((x) => x.id === planId)
@@ -51,51 +68,58 @@ export default function Impact() {
   if (r.status === 'not_reached') {
     return (
       <div>
-        <Journey at="prove" teamId={p?.team_id} planId={planId} />
-        <PageHeader crumbs={crumbs} title="Impact review" sub={`${p?.obstacle ?? ''} · started ${longDate(r.start)}`} actions={actions} />
+        <PageHeader crumbs={crumbs} title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone="info" dot>Not ready</Badge></span>} sub={`${p?.obstacle ?? ''} · started ${longDate(r.start)}`} actions={actions} />
         <Card className="py-14 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-info-50 text-info-700"><CalendarClock size={22} /></div>
           <div className="mt-4 text-[44px] font-semibold tracking-tight tnum">{r.days_to_go} days</div>
           <p className="text-fg-mute">until the review on {longDate(r.review)}</p>
-          <p className="mx-auto mt-3 max-w-lg text-[13.5px] text-fg-soft">On the review date, {r.kpi_label.toLowerCase()} for this team before and after the plan are compared with similar teams that did not act.</p>
+          <p className="mx-auto mt-3 max-w-lg text-[13.5px] text-fg-soft">Not ready: on the review date, {r.kpi_label.toLowerCase()} for this team before and after the plan are compared with similar teams that did not act. Until then there is nothing to judge.</p>
           <div className="mt-6"><Button variant="primary" icon={<FastForward size={15} />} onClick={() => setAsOf(REVIEW)}>Fast-forward to the review date</Button></div>
           <p className="mt-3 text-[12px] text-fg-faint">Demo clock: moves the workspace to Nov 30, 2026. Follow-up months are synthetic.</p>
         </Card>
+        <Limits />
+        <div className="mt-6"><Journey at="prove" teamId={p?.team_id} planId={planId} /></div>
       </div>
     )
   }
   if (r.status === 'insufficient') {
-    return <div><PageHeader crumbs={crumbs} title="Impact review" sub={r.reason} actions={actions} /></div>
+    return (
+      <div>
+        <PageHeader crumbs={crumbs} title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone="neutral" dot>Missing follow-up</Badge></span>} sub={p?.obstacle} actions={actions} />
+        <StateNote kind="insufficient" title="Not enough follow-up data to judge yet">{r.reason}</StateNote>
+        <Limits />
+      </div>
+    )
   }
+  const word = reviewWord(r.verdict)
+  const tone = reviewTone(r.verdict)
   const fell = (r.estimate ?? 0) < 0
-  const worked = r.verdict === 'worked'
+  const improved = r.verdict === 'worked'
   return (
     <div>
-      <Journey at="prove" teamId={p?.team_id} planId={planId} />
       <PageHeader crumbs={crumbs}
-        title={<span className="flex flex-wrap items-center gap-3">Impact review {worked ? <Badge tone="ok" dot>It worked</Badge> : <Badge tone="warn" dot>{r.verdict}</Badge>}</span>}
-        sub={worked
-          ? <>After the plan, <b className="text-fg">{r.kpi_label.toLowerCase()} fell {per10(Math.abs(r.estimate!))} per 10 people a month more</b> than at comparable teams over the same months{r.dollars_per_quarter ? <> — about <b className="text-fg">{money(r.dollars_per_quarter)}</b> a quarter</> : null}. Directional, not causal.</>
-          : <>{r.kpi_label}: {r.verdict}. The plan may need more time or a different action.</>}
+        title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone={tone} dot>{word}</Badge></span>}
+        sub={<>{word}: after the plan, <b className="text-fg">{r.kpi_label.toLowerCase()} {fell ? 'fell' : 'rose'} {per10(Math.abs(r.estimate!))} per 10 people a month {fell ? 'more' : 'more'}</b> than at comparable teams over the same months{improved && r.dollars_per_quarter ? <> — about <b className="text-fg">{money(r.dollars_per_quarter)}</b> a quarter</> : null}. {r.verdict === 'inconclusive' ? 'The 95% interval includes no change. ' : ''}Directional, not causal.</>}
         actions={actions} />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6 stagger">
-        <Stat label="Change vs comparable teams" value={signed((r.estimate ?? 0) * 10, 1)} tone={worked ? 'ok' : 'warn'} sub={`per 10 people / month · 95% CI ${signed(r.ci_low! * 10, 1)} to ${signed(r.ci_high! * 10, 1)}`} />
+        <Stat label="Change vs comparable teams" value={signed((r.estimate ?? 0) * 10, 1)} tone={improved ? 'ok' : tone === 'crit' ? 'crit' : 'warn'} sub={`per 10 people / month · 95% CI ${signed(r.ci_low! * 10, 1)} to ${signed(r.ci_high! * 10, 1)}`} />
         <Stat label="Per quarter" value={num(Math.abs(r.events_avoided_per_quarter ?? 0))} tone="brand" sub={`${fell ? 'fewer' : 'more'} ${r.kpi_label.toLowerCase()}`} />
-        <Stat label="Worth per quarter" value={worked && r.dollars_per_quarter != null ? money(r.dollars_per_quarter) : '—'} tone="brand" sub={r.unit_cost ? `at ${money(r.unit_cost)} each (client-entered)` : 'no unit cost entered'} />
+        <Stat label="Worth per quarter" value={improved && r.dollars_per_quarter != null ? money(r.dollars_per_quarter) : '—'} tone="brand" sub={r.unit_cost ? `at ${money(r.unit_cost)} each (client-entered)` : 'no unit cost entered'} />
         <Stat label="Compared with" value={r.comparison?.teams.length ?? 0} sub={<span className="line-clamp-2" title={r.comparison?.teams.join(', ')}>{r.comparison?.teams.join(', ')}</span>} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader title={`${r.kpi_label}, per 10 people per month`} sub="This team vs the comparison teams' average, before and after the plan"
-            right={<><Provenance kind="computed" /><Provenance kind="synthetic" /><CsvButton filename={`impact_${planId}.csv`} rows={() => (r.series ?? []).map((x) => ({ month: x.month, this_team_per_10: +(x.treated * 10).toFixed(2), comparison_per_10: +(x.comparison * 10).toFixed(2), period: (r.pre_months ?? []).includes(x.month) ? 'before' : (r.post_months ?? []).includes(x.month) ? 'after' : '' }))} /></>} />
+            right={<><Provenance kind="computed" /><Provenance kind="synthetic" /><CsvButton filename={`review_${planId}.csv`} rows={() => (r.series ?? []).map((x) => ({ month: x.month, this_team_per_10: +(x.treated * 10).toFixed(2), comparison_per_10: +(x.comparison * 10).toFixed(2), period: (r.pre_months ?? []).includes(x.month) ? 'before' : (r.post_months ?? []).includes(x.month) ? 'after' : '' }))} /></>} />
           <DidChart series={r.series ?? []} pre={r.pre_months ?? []} post={r.post_months ?? []} start={r.start} compLabel={`Comparable teams (${r.comparison?.teams.length})`} />
+          <p className="mt-1 text-[11.5px] text-fg-mute">Unit: events per 10 people per month · before: {(r.pre_months ?? []).map(month).join(', ')} · after: {(r.post_months ?? []).map(month).join(', ')} · baseline: the comparison teams (other sites, same shift)</p>
         </Card>
         <div className="space-y-6">
           <Card>
             <CardHeader title="Before and after" sub={`Before: ${(r.pre_months ?? []).map(month).join(', ')} · After: ${(r.post_months ?? []).map(month).join(', ')}`}
-              right={<Method title="Difference-in-differences">The team's change (after minus before) minus the comparison teams' change over the same months, so a seasonal or company-wide shift cancels out. Standard error from the event counts (Poisson). "Worked" only if the whole 95% interval is below zero. Directional, not causal: another change at the same time could explain it, which is why the plan owner confirms what else happened.</Method>} />
+              right={<Method title="Difference-in-differences">The team's change (after minus before) minus the comparison teams' change over the same months, so a seasonal or company-wide shift cancels out. Standard error from the event counts (Poisson). Improved only if the whole 95% interval is below zero; deteriorated only if it is entirely above zero; otherwise inconclusive. Directional, not causal: another change at the same time could explain it, which is why the plan owner confirms what else happened.</Method>} />
             <table className="w-full text-[13.5px] tnum">
               <thead><tr className="text-[12px] text-fg-mute"><th className="text-left font-medium pb-2" /><th className="text-right font-medium">Before</th><th className="text-right font-medium">After</th><th className="text-right font-medium">Change</th></tr></thead>
               <tbody>
@@ -114,20 +138,22 @@ export default function Impact() {
           <CardHeader title="Other KPIs the obstacle could touch" sub="Reported as they are — two months is short for rare events" />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {r.also.filter((a) => a.status === 'ok').map((a) => (
-              <div key={a.kpi} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+              <div key={a.kpi} className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
                 <div><div className="font-medium">{a.kpi_label}</div><div className="text-[12px] text-fg-mute tnum">{signed((a.estimate ?? 0) * 10, 1)} per 10 / month · CI {signed(a.ci_low! * 10, 1)} to {signed(a.ci_high! * 10, 1)}</div></div>
-                <Badge tone={a.verdict === 'worked' ? 'ok' : 'warn'} dot>{a.verdict}</Badge>
+                <Badge tone={reviewTone(a.verdict)} dot>{reviewWord(a.verdict)}</Badge>
               </div>
             ))}
           </div>
         </Card>
       )}
-      {worked && (
+      <Limits />
+      {improved && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ok-100 bg-ok-50 px-5 py-4">
-          <p className="flex items-center gap-2 text-[13.5px] text-ok-700"><CheckCircle2 size={17} /> Keep the new routine, tell the team what changed because of their survey answers, and check again at the next wave.</p>
+          <p className="flex items-center gap-2 text-[13.5px] text-ok-700"><CheckCircle2 size={17} /> Your decision: keep the new routine, tell the team what changed because of their survey answers, and check again at the next wave.</p>
           <Button variant="secondary" onClick={() => nav('/value')}>What is this worth across sites?</Button>
         </div>
       )}
+      <div className="mt-6"><Journey at="prove" teamId={p?.team_id} planId={planId} /></div>
     </div>
   )
 }
