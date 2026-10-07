@@ -5,7 +5,7 @@ import {
 import type { Assoc, ItemChange, Quartile } from '../lib/api'
 import { month } from '../lib/format'
 
-export const C = { brand: '#0E8A7E', brandSoft: '#C9ECE7', crit: '#D92D20', critSoft: '#FEE4E2', grey: '#98A2B3', grid: '#EEF0F3', fg: '#101828', mute: '#667085' }
+export const C = { brand: '#0E8A7E', brandSoft: '#C9ECE7', crit: '#D92D20', critSoft: '#FEE4E2', grey: '#98A2B3', grid: '#EEECE7', fg: '#101828', mute: '#667085' }
 const axis = { tickLine: false, axisLine: false, tick: { fill: C.mute, fontSize: 11.5 } }
 
 function Tip({ active, payload, label, unit }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string; unit?: string }) {
@@ -42,7 +42,7 @@ export function TrendChart({ data, k, window: win, marks = [], teamLabel, height
           {marks.map((x) => <ReferenceLine key={x.m} x={x.m} stroke={C.grey} strokeDasharray="3 3" label={{ value: x.label, position: 'top', fontSize: 11, fill: C.mute }} />)}
           <Tooltip content={<Tip unit="per 10 ppl" />} />
           <Legend verticalAlign="bottom" height={26} iconType="plainline" wrapperStyle={{ fontSize: 12, color: C.mute }} />
-          <Line name="Comparable teams (same shift, other sites)" dataKey="base" stroke={C.grey} strokeWidth={2} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+          <Line name="Comparable teams (same shift, 4+ people)" dataKey="base" stroke={C.grey} strokeWidth={2} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
           <Area name={teamLabel} dataKey="team" stroke={C.crit} strokeWidth={2.4} fill="url(#gTeam)" dot={{ r: 2.5, fill: C.crit, strokeWidth: 0 }} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>

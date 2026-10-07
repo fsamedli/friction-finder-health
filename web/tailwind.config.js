@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#F5F6F8',
+        canvas: '#F8F7F4',  // warm white (v0.8)
         surface: '#FFFFFF',
-        border: { DEFAULT: '#E4E7EC', strong: '#D0D5DD' },
+        border: { DEFAULT: '#E7E5E0', strong: '#D3D0C8' },
         fg: { DEFAULT: '#101828', soft: '#344054', mute: '#525E70', faint: '#667085' },  // mute and faint meet WCAG AA (≥ 4.5:1) on white and canvas
-        side: { DEFAULT: '#0B1B2B', hover: '#13283D', active: '#1B3550', line: '#1E3348', fg: '#C9D4E0', mute: '#7D8FA3' },
+        side: { DEFAULT: '#0A1726', hover: '#12253A', active: '#1A3350', line: '#1C3047', fg: '#C9D4E0', mute: '#8597AB' },  // deep ink
         brand: { DEFAULT: '#0E8A7E', 50: '#E7F6F4', 100: '#C9ECE7', 500: '#12A594', 600: '#0E8A7E', 700: '#0B6E65', 900: '#08433E' },
         crit: { DEFAULT: '#D92D20', 50: '#FEF3F2', 100: '#FEE4E2', 700: '#B42318' },
         warn: { DEFAULT: '#CA8504', 50: '#FEFBE8', 100: '#FEF7C3', 700: '#854A0E' },

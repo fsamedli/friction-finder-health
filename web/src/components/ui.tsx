@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Download, Info, X } from 'lucide-react'
+import { AlertTriangle, CircleSlash, Download, Info, Lock, RotateCw, X } from 'lucide-react'
 import { downloadCsv } from '../lib/csv'
-import type { Status } from '../lib/api'
+import type { EvidenceState, Status } from '../lib/api'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -158,8 +158,71 @@ export function PageSkeleton() {
   )
 }
 
-export function ErrorState({ error }: { error: string }) {
-  return <Card className="border-crit-100 bg-crit-50/40 text-crit-700 text-[13.5px]">Could not load: {error}. Is the API running on port 8000?</Card>
+export function ErrorState({ error, onRetry }: { error: string; onRetry?: () => void }) {
+  return (
+    <Card className="border-crit-100 bg-crit-50/40 text-crit-700 text-[13.5px]">
+      <div role="alert" className="flex flex-wrap items-center justify-between gap-3">
+        <span className="flex items-center gap-2"><AlertTriangle size={16} /> Could not load: {error}. Is the API running?</span>
+        {onRetry && <Button size="sm" variant="secondary" onClick={onRetry} icon={<RotateCw size={14} />}>Try again</Button>}
+      </div>
+    </Card>
+  )
+}
+
+/** Evidence states (v0.8): set by explicit rules in code, never a confidence percentage. */
+export const EVIDENCE: Record<EvidenceState, { label: string; tone: Tone; plain: string }> = {
+  supported: { label: 'Supported', tone: 'brand', plain: 'The checks agree and cover the question.' },
+  mixed: { label: 'Mixed', tone: 'warn', plain: 'Some checks point one way and some the other; both are shown.' },
+  insufficient: { label: 'Insufficient', tone: 'neutral', plain: 'Not enough evidence to say. The next step is to gather it.' },
+  unavailable: { label: 'Unavailable', tone: 'neutral', plain: 'The data this needs is not in this prototype.' },
+}
+
+export function EvidenceChip({ state, prefix }: { state: EvidenceState; prefix?: string }) {
+  const e = EVIDENCE[state] ?? EVIDENCE.insufficient
+  return (
+    <span title={e.plain} className="inline-flex">
+      <Badge tone={e.tone} dot className={state === 'insufficient' || state === 'unavailable' ? 'ring-dashed' : undefined}>
+        {prefix ? `${prefix}: ` : ''}{e.label}<span className="sr-only">. {e.plain}</span>
+      </Badge>
+    </span>
+  )
+}
+
+/** One-line states used on every call, so a screen never shows a blank card. */
+export function Loading({ label = 'Loading', className }: { label?: string; className?: string }) {
+  return (
+    <div role="status" aria-live="polite" className={cx('space-y-2.5', className)}>
+      <span className="sr-only">{label}…</span>
+      <Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/2" /><Skeleton className="h-24" />
+    </div>
+  )
+}
+
+export function StateNote({ kind, title, children }: { kind: 'suppressed' | 'insufficient' | 'unavailable' | 'fallback'; title: string; children?: ReactNode }) {
+  const m = {
+    suppressed: { icon: <Lock size={15} />, cls: 'bg-canvas text-fg-soft ring-border' },
+    insufficient: { icon: <Info size={15} />, cls: 'bg-canvas text-fg-soft ring-border' },
+    unavailable: { icon: <CircleSlash size={15} />, cls: 'bg-canvas text-fg-soft ring-border' },
+    fallback: { icon: <AlertTriangle size={15} />, cls: 'bg-warn-50 text-warn-700 ring-warn-100' },
+  }[kind]
+  return (
+    <div className={cx('flex gap-2.5 rounded-lg px-3 py-2.5 text-[13px] ring-1 ring-inset', m.cls)}>
+      <span className="mt-0.5 shrink-0">{m.icon}</span>
+      <div><b className="font-medium">{title}</b>{children && <div className="mt-0.5 text-[12.5px] opacity-90">{children}</div>}</div>
+    </div>
+  )
+}
+
+/** A disclosure for the technical layer (SQL, method, trace): one click down, never in the headline. */
+export function Details({ summary, children, className }: { summary: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <details className={cx('group rounded-lg border border-border', className)}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[12.5px] font-medium text-fg-mute hover:text-fg [&::-webkit-details-marker]:hidden">
+        {summary}<span aria-hidden className="text-fg-faint transition-transform group-open:rotate-90">›</span>
+      </summary>
+      <div className="border-t border-border px-3 py-3">{children}</div>
+    </details>
+  )
 }
 
 export function Empty({ icon, title, sub, action }: { icon?: ReactNode; title: string; sub?: ReactNode; action?: ReactNode }) {

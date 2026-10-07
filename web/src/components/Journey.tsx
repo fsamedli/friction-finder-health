@@ -4,10 +4,10 @@ import { cx } from './ui'
 
 export type Step = 'detect' | 'explain' | 'act' | 'prove'
 const STEPS: { id: Step; label: string; q: string }[] = [
-  { id: 'detect', label: 'Detect', q: 'Which team is costing the site?' },
-  { id: 'explain', label: 'Explain', q: 'What moved with what?' },
-  { id: 'act', label: 'Act', q: 'One plan, one owner, one date' },
-  { id: 'prove', label: 'Prove', q: 'Did the number move?' },
+  { id: 'detect', label: 'Today', q: 'Which team needs attention?' },
+  { id: 'explain', label: 'Investigate', q: 'Is it real, and what explains it?' },
+  { id: 'act', label: 'Decide', q: 'One plan, one owner, one date' },
+  { id: 'prove', label: 'Review', q: 'Did the operating number move?' },
 ]
 
 /** The product's loop, shown on the four screens that make it up. Earlier steps are ticked; each step links to its screen. */
@@ -15,10 +15,10 @@ export default function Journey({ at, teamId, planId }: { at: Step; teamId?: num
   const nav = useNavigate()
   const idx = STEPS.findIndex((s) => s.id === at)
   const to: Record<Step, string | null> = {
-    detect: '/', explain: teamId ? `/teams/${teamId}` : null, act: teamId ? `/teams/${teamId}?tab=plan` : null, prove: planId ? `/impact/${planId}` : null,
+    detect: '/', explain: teamId ? `/investigate/${teamId}` : null, act: teamId ? `/investigate/${teamId}?focus=act&tab=plan` : null, prove: planId ? `/review/${planId}` : null,
   }
   return (
-    <ol className="mb-5 flex flex-wrap items-center gap-1.5 text-[12.5px]" aria-label="Detect, explain, act, prove">
+    <ol className="mb-5 flex flex-wrap items-center gap-1.5 text-[12.5px]" aria-label="Today, investigate, decide, review">
       {STEPS.map((s, i) => {
         const done = i < idx, on = i === idx, target = to[s.id]
         return (

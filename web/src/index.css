@@ -4,11 +4,11 @@
 
 :root { color-scheme: light; }
 html, body, #root { height: 100%; }
-body { background: #F5F6F8; color: #101828; font-family: Geist, "Source Sans 3", system-ui, sans-serif; font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased; font-feature-settings: "ss01" 1; }
+body { background: #F8F7F4; color: #101828; font-family: Geist, "Source Sans 3", system-ui, sans-serif; font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased; font-feature-settings: "ss01" 1; }
 .tnum { font-variant-numeric: tabular-nums; }
 .label { font-size: 12px; font-weight: 500; color: #667085; }
-.overline { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #98A2B3; }
-.recharts-cartesian-axis-tick-value { font-family: Geist, system-ui, sans-serif; font-size: 11.5px; fill: #667085; }
+.eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
+.recharts-cartesian-axis-tick-value { font-family: Geist, system-ui, sans-serif; font-size: 11.5px; fill: #5F6B7C; }
 .recharts-tooltip-wrapper { outline: none; }
 .recharts-surface { overflow: visible; }
 ::selection { background: #C9ECE7; }
@@ -23,3 +23,7 @@ body { background: #F5F6F8; color: #101828; font-family: Geist, "Source Sans 3",
 .bg-side :focus-visible { outline-color: #12A594; }
 .skip-link { position: absolute; left: -9999px; top: 8px; z-index: 60; }
 .skip-link:focus { left: 8px; background: #101828; color: #fff; padding: 8px 12px; border-radius: 8px; }
+
+/* in-page anchors land below the sticky top bar */
+[data-anchor] { scroll-margin-top: 84px; }
+.ring-dashed { box-shadow: none; outline: 1px dashed currentColor; outline-offset: -1px; }

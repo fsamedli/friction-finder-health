@@ -36,7 +36,7 @@ export default function Impact() {
   const res = useLoad(() => api.result(planId ?? SEED_PLAN, asOf), [planId, asOf])
   if (!planId) {
     const latest = plans.data ? visiblePlans(plans.data, asOf).slice(-1)[0] : undefined
-    return plans.data ? <Navigate to={`/impact/${latest?.id ?? SEED_PLAN}`} replace /> : <PageSkeleton />
+    return plans.data ? <Navigate to={`/review/${latest?.id ?? SEED_PLAN}`} replace /> : <PageSkeleton />
   }
   if (res.error) return <ErrorState error={res.error} />
   if (!res.data || !plans.data) return <PageSkeleton />

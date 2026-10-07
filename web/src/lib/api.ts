@@ -54,6 +54,10 @@ export interface PlanAction { text: string; owner: string; due: string }
 export interface Plan {
   id: string; team_id: number; item: string; kpi: Kpi; obstacle: string; focus: string
   actions: PlanAction[]; start: string; review: string; status: string; note: string; team_label?: string
+  // v0.8 (all optional; the seeded plan and v0.7 plans do not have them)
+  owner?: string; measure?: string; baseline?: string; success?: string; assumptions?: string[]; finding?: string; rationale?: string
+  investigation_id?: string | null; evidence_ids?: string[]; request_id?: string; decided_at?: string; created_at?: string
+  edits?: { field: string; from: string; to: string }[]
 }
 export interface Did {
   plan_id: string; kpi: Kpi; kpi_label: string; start: string; review: string
@@ -84,6 +88,63 @@ export interface AskResult {
   trace: { step: string; detail: string; mode: 'model' | 'rules' | 'code' | 'template'; seconds: number | null }[]
   prepared: { generated_at: string; model: string } | null
 }
+
+// ---------------------------------------------------------------- v0.8 investigation contract (api/main.py, app/investigate.py)
+export type EvidenceState = 'supported' | 'mixed' | 'insufficient' | 'unavailable'
+export type FunctionId =
+  | 'why_flagged' | 'could_explain' | 'compare' | 'normal' | 'when_started' | 'how_widespread' | 'whats_missing'
+  | 'provenance' | 'precedent' | 'draft_plan' | 'did_it_work' | 'team_conversation' | 'metric'
+export interface InvContext {
+  site_id: number | null; site: string | null; team_id: number | null; team: string | null; shift: string | null
+  as_of: string; kpi: Kpi | null; kpi_label: string | null; item: string | null; item_label: string | null
+  finding: { status: Status | null; kpi: Kpi | null; item: string | null } | null
+  dataset: 'demo' | 'upload'; version: string
+}
+export interface InvEvidence extends Evidence { tool: string; turn: number; stale?: boolean }
+export interface ChartSpec {
+  type: 'bars' | 'line' | 'range'
+  title: string; unit: string; period: string; baseline: string | null
+  x: string; series: { key: string; label: string; role: 'team' | 'comparison' | 'other' }[]
+  rows: Record<string, string | number | null>[]
+  highlight?: string | null   // x value of the team being investigated
+}
+export interface TableSpec { caption: string; columns: { key: string; label: string; unit?: string }[]; rows: Record<string, string | number | null>[] }
+export interface Hypothesis { id: string; label: string; evidence_state: EvidenceState; text: string; evidence_ids: string[] }
+export interface Gap { gap: string; step: string; owner: string }
+export interface PlanDraft {
+  team_id: number; team_label: string; finding: string; rationale: string; owner: string; owner_source: string
+  action: string; actions: PlanAction[]; kpi: Kpi; measure: string; baseline: string; start: string; review: string
+  success: string; assumptions: string[]; item: string; focus: string; obstacle: string; evidence_ids: string[]
+}
+export interface InvAnswer {
+  conclusion: string; evidence_state: EvidenceState; evidence_ids: string[]
+  competing: { text: string; evidence_state: EvidenceState; evidence_ids: string[] } | null
+  next_step: { kind: 'action' | 'gather'; text: string; owner: string } | null
+  hypotheses?: Hypothesis[]; chart?: ChartSpec | null; table?: TableSpec | null
+  plan_draft?: PlanDraft | null; review?: Did | null; gaps?: Gap[]; questions?: { items: string[]; source: string } | null
+}
+export interface TraceStep { step: string; detail: string; mode: 'code' | 'model' | 'rules'; seconds: number | null; tool?: string }
+export interface Investigation {
+  id: string; conversation_id: string; question: string; created_at: string
+  status: 'running' | 'answered' | 'declined' | 'clarify' | 'error'; message: string | null
+  function: { id: FunctionId; label: string } | null
+  context: InvContext; answer: InvAnswer | null; evidence: InvEvidence[]; trace: TraceStep[]
+  budget: { tool_calls: number; max_tool_calls: number; model_requests: number; max_model_requests: number; seconds: number; max_seconds: number; stopped: string | null }
+  mode: 'model' | 'rules'; model: string | null; selection: 'function_calling' | 'json_schema' | 'fixed_plan'; fallback: string | null
+  check: { passed: boolean; notes: string[]; numbers_checked: number; numbers_total: number }
+  prepared: { generated_at: string; model: string } | null
+  suggestions: { label: string; question: string; function: FunctionId }[]
+}
+export interface InvestigateIn {
+  question: string; conversation_id?: string | null
+  context?: { site_id?: number | null; team_id?: number | null; as_of?: string; kpi?: Kpi | null; item?: string | null }
+  mode?: 'auto' | 'rules'; live?: boolean; function?: FunctionId | null
+  async?: boolean   // true: returns at once with status 'running'; poll GET /api/investigate/{id} for the trace as it grows
+}
+export interface ManagerFunction { id: FunctionId; label: string; chip: string; question: string; shipped: boolean; research_label: string }
+export type PlanState = 'draft' | 'approved' | 'in_review' | 'reviewed'
+export interface PlanRow extends Plan { state: PlanState; result: Did | null; owner?: string; measure?: string; success?: string; baseline?: string; assumptions?: string[] }
+export interface PlansBoard { plans: PlanRow[]; queue: { due_reviews: string[]; missing_follow_ups: string[]; inconclusive: string[] } }
 
 export interface PackRun { file: string; ts: string; model: string; passed: number; total: number }
 export interface Quality {
@@ -127,7 +188,7 @@ export const api = {
   feedback: () => j<{ who: string; when: string; said: string; changed: string }[]>('/api/feedback'),
   resetDemo: () => j<{ ok: boolean }>('/api/demo', { method: 'DELETE' }),
   quality: () => j<Quality>('/api/quality'),
-  useful: (target: 'ask' | 'plan', target_id: string, useful: boolean, reason?: string) =>
+  useful: (target: 'ask' | 'plan' | 'investigation', target_id: string, useful: boolean, reason?: string) =>
     j<Record<string, unknown>>('/api/useful', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target, target_id, useful, reason: reason ?? null }) }),
   opsUpload: () => j<{ active: boolean; rows?: number; teams?: number; months?: string[] }>('/api/ops-upload'),
   opsUploadSend: async (file: File) => {
@@ -143,6 +204,17 @@ export const api = {
   reviewLog: () => j<Record<string, unknown>[]>('/api/review-log'),
   ask: (question: string, rules = false, live = false) =>
     j<AskResult>('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, rules, live }) }),
+  investigate: (body: InvestigateIn) =>
+    j<Investigation>('/api/investigate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+  investigation: (id: string) => j<Investigation>(`/api/investigate/${id}`),
+  functions: () => j<ManagerFunction[]>('/api/functions'),
+  plansBoard: (as_of: string) => j<PlansBoard>('/api/plans/board' + q({ as_of })),
+  planCheck: (team_id: number, kpi: Kpi, start: string) => j<{ existing: Plan[]; explanation: string }>('/api/plans/check' + q({ team_id, kpi, start })),
+  approvePlan: (id: string, body: { request_id: string; edits: { field: string; from: string; to: string }[] }) =>
+    j<Plan>(`/api/plans/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+  invFeedback: (investigation_id: string, reason: string, evidence_ids: string[], note = '') =>
+    j<Record<string, unknown>>('/api/useful', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: 'investigation', target_id: investigation_id, useful: false, reason, evidence_ids, note }) }),
   approve: (result_id: string, decision: 'approved' | 'rejected' | 'flagged', note = '') =>
     j<Record<string, unknown>>('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result_id, decision, note }) }),
 }

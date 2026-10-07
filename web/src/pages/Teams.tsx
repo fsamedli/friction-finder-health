@@ -73,7 +73,7 @@ export default function Teams() {
                 const locked = t.status === 'rolled_up'
                 const d = t.engagement?.biggest_drop
                 return (
-                  <tr key={t.team_id} onClick={() => !locked && nav(`/teams/${t.team_id}`)}
+                  <tr key={t.team_id} onClick={() => !locked && nav(`/investigate/${t.team_id}`)}
                     className={cx('border-b border-border last:border-0', locked ? 'bg-canvas/40 text-fg-mute' : 'cursor-pointer hover:bg-canvas/60')}>
                     <td className="px-4 py-3">
                       <div className="font-medium text-fg">{t.team_name}</div>

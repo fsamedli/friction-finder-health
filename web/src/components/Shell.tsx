@@ -2,10 +2,11 @@ import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell, BookOpenCheck, Building2, CalendarClock, ChevronDown, ClipboardList, Database, LayoutDashboard, LineChart,
-  Menu, Network, RotateCcw, ShieldCheck, Sparkles, TrendingUp, Users, X,
+  Menu, Network, RotateCcw, Search, ShieldCheck, Sparkles, TrendingUp, X,
 } from 'lucide-react'
 import { api, type Board, type Plan } from '../lib/api'
 import { longDate } from '../lib/format'
+import { reviewWord } from '../lib/labels'
 import { DETECT, PERSONA, REVIEW, useStore, visiblePlans, type Role } from '../lib/store'
 import { PageSkeleton, cx } from './ui'
 import DemoGuide, { StartDemo, useDemo } from './DemoGuide'
@@ -25,11 +26,10 @@ export function Logo({ className = 'h-7 w-7' }: { className?: string }) {
 
 const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; group?: string }[] = [
   { to: '/', label: 'Today', icon: <LayoutDashboard size={17} />, end: true },
-  { to: '/teams', label: 'Teams', icon: <Users size={17} /> },
+  { to: '/investigate', label: 'Investigate', icon: <Search size={17} /> },
   { to: '/plans', label: 'Action plans', icon: <ClipboardList size={17} /> },
-  { to: '/impact', label: 'Impact', icon: <TrendingUp size={17} /> },
-  { to: '/insights', label: 'Insights', icon: <Network size={17} /> },
-  { to: '/ask', label: 'Ask', icon: <Sparkles size={17} /> },
+  { to: '/review', label: 'Review', icon: <TrendingUp size={17} /> },
+  { to: '/insights', label: 'Insights', icon: <Network size={17} />, group: 'Workspace' },
   { to: '/data', label: 'Data sources', icon: <Database size={17} />, group: 'Workspace' },
   { to: '/value', label: 'Business case', icon: <LineChart size={17} />, group: 'Workspace' },
   { to: '/trust', label: 'Trust & method', icon: <ShieldCheck size={17} />, group: 'Workspace' },
@@ -112,12 +112,12 @@ function Notifications() {
       const results = await Promise.all(plans.map((p) => api.result(p.id, asOf)))
       if (!live) return
       const out: typeof items = []
-      b.teams.filter((t) => t.status === 'red').forEach((t) => out.push({ tone: 'crit', title: `${t.team_name}: operations and engagement both moved`, sub: `${b.site} · ${t.signal}`, to: `/teams/${t.team_id}` }))
-      b.teams.filter((t) => t.status === 'amber').slice(0, 2).forEach((t) => out.push({ tone: 'warn', title: `${t.team_name}: watch`, sub: `${b.site} · ${t.signal}`, to: `/teams/${t.team_id}` }))
+      b.teams.filter((t) => t.status === 'red').forEach((t) => out.push({ tone: 'crit', title: `${t.team_name}: operations and engagement both moved`, sub: `${b.site} · ${t.signal}`, to: `/investigate/${t.team_id}` }))
+      b.teams.filter((t) => t.status === 'amber').slice(0, 2).forEach((t) => out.push({ tone: 'warn', title: `${t.team_name}: watch`, sub: `${b.site} · ${t.signal}`, to: `/investigate/${t.team_id}` }))
       plans.forEach((p, i) => {
         const r = results[i]
-        if (r.status === 'ok') out.push({ tone: 'brand', title: `Review ready: ${p.team_label}`, sub: `${r.kpi_label}: ${r.verdict}`, to: `/impact/${p.id}` })
-        else if (r.status === 'not_reached') out.push({ tone: 'brand', title: `Plan in progress: ${p.team_label}`, sub: `Review in ${r.days_to_go} days`, to: `/impact/${p.id}` })
+        if (r.status === 'ok') out.push({ tone: 'brand', title: `Review ready: ${p.team_label}`, sub: `${r.kpi_label}: ${reviewWord(r.verdict)}`, to: `/review/${p.id}` })
+        else if (r.status === 'not_reached') out.push({ tone: 'brand', title: `Plan in progress: ${p.team_label}`, sub: `Review in ${r.days_to_go} days`, to: `/review/${p.id}` })
       })
       setItems(out)
     }).catch(() => setItems([]))
@@ -227,6 +227,10 @@ function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) 
         {(meta?.sites ?? [{ site_id: 1, site_name: 'Richmond' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name} DC</option>)}
       </select>
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <NavLink to="/ask" aria-label="Ask a question (AI-assisted investigation)"
+          className={({ isActive }) => cx('inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 sm:px-3 text-[13px] font-medium', isActive ? 'border-ai-100 bg-ai-50 text-ai-700' : 'border-border-strong text-fg-soft hover:bg-canvas')}>
+          <Sparkles size={14} className="text-ai" /><span className="hidden sm:inline">Ask</span>
+        </NavLink>
         <StartDemo onStart={onDemo} />
         <DemoClock />
         <Notifications />
@@ -237,8 +241,10 @@ function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) 
   )
 }
 
-function UploadBanner() {
+/** Every screen says which date the demo clock is on and which data it is reading (v0.8). */
+function ContextStrip() {
   const loc = useLocation()
+  const { asOf, meta } = useStore()
   const [s, setS] = useState<{ active: boolean; rows?: number } | null>(null)
   useEffect(() => {
     const load = () => api.opsUpload().then(setS).catch(() => setS(null))
@@ -246,11 +252,16 @@ function UploadBanner() {
     window.addEventListener('ff:data-changed', load)
     return () => window.removeEventListener('ff:data-changed', load)
   }, [loc.pathname])
-  if (!s?.active) return null
+  const upload = !!s?.active
   return (
-    <div className="border-b border-info-100 bg-info-50 px-4 py-2 text-[12.5px] text-info-700 lg:px-8">
-      Showing your uploaded operating records ({s.rows} team-months) instead of the demo rows for those teams and months.{' '}
-      <NavLink to="/data" className="font-medium underline">Manage or go back to demo data</NavLink>
+    <div className={cx('border-b px-4 py-1.5 text-[12px] lg:px-8', upload ? 'border-info-100 bg-info-50 text-info-700' : 'border-border bg-surface/70 text-fg-mute')}>
+      <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-x-3 gap-y-0.5">
+        <span><span className="font-medium text-fg-soft">As of {longDate(asOf)}</span> (demo clock)</span>
+        <span aria-hidden className="text-fg-faint">·</span>
+        {upload
+          ? <span>Data: <b className="font-medium">your uploaded operating records</b> ({s?.rows} team-months) plus demo data · <NavLink to="/data" className="font-medium underline">Manage</NavLink></span>
+          : <span>Data: <span className="font-medium text-fg-soft">demo CSV, synthetic</span> · {meta?.company ?? 'Northline Logistics (fictional)'}</span>}
+      </div>
     </div>
   )
 }
@@ -277,7 +288,7 @@ export default function Shell() {
       )}
       <a href="#main" className="skip-link">Skip to content</a>
       <Topbar onMenu={() => setMenu(true)} onDemo={startDemo} />
-      <UploadBanner />
+      <ContextStrip />
       <main id="main" tabIndex={-1} key={loc.pathname + asOf + siteId + role} className="mx-auto max-w-[1360px] px-4 py-6 lg:px-8 lg:py-8">
         <Suspense fallback={<PageSkeleton />}><Outlet /></Suspense>
       </main>

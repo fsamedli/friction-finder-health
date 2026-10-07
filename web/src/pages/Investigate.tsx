@@ -181,7 +181,7 @@ function PlanTab({ w, ev, existing, onSaved }: { w: Why; ev: AskResult | null; e
             ))}
           </ol>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant="primary" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if it worked</Button>
+            <Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if it worked</Button>
             <a href={`/api/report/${existing.id}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
           </div>
           <div className="mt-4 border-t border-border pt-3"><Useful target="plan" id={existing.id} /></div>
@@ -244,13 +244,13 @@ export default function TeamDetail() {
   if (why.error) return <ErrorState error={why.error} />
   if (!why.data || !detect.data) return <PageSkeleton />
   const w = why.data
-  const crumbs = <><button onClick={() => nav('/teams')} className="hover:text-fg">Teams</button><span>/</span><span>{w.team.site} {w.team.team_name}</span></>
+  const crumbs = <><button onClick={() => nav('/investigate')} className="hover:text-fg">Investigate</button><span>/</span><span>{w.team.site} {w.team.team_name}</span></>
   if (w.suppressed) {
     return (
       <div>
         <PageHeader crumbs={crumbs} title={`${w.team.site} ${w.team.team_name}`} sub={`${w.team.shift} shift · ${w.team.headcount} people`} />
         <Card><Empty icon={<Lock size={20} />} title="Too small to report on its own" sub={`Fewer than 4 people. Survey answers and operating counts are included in the ${w.team.site} site totals only, so no one on this team can be identified. Gallup's reporting threshold is 4.`}
-          action={<Button variant="secondary" onClick={() => nav('/teams')}>Back to teams</Button>} /></Card>
+          action={<Button variant="secondary" onClick={() => nav('/investigate')}>Back to the team list</Button>} /></Card>
       </div>
     )
   }
@@ -264,7 +264,7 @@ export default function TeamDetail() {
         title={<span className="flex flex-wrap items-center gap-3">{w.team.site} {w.team.team_name} {w.status && <StatusBadge s={w.status} />}</span>}
         sub={<>{w.team.shift} shift · {w.team.headcount} people · {monthRange(w.window ?? [])}. <span className="text-fg">{conclusion(w)}</span></>}
         actions={existing
-          ? <Button variant="primary" onClick={() => nav(`/impact/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
+          ? <Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
           : <Button variant="decide" onClick={() => setTab('plan')} icon={<ClipboardPlus size={15} />}>Create action plan</Button>} />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6 stagger">

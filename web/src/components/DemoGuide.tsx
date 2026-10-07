@@ -7,10 +7,10 @@ import { cx } from './ui'
 
 // Four clicks, one sentence each. No numbers here: every number the audience sees is on the screen itself.
 const STEPS = [
-  { title: 'Detect', say: "The site's own operating records show which team is running above comparable teams, and whether its engagement moved at the same time." },
-  { title: 'Explain', say: 'Across every team, the tool checks which engagement items move with which operating KPIs, then reads what employees wrote. Association, not cause.' },
-  { title: 'Act', say: 'The tool drafts one plan from the evidence. The site manager edits it and approves it; nothing happens without a person.' },
-  { title: 'Prove', say: 'At the review date, the team is compared with similar teams that did not act. Directional, not causal; the follow-up months are synthetic.' },
+  { title: 'Today', say: "The site's own operating records show which team needs attention, why it matters, and one next step. No statistics in the way." },
+  { title: 'Investigate', say: 'The manager can challenge the explanation in plain words. The AI-assisted investigation picks which read-only checks to run, code computes every number, and the answer says how strong the evidence is. Association, not cause.' },
+  { title: 'Decide', say: 'The tool drafts one plan from the evidence. The site manager edits it and approves it; nothing happens without a person.' },
+  { title: 'Review', say: 'At the review date, the team is compared with similar teams that did not act. Directional, not causal; the follow-up months are synthetic.' },
 ]
 const KEY = 'ff.demo'
 
@@ -39,13 +39,13 @@ export default function DemoGuide({ step, set }: { step: number; set: (n: number
     setBusy(true)
     try {
       if (n === 0) nav('/')
-      if (n === 1) nav('/teams/4')
-      if (n === 2) nav('/teams/4?tab=plan')
+      if (n === 1) nav('/investigate/4')
+      if (n === 2) nav('/investigate/4?focus=act&tab=plan')
       if (n === 3) {
         // the plan approved live in the demo if there is one, otherwise the seeded fallback plan
         const live = visiblePlans(await api.plans(), REVIEW).filter((p) => p.team_id === 4).slice(-1)[0]
         setAsOf(REVIEW)
-        nav(`/impact/${live?.id ?? SEED_PLAN}`)
+        nav(`/review/${live?.id ?? SEED_PLAN}`)
       }
       set(n)
     } finally { setBusy(false) }

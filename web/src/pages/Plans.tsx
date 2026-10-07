@@ -29,7 +29,7 @@ export default function Plans() {
     <div>
       <PageHeader title="Action plans" sub="Each plan has one focus item, a few actions with owners, and a review date. At the review date the operating KPI is compared with similar teams that did not act."
         actions={<><CsvButton filename="action_plans.csv" rows={() => rows.map((p) => ({ team: p.team_label, obstacle: p.obstacle, focus: p.focus, kpi: p.kpi, start: p.start, review: p.review,
-          status: results.data?.[p.id]?.status === 'ok' ? `reviewed: ${results.data?.[p.id]?.verdict}` : results.data?.[p.id]?.status ?? '', actions: p.actions.map((a) => `${a.text} (${a.owner}, ${a.due})`).join(' | ') }))} /><Button variant="decide" icon={<Plus size={15} />} onClick={() => nav(`/teams/${teamId}?tab=plan`)}>New plan</Button></>} />
+          status: results.data?.[p.id]?.status === 'ok' ? `reviewed: ${results.data?.[p.id]?.verdict}` : results.data?.[p.id]?.status ?? '', actions: p.actions.map((a) => `${a.text} (${a.owner}, ${a.due})`).join(' | ') }))} /><Button variant="decide" icon={<Plus size={15} />} onClick={() => nav(`/investigate/${teamId}?focus=act&tab=plan`)}>New plan</Button></>} />
       <Card pad={false}>
         {rows.length === 0 ? <Empty icon={<ClipboardList size={20} />} title="No plans yet" sub="Open a team that needs attention and draft a plan from its evidence." /> : (
           <div className="overflow-x-auto scroll-thin">
@@ -39,7 +39,7 @@ export default function Plans() {
                 <th className="px-3 py-2.5 font-medium">Start → review</th><th className="px-3 py-2.5 font-medium">Status</th><th className="px-3 py-2.5" /></tr></thead>
               <tbody>
                 {rows.map((p) => (
-                  <tr key={p.id} onClick={() => nav(`/impact/${p.id}`)} className="cursor-pointer border-b border-border last:border-0 hover:bg-canvas/60">
+                  <tr key={p.id} onClick={() => nav(`/review/${p.id}`)} className="cursor-pointer border-b border-border last:border-0 hover:bg-canvas/60">
                     <td className="px-4 py-3 font-medium">{p.team_label}</td>
                     <td className="px-3 py-3 text-fg-soft max-w-[320px]"><div className="truncate" title={p.obstacle}>{p.obstacle}</div><div className="text-[12px] text-fg-mute">{p.actions.length} actions · owner {p.actions[0]?.owner}</div></td>
                     <td className="px-3 py-3">{KPI_SHORT[p.kpi]}</td>

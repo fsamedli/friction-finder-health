@@ -40,16 +40,21 @@ for (const width of [1440, 390]) {
   await see('Detect', ['Night A needs attention', 'Excess operating cost', 'Teams needing attention'])
   await see('Detect numbers', ['81', 'late departures vs', '51'])
   await noOverflow('Detect')
+  await see('Context strip', ['(demo clock)', 'demo CSV, synthetic'])
+  for (const [from, to] of [['/teams', '/investigate'], ['/teams/4?tab=plan', '/investigate/4'], ['/impact/plan-richmond-night-a', '/review/plan-richmond-night-a'], ['/why/4', '/investigate/4'], ['/proof/plan-richmond-night-a', '/review/plan-richmond-night-a']]) {
+    await page.goto(base + from, { waitUntil: 'networkidle' })
+    log(new URL(page.url()).pathname === to, width, `Redirect ${from} -> ${to}${new URL(page.url()).pathname === to ? '' : ` (got ${new URL(page.url()).pathname})`}`)
+  }
 
-  await page.goto(base + '/teams/4', { waitUntil: 'networkidle' })
+  await page.goto(base + '/investigate/4', { waitUntil: 'networkidle' })
   await see('Explain', ['Richmond Night A', 'what comparable teams predict (81 vs 51)', 'Materials and equipment to do my work right', 'Survey change, wave 1'])
   await noOverflow('Explain')
-  await page.goto(base + '/teams/4?tab=drivers', { waitUntil: 'networkidle' })
+  await page.goto(base + '/investigate/4?tab=drivers', { waitUntil: 'networkidle' })
   await see('Explain · drivers', ['Association, not cause', 'Top vs bottom quartile', 'Linked.'])
-  await page.goto(base + '/teams/4?tab=evidence', { waitUntil: 'networkidle' })
+  await page.goto(base + '/investigate/4?tab=evidence', { waitUntil: 'networkidle' })
   await see('Explain · evidence', ['Supported hypothesis', 'What employees wrote', 'rules mode'])
 
-  await page.goto(base + '/teams/4?tab=plan', { waitUntil: 'networkidle' })
+  await page.goto(base + '/investigate/4?tab=plan', { waitUntil: 'networkidle' })
   await see('Act', ['Draft action plan', 'Needs your decision', 'reviewed Nov 30'])
   await click('Act', 'Approve plan')
   await see('Act · approved', ['See if the plan worked', 'Approved', 'Useful?'])
@@ -87,7 +92,7 @@ for (const width of [1440, 390]) {
   // one-page report and CSV export
   const rep = await (await fetch(base + '/api/report/plan-richmond-night-a')).text()
   log(rep.includes('What we found') && rep.includes('Did it work?') && rep.includes('Directional, not causal') && rep.includes('&lt; 0.001'), width, 'One-page report: finding, plan, result, caveats')
-  await page.goto(base + '/teams', { waitUntil: 'networkidle' })
+  await page.goto(base + '/investigate', { waitUntil: 'networkidle' })
   try {
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.getByRole('button', { name: 'CSV' }).locator('visible=true').first().click()])
     log(/^teams_Richmond_.*\.csv$/.test(dl.suggestedFilename()), width, `CSV export: ${dl.suggestedFilename()}`)
@@ -99,7 +104,7 @@ for (const width of [1440, 390]) {
   await see('Upload · bad file', ['The file was not loaded', 'Missing columns'])
   const good = 'month,team_id,absence_days,late_departures,quits,injuries,rework\n' + [6, 7, 8].map((m) => `2026-0${m},4,8,14,0,0,4`).join('\n') + '\n'
   await input.setInputFiles({ name: 'ops.csv', mimeType: 'text/csv', buffer: Buffer.from(good) })
-  await see('Upload · good file', ['3 team-months loaded', 'Showing your uploaded operating records'])
+  await see('Upload · good file', ['3 team-months loaded', 'your uploaded operating records'])
   const b2 = await (await fetch(base + '/api/board?site_id=1&as_of=2026-09-15')).json()
   log(b2.teams.find((t) => t.team_name === 'Night A')?.status !== 'red', width, 'Upload · board updated (Night A no longer flagged with normal late departures)')
   await click('Upload', 'Back to demo data')
