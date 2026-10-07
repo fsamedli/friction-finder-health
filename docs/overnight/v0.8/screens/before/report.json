@@ -1,0 +1,366 @@
+[
+  {
+    "route": "/",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_home.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_teams.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_teams_4.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=drivers",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_teams_4_tab_drivers.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=evidence",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_teams_4_tab_evidence.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=plan",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_teams_4_tab_plan.jpg",
+    "errors": []
+  },
+  {
+    "route": "/plans",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_plans.jpg",
+    "errors": []
+  },
+  {
+    "route": "/impact/plan-richmond-night-a",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_impact_plan-richmond-night-a.jpg",
+    "errors": []
+  },
+  {
+    "route": "/insights",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_insights.jpg",
+    "errors": []
+  },
+  {
+    "route": "/ask",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_ask.jpg",
+    "errors": []
+  },
+  {
+    "route": "/data",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_data.jpg",
+    "errors": []
+  },
+  {
+    "route": "/value",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_value.jpg",
+    "errors": []
+  },
+  {
+    "route": "/trust",
+    "width": 1440,
+    "clock": "2026-09-15",
+    "file": "1440_09-15_trust.jpg",
+    "errors": []
+  },
+  {
+    "route": "/",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_home.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_teams.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_teams_4.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=drivers",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_teams_4_tab_drivers.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=evidence",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_teams_4_tab_evidence.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=plan",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_teams_4_tab_plan.jpg",
+    "errors": []
+  },
+  {
+    "route": "/plans",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_plans.jpg",
+    "errors": []
+  },
+  {
+    "route": "/impact/plan-richmond-night-a",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_impact_plan-richmond-night-a.jpg",
+    "errors": []
+  },
+  {
+    "route": "/insights",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_insights.jpg",
+    "errors": []
+  },
+  {
+    "route": "/ask",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_ask.jpg",
+    "errors": []
+  },
+  {
+    "route": "/data",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_data.jpg",
+    "errors": []
+  },
+  {
+    "route": "/value",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_value.jpg",
+    "errors": []
+  },
+  {
+    "route": "/trust",
+    "width": 1440,
+    "clock": "2026-11-30",
+    "file": "1440_11-30_trust.jpg",
+    "errors": []
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_home.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_teams.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_teams_4.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=drivers",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_teams_4_tab_drivers.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=evidence",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_teams_4_tab_evidence.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=plan",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_teams_4_tab_plan.jpg",
+    "errors": []
+  },
+  {
+    "route": "/plans",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_plans.jpg",
+    "errors": []
+  },
+  {
+    "route": "/impact/plan-richmond-night-a",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_impact_plan-richmond-night-a.jpg",
+    "errors": []
+  },
+  {
+    "route": "/insights",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_insights.jpg",
+    "errors": []
+  },
+  {
+    "route": "/ask",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_ask.jpg",
+    "errors": []
+  },
+  {
+    "route": "/data",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_data.jpg",
+    "errors": []
+  },
+  {
+    "route": "/value",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_value.jpg",
+    "errors": []
+  },
+  {
+    "route": "/trust",
+    "width": 390,
+    "clock": "2026-09-15",
+    "file": "390_09-15_trust.jpg",
+    "errors": []
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_home.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_teams.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_teams_4.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=drivers",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_teams_4_tab_drivers.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=evidence",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_teams_4_tab_evidence.jpg",
+    "errors": []
+  },
+  {
+    "route": "/teams/4?tab=plan",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_teams_4_tab_plan.jpg",
+    "errors": []
+  },
+  {
+    "route": "/plans",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_plans.jpg",
+    "errors": []
+  },
+  {
+    "route": "/impact/plan-richmond-night-a",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_impact_plan-richmond-night-a.jpg",
+    "errors": []
+  },
+  {
+    "route": "/insights",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_insights.jpg",
+    "errors": []
+  },
+  {
+    "route": "/ask",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_ask.jpg",
+    "errors": []
+  },
+  {
+    "route": "/data",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_data.jpg",
+    "errors": []
+  },
+  {
+    "route": "/value",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_value.jpg",
+    "errors": []
+  },
+  {
+    "route": "/trust",
+    "width": 390,
+    "clock": "2026-11-30",
+    "file": "390_11-30_trust.jpg",
+    "errors": []
+  }
+]

@@ -1,0 +1,163 @@
+$ ./scripts/demo_check.sh
+# 2026-10-08 01:15:19 +0400 on 523b2c1 (v0.8-investigate)
+PASS  1440px  Detect: "Night A needs attention"
+PASS  1440px  Detect: "Excess operating cost"
+PASS  1440px  Detect: "Teams needing attention"
+PASS  1440px  Detect numbers: "81"
+PASS  1440px  Detect numbers: "late departures vs"
+PASS  1440px  Detect numbers: "51"
+PASS  1440px  Detect: no horizontal scroll
+PASS  1440px  Explain: "Richmond Night A"
+PASS  1440px  Explain: "what comparable teams predict (81 vs 51)"
+PASS  1440px  Explain: "Materials and equipment to do my work right"
+PASS  1440px  Explain: "Survey change, wave 1"
+PASS  1440px  Explain: no horizontal scroll
+PASS  1440px  Explain · drivers: "Association, not cause"
+PASS  1440px  Explain · drivers: "Top vs bottom quartile"
+PASS  1440px  Explain · drivers: "Linked."
+PASS  1440px  Explain · evidence: "Supported hypothesis"
+PASS  1440px  Explain · evidence: "What employees wrote"
+PASS  1440px  Explain · evidence: "rules mode"
+PASS  1440px  Act: "Draft action plan"
+PASS  1440px  Act: "Needs your decision"
+PASS  1440px  Act: "reviewed Nov 30"
+PASS  1440px  Act: clicked Approve plan
+PASS  1440px  Act · approved: "See if the plan worked"
+PASS  1440px  Act · approved: "Approved"
+PASS  1440px  Act · approved: "Useful?"
+PASS  1440px  Act: no horizontal scroll
+PASS  1440px  Act → Prove: clicked See if the plan worked
+PASS  1440px  Prove · countdown: "76 days"
+PASS  1440px  Prove · countdown: "Fast-forward to the review date"
+PASS  1440px  Prove: clicked Fast-forward to the review date
+PASS  1440px  Prove · result: "It worked"
+PASS  1440px  Prove · result: "10.6 per 10 people a month"
+PASS  1440px  Prove · result: "95% CI"
+PASS  1440px  Prove · result: "Synthetic data"
+PASS  1440px  Prove · result: "Placebo check"
+PASS  1440px  Prove · result: "inconclusive"
+PASS  1440px  Prove: no horizontal scroll
+PASS  1440px  Business case: "$80.1K"
+PASS  1440px  Business case: "Unit costs"
+PASS  1440px  Business case: "Pricing hypothesis"
+PASS  1440px  Business case: "Sourced"
+PASS  1440px  Business case: no horizontal scroll
+PASS  1440px  Under the hood · quality: "Trust & method"
+PASS  1440px  Under the hood · quality: "Pass rate by test pack"
+PASS  1440px  Under the hood · quality: "Adversarial"
+PASS  1440px  Under the hood · quality: "Holdout"
+PASS  1440px  Under the hood · quality: "Numbers checked against the evidence"
+PASS  1440px  Under the hood: clicked Assumptions
+PASS  1440px  Under the hood · assumptions: "Minimum n"
+PASS  1440px  Under the hood · assumptions: "With real data we would need"
+PASS  1440px  Under the hood: clicked Architecture
+PASS  1440px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  1440px  Under the hood · architecture: "Why these techniques"
+PASS  1440px  Under the hood · architecture: "Farid to confirm"
+PASS  1440px  Under the hood: no horizontal scroll
+PASS  1440px  Ask (rules mode): clicked Ask
+PASS  1440px  Ask (rules mode): "Supported hypothesis"
+PASS  1440px  Ask (rules mode): "numbers checked against the evidence"
+PASS  1440px  Ask (rules mode): "Evidence register"
+PASS  1440px  Ask (rules mode): "How this answer was produced"
+PASS  1440px  Ask (rules mode): "Useful?"
+PASS  1440px  Ask: no horizontal scroll
+PASS  1440px  Ask (prepared): "Prepared answer"
+PASS  1440px  Ask (prepared): "Run live"
+PASS  1440px  One-page report: finding, plan, result, caveats
+PASS  1440px  CSV export: teams_Richmond_2026-09-15.csv
+PASS  1440px  Upload · bad file: "The file was not loaded"
+PASS  1440px  Upload · bad file: "Missing columns"
+PASS  1440px  Upload · good file: "3 team-months loaded"
+PASS  1440px  Upload · good file: "Showing your uploaded operating records"
+PASS  1440px  Upload · board updated (Night A no longer flagged with normal late departures)
+PASS  1440px  Upload: clicked Back to demo data
+PASS  1440px  Upload · reset: "Back to the demo data"
+PASS  1440px  Study mode: "Study mode"
+PASS  1440px  Study mode: clicked Begin
+PASS  1440px  Study mode: clicked Task 1
+PASS  1440px  Study mode: "Find the team that is costing the site the most"
+PASS  1440px  Study mode: clicked Done
+PASS  1440px  no console errors or failed API calls
+PASS  390px  Detect: "Night A needs attention"
+PASS  390px  Detect: "Excess operating cost"
+PASS  390px  Detect: "Teams needing attention"
+PASS  390px  Detect numbers: "81"
+PASS  390px  Detect numbers: "late departures vs"
+PASS  390px  Detect numbers: "51"
+PASS  390px  Detect: no horizontal scroll
+PASS  390px  Explain: "Richmond Night A"
+PASS  390px  Explain: "what comparable teams predict (81 vs 51)"
+PASS  390px  Explain: "Materials and equipment to do my work right"
+PASS  390px  Explain: "Survey change, wave 1"
+PASS  390px  Explain: no horizontal scroll
+PASS  390px  Explain · drivers: "Association, not cause"
+PASS  390px  Explain · drivers: "Top vs bottom quartile"
+PASS  390px  Explain · drivers: "Linked."
+PASS  390px  Explain · evidence: "Supported hypothesis"
+PASS  390px  Explain · evidence: "What employees wrote"
+PASS  390px  Explain · evidence: "rules mode"
+PASS  390px  Act: "Draft action plan"
+PASS  390px  Act: "Needs your decision"
+PASS  390px  Act: "reviewed Nov 30"
+PASS  390px  Act: clicked Approve plan
+PASS  390px  Act · approved: "See if the plan worked"
+PASS  390px  Act · approved: "Approved"
+PASS  390px  Act · approved: "Useful?"
+PASS  390px  Act: no horizontal scroll
+PASS  390px  Act → Prove: clicked See if the plan worked
+PASS  390px  Prove · countdown: "76 days"
+PASS  390px  Prove · countdown: "Fast-forward to the review date"
+PASS  390px  Prove: clicked Fast-forward to the review date
+PASS  390px  Prove · result: "It worked"
+PASS  390px  Prove · result: "10.6 per 10 people a month"
+PASS  390px  Prove · result: "95% CI"
+PASS  390px  Prove · result: "Synthetic data"
+PASS  390px  Prove · result: "Placebo check"
+PASS  390px  Prove · result: "inconclusive"
+PASS  390px  Prove: no horizontal scroll
+PASS  390px  Business case: "$80.1K"
+PASS  390px  Business case: "Unit costs"
+PASS  390px  Business case: "Pricing hypothesis"
+PASS  390px  Business case: "Sourced"
+PASS  390px  Business case: no horizontal scroll
+PASS  390px  Under the hood · quality: "Trust & method"
+PASS  390px  Under the hood · quality: "Pass rate by test pack"
+PASS  390px  Under the hood · quality: "Adversarial"
+PASS  390px  Under the hood · quality: "Holdout"
+PASS  390px  Under the hood · quality: "Numbers checked against the evidence"
+PASS  390px  Under the hood: clicked Assumptions
+PASS  390px  Under the hood · assumptions: "Minimum n"
+PASS  390px  Under the hood · assumptions: "With real data we would need"
+PASS  390px  Under the hood: clicked Architecture
+PASS  390px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  390px  Under the hood · architecture: "Why these techniques"
+PASS  390px  Under the hood · architecture: "Farid to confirm"
+PASS  390px  Under the hood: no horizontal scroll
+PASS  390px  Ask (rules mode): clicked Ask
+PASS  390px  Ask (rules mode): "Supported hypothesis"
+PASS  390px  Ask (rules mode): "numbers checked against the evidence"
+PASS  390px  Ask (rules mode): "Evidence register"
+PASS  390px  Ask (rules mode): "How this answer was produced"
+PASS  390px  Ask (rules mode): "Useful?"
+PASS  390px  Ask: no horizontal scroll
+PASS  390px  Ask (prepared): "Prepared answer"
+PASS  390px  Ask (prepared): "Run live"
+PASS  390px  One-page report: finding, plan, result, caveats
+PASS  390px  CSV export: teams_Richmond_2026-09-15.csv
+PASS  390px  Upload · bad file: "The file was not loaded"
+PASS  390px  Upload · bad file: "Missing columns"
+PASS  390px  Upload · good file: "3 team-months loaded"
+PASS  390px  Upload · good file: "Showing your uploaded operating records"
+PASS  390px  Upload · board updated (Night A no longer flagged with normal late departures)
+PASS  390px  Upload: clicked Back to demo data
+PASS  390px  Upload · reset: "Back to the demo data"
+PASS  390px  Study mode: "Study mode"
+PASS  390px  Study mode: clicked Begin
+PASS  390px  Study mode: clicked Task 1
+PASS  390px  Study mode: "Find the team that is costing the site the most"
+PASS  390px  Study mode: clicked Done
+PASS  390px  no console errors or failed API calls
+
+158 passed, 0 failed
+exit=0
