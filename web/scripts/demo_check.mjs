@@ -80,7 +80,7 @@ for (const width of [1440, 390]) {
   await see('Under the hood · architecture', ['An AI-assisted workflow', 'Why these techniques', 'Farid to confirm'])
   await noOverflow('Under the hood')
 
-  await page.goto(base + '/ask', { waitUntil: 'networkidle' })
+  await page.goto(base + '/ask?view=brief', { waitUntil: 'networkidle' })
   await page.getByPlaceholder("Why did the Richmond night shift's scores drop?").fill("Why did the Richmond Night A team's scores drop?")
   await click('Ask (rules mode)', 'Ask')
   await see('Ask (rules mode)', ['Supported hypothesis', 'numbers checked against the evidence', 'Evidence register', 'How this answer was produced', 'Useful?'], 30000)

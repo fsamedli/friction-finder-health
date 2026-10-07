@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, ClipboardPlus, FileText, Lock, MessageSquareQuote, UserRound } from 'lucide-react'
+import { ArrowRight, ClipboardPlus, FileText, Lock, MessageSquareQuote, Sparkles, UserRound } from 'lucide-react'
 import { api, KPI_ORDER, type AskResult, type EvidenceState, type Investigation, type Kpi, type Plan, type Why } from '../lib/api'
 import { longDate, money, monthRange, num, per10, pval, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
-import { DETECT, useLoad, useStore, visiblePlans } from '../lib/store'
+import { DETECT, useLoad, useMedia, useStore, visiblePlans } from '../lib/store'
 import { QUESTION, useInv } from '../lib/inv'
 import { ItemChanges, LinkScatter, QuartileBars, TrendChart } from '../components/charts'
 import { Cites, SpecChart, SpecTable } from '../components/InvParts'
 import PlanEditor, { type DraftSeed, seedFromDraft } from '../components/PlanEditor'
 import Journey from '../components/Journey'
+import InvestigationPanel from '../components/InvestigationPanel'
 import Useful from '../components/Useful'
 import {
   Badge, Button, Card, CardHeader, Details, Empty, ErrorState, EvidenceChip, Loading, Method, PageHeader, PageSkeleton, Provenance,
@@ -383,6 +384,8 @@ export default function Investigate() {
   const ev = useEvidence(detect.data ?? ({ team: { site: '', team_name: '' } } as Why))
   const existing = useMemo(() => (plans.data ? visiblePlans(plans.data, asOf) : []).filter((p) => p.team_id === id).slice(-1)[0], [plans.data, id, asOf])
   const ready = !!why.data && !!detect.data
+  const wide = useMedia('(min-width: 1280px)')
+  const panelCtx = useMemo(() => ({ site_id: why.data?.team.site_id ?? null, team_id: id, as_of: asOf }), [why.data?.team.site_id, id, asOf])
   useEffect(() => {
     if (!ready || !focus) return
     const t = setTimeout(() => document.getElementById(focus)?.scrollIntoView({ block: 'start' }), 150)
@@ -409,18 +412,29 @@ export default function Investigate() {
         actions={existing
           ? <Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
           : <Button variant="decide" onClick={() => document.getElementById('act')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} icon={<ClipboardPlus size={15} />}>Draft a plan</Button>} />
-      <nav aria-label="Questions on this page" className="sticky top-16 z-20 -mx-4 mb-5 border-b border-border bg-canvas/90 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8">
-        <ul className="flex gap-2 overflow-x-auto scroll-thin">
-          {Q.map((q) => <li key={q.id} className="shrink-0"><a href={`#${q.id}`} className={cx('inline-block rounded-full px-3 py-1 text-[12.5px] font-medium ring-1 ring-border hover:bg-surface', focus === q.id ? 'bg-surface text-fg' : 'text-fg-soft')}>{q.label}</a></li>)}
-        </ul>
-      </nav>
-      <div className="space-y-6">
-        <RealBlock w={w} ev={ev.r} />
-        <NormalBlock w={detect.data} asOf={asOf} />
-        <ExplainBlock w={detect.data} asOf={asOf} ev={ev} />
-        <MissingBlock w={detect.data} asOf={asOf} />
-        <ActBlock w={detect.data} ev={ev.r} existing={existing} asOf={asOf} onSaved={(p) => { plans.setData([...(plans.data ?? []), p]) }} />
-        <Journey at={existing ? 'act' : 'explain'} teamId={w.team.team_id} planId={existing?.id} />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="min-w-0">
+          <nav aria-label="Questions on this page" className="sticky top-16 z-20 -mx-4 mb-5 border-b border-border bg-canvas/90 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8 xl:mx-0 xl:rounded-xl xl:border xl:px-2">
+            <ul className="flex gap-2 overflow-x-auto scroll-thin">
+              {Q.map((q) => <li key={q.id} className="shrink-0"><a href={`#${q.id}`} className={cx('inline-block rounded-full px-3 py-1 text-[12.5px] font-medium ring-1 ring-border hover:bg-surface', focus === q.id ? 'bg-surface text-fg' : 'text-fg-soft')}>{q.label}</a></li>)}
+              {!wide && <li className="shrink-0"><a href="#ask" className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12.5px] font-medium text-ai-700 ring-1 ring-ai-100 hover:bg-surface"><Sparkles size={12} /> Ask</a></li>}
+            </ul>
+          </nav>
+          <div className="space-y-6">
+            <RealBlock w={w} ev={ev.r} />
+            <NormalBlock w={detect.data} asOf={asOf} />
+            <ExplainBlock w={detect.data} asOf={asOf} ev={ev} />
+            <MissingBlock w={detect.data} asOf={asOf} />
+            <ActBlock w={detect.data} ev={ev.r} existing={existing} asOf={asOf} onSaved={(p) => { plans.setData([...(plans.data ?? []), p]) }} />
+            {!wide && <div id="ask" data-anchor><InvestigationPanel initial={panelCtx} /></div>}
+            <Journey at={existing ? 'act' : 'explain'} teamId={w.team.team_id} planId={existing?.id} />
+          </div>
+        </div>
+        {wide && (
+          <aside aria-label="Investigation panel" className="min-w-0">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scroll-thin pb-4"><InvestigationPanel initial={panelCtx} /></div>
+          </aside>
+        )}
       </div>
     </div>
   )

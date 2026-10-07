@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ArrowUp, Check, ChevronDown, Code2, Flag, Loader2, ShieldCheck, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { api, type AskResult, type Evidence } from '../lib/api'
 import { useStore } from '../lib/store'
-import { Badge, Button, Card, CardHeader, CsvButton, PageHeader, Provenance, cx } from '../components/ui'
+import InvestigationPanel from '../components/InvestigationPanel'
+import { Badge, Button, Card, CardHeader, CsvButton, PageHeader, Provenance, Segmented, cx } from '../components/ui'
 import Useful from '../components/Useful'
 
 const EXAMPLES = [
@@ -87,7 +89,7 @@ function Trace({ r }: { r: AskResult }) {
   )
 }
 
-export default function Ask() {
+function Brief() {
   const { meta } = useStore()
   const [q, setQ] = useState('')
   const [r, setR] = useState<AskResult | null>(null)
@@ -103,9 +105,8 @@ export default function Ask() {
   const b = r?.brief
   const g = r?.grounding
   return (
-    <div className="max-w-[1180px]">
-      <PageHeader title={<span className="flex items-center gap-2"><Sparkles size={22} className="text-ai" /> Ask</span>}
-        sub={<>Ask about the survey and operating data in plain language. The AI reads the question and writes the brief; every number comes from SQL on the database and is checked. {model ? <>Model: <b>{meta?.model}</b> (GW Azure OpenAI).</> : <>No model key: rules mode.</>}</>} />
+    <div>
+      <p className="mb-4 max-w-3xl text-[13.5px] text-fg-mute">A one-page evidence brief for one question. The AI reads the question and writes the brief; every number comes from SQL on the database and is checked. {model ? <>Model: <b>{meta?.model}</b> (GW Azure OpenAI).</> : <>No model key: rules mode.</>}</p>
       <Card>
         <form onSubmit={(e) => { e.preventDefault(); if (q.trim() && !started) go(q) }} className="flex items-center gap-2 rounded-xl border border-border-strong p-1.5 pl-4 focus-within:ring-4 focus-within:ring-brand/10">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Why did the Richmond night shift's scores drop?" className="flex-1 bg-transparent text-[14.5px] focus:outline-none" />
@@ -163,6 +164,20 @@ export default function Ask() {
           </Card>
         </div>
       )}
+    </div>
+  )
+}
+
+export default function Ask() {
+  const { siteId, teamId, asOf } = useStore()
+  const [sp, setSp] = useSearchParams()
+  const view = sp.get('view') === 'brief' ? 'brief' : 'investigate'
+  return (
+    <div className="max-w-[1180px]">
+      <PageHeader title={<span className="flex items-center gap-2"><Sparkles size={22} className="text-ai" /> Ask</span>}
+        sub="Ask about the survey and operating data in plain language. Every number comes from code on the database and is checked; a person approves every action."
+        actions={<Segmented value={view} onChange={(v) => setSp(v === 'brief' ? { view: 'brief' } : {}, { replace: true })} options={[{ id: 'investigate', label: 'Investigation' }, { id: 'brief', label: 'One-page brief' }]} />} />
+      {view === 'brief' ? <Brief /> : <InvestigationPanel full initial={{ site_id: siteId, team_id: teamId, as_of: asOf }} />}
     </div>
   )
 }

@@ -83,3 +83,16 @@ export function useFunctions(): ManagerFunction[] | null {
   }, [])
   return fns
 }
+
+/** True while the media query matches (e.g. the xl breakpoint), so a component can be placed once, not twice. */
+export function useMedia(query: string): boolean {
+  const get = () => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(query).matches : false)
+  const [m, setM] = useState(get)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const h = () => setM(mq.matches)
+    mq.addEventListener('change', h); h()
+    return () => mq.removeEventListener('change', h)
+  }, [query])
+  return m
+}
