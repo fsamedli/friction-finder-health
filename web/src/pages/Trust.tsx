@@ -115,6 +115,7 @@ function QualityTab({ q }: { q: Quality }) {
         </Card>
       </div>
       <p className="text-[12px] text-fg-mute">The gold and adversarial packs were written by the builder, so they are not independent. The holdout pack is for a teammate who has not seen the planted answers.</p>
+      <p className="text-[12px] text-fg-mute">Approvals are recorded as decisions. An approval is never evidence that an answer was correct; correctness is measured by the packs above and, at the review date, by the operating number.</p>
     </div>
   )
 }

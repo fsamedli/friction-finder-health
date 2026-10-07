@@ -1,47 +1,72 @@
-# Friction Finder brand tokens (v0.7)
+# Friction Finder brand tokens (v0.8)
 
 This is the source of truth for the app, the deck and any website. The tokens live in code in
-`web/tailwind.config.js` and `web/src/index.css`.
+`web/tailwind.config.js` and `web/src/index.css`. v0.8 (Oct 8, 2026) warmed the canvas, deepened the ink and
+added evidence states; every colour meaning from v0.7 is unchanged, because judges have seen them.
 
 ## Colour: every colour means one thing
 
 | Role | Token | Hex | Use only for |
 |---|---|---|---|
-| **Computed by code** | `brand` / `brand-500` | `#0E8A7E` / `#12A594` (tints `#E7F6F4`, `#C9ECE7`) | numbers and badges the code computed, "Computed" provenance, links to a method, "linked" cells |
-| **Needs a human decision** | `act` | `#C4501E` (tints `#FDF1EC`, `#F9DCCF`; text `#9C3A12`) | Create action plan, Approve, "Needs your decision" |
-| **Written by AI, checked** | `ai` | `#6941C6` (tints `#F4F3FF`) | model-written text and the AI steps in a trace |
-| Navigation / primary UI | `fg` (ink) | `#101828`, soft `#344054`, mute `#525E70`, faint `#667085` (both ≥ 4.5:1, WCAG AA) | text, primary navigation buttons |
-| Sidebar | `side` | `#0B1B2B`, hover `#13283D`, active `#1B3550` | app chrome only |
-| Canvas / surface / border | | `#F5F6F8` / `#FFFFFF` / `#E4E7EC` (strong `#D0D5DD`) | backgrounds, cards, rules |
+| **Computed by code** | `brand` / `brand-500` | `#0E8A7E` / `#12A594` (tints `#E7F6F4`, `#C9ECE7`) | numbers and badges the code computed, "Computed" provenance, links to a method, "linked" cells, the "Supported" evidence state |
+| **Needs a human decision** | `act` | `#C4501E` (tints `#FDF1EC`, `#F9DCCF`; text `#9C3A12`) | the one next action on Today, Draft a plan, Approve plan, "Decide: keep, change or stop", "Needs your decision" |
+| **Written by AI, checked** | `ai` | `#6941C6` (tints `#F4F3FF`) | model-written text (an investigation conclusion in model mode), the Ask button, AI steps in a trace |
+| Navigation / primary UI | `fg` (ink) | `#101828`, soft `#344054`, mute `#525E70`, faint `#667085` (all ≥ 4.5:1 on white and on the canvas, WCAG AA) | text, primary navigation buttons |
+| Sidebar (deep ink) | `side` | `#0A1726`, hover `#12253A`, active `#1A3350` | app chrome only |
+| Canvas / surface / border | | warm white `#F8F7F4` / `#FFFFFF` / `#E7E5E0` (strong `#D3D0C8`) | backgrounds, cards, rules |
+
+The sidebar keeps the legend: teal computed by code, rust needs your decision, purple written by AI and checked.
 
 Status colours are a separate system and never mean "computed" or "decision":
 
 | Status | Token | Hex | Meaning |
 |---|---|---|---|
-| Needs attention | `crit` | `#D92D20` | operations **and** engagement moved beyond normal variation |
-| Watch | `warn` | `#CA8504` (amber-yellow, kept apart from rust) | one of the two moved; also "inconclusive" and "hypothesis" |
-| Normal / worked | `ok` | `#079455` | within normal variation; plan review "worked" |
-| Info | `info` | `#2E6BE6` | in progress, demo CSV |
+| Needs attention | `crit` | `#D92D20` | operations **and** engagement moved beyond normal variation; a review that deteriorated |
+| Watch | `warn` | `#CA8504` (amber-yellow, kept apart from rust) | one of the two moved; "Mixed" evidence; "Inconclusive" review |
+| Normal / improved | `ok` | `#079455` | within normal variation; review "Improved" |
+| Info | `info` | `#2E6BE6` | in progress, "Not ready", the uploaded-data strip, prepared answers |
 | Rolled up | neutral grey | `#98A2B3` | team under 4 people, no numbers shown |
 
-Charts: the team line is `crit` `#D92D20` with a light area fill. Comparable teams are a dashed grey
-`#98A2B3` line. Gridlines are `#EEF0F3`. Before/after shading uses 5–8% `crit` / `brand`. Quartile bars
-run from bottom `crit` through middle `#D0D5DD` to top `brand`.
+## Evidence states (new in v0.8)
+
+Every answer and every block on Investigate carries one chip. They are set by explicit rules in code, never a
+confidence percentage. The tooltip says what the state means in plain words.
+
+| State | Chip | Plain words |
+|---|---|---|
+| Supported | teal | The checks agree and cover the question. |
+| Mixed | amber | Some checks point one way and some the other; both are shown. |
+| Insufficient | grey, dashed | Not enough evidence to say. The next step is to gather it, with an owner. |
+| Unavailable | grey, dashed | The data this needs is not in this prototype (e.g. the external Gallup benchmark). |
+
+Review results use plain words too: **Improved**, **Deteriorated**, **Inconclusive**, or **Not ready** before the
+review date. `app/impact.py` returns worked / no effect / inconclusive; the UI maps them (no effect = the whole 95%
+interval above zero, i.e. the KPI rose relative to comparable teams = Deteriorated).
+
+## Charts
+
+Charts only where they change a decision. Every chart says its **unit, period and baseline** in its caption or
+legend. The team line is `crit` `#D92D20` with a light area fill; comparable teams are a dashed grey `#98A2B3`
+line; gridlines `#EEECE7`. Before/after shading uses 5–8% `crit` / `brand`. Quartile bars run from bottom `crit`
+through middle `#D0D5DD` to top `brand`. Charts the investigation API describes (`ChartSpec`) render as simple bars
+or a range strip from the rows in the response; nothing is drawn from numbers the API did not send.
 
 ## Type
 
 - **Geist** (Google Fonts) for everything; **Geist Mono** for SQL, ids and item codes.
-- Page title 24 px / 600 / −0.02em. Card title 15 px / 600. Body 14 px. Labels 12 px / 500 in mute.
-  Overline 11 px / 600 / +0.06em uppercase.
-- Big numbers 26 px / 600, tabular figures (`.tnum`). Units always sit beside or under the number:
-  "per 10 people / month", "pts on a 5-point scale", "3 months".
+- Page title 24 px / 600 / −0.02em; the Today headline 26 px. Block sentence 16 px / 600. Body 14 px. Labels
+  12 px / 500 in mute. Eyebrow (`.eyebrow`) 11.5 px / 600 / +0.06em uppercase in faint (the old `.overline` class
+  name collided with Tailwind's text-decoration utility and drew a line; renamed).
+- Big numbers 26 px / 600, tabular figures (`.tnum`). Units sit beside or under the number.
 
-## Shape and space
+## Shape, space and motion
 
-- Radius: cards 12 px (`rounded-xl`), controls 8 px (`rounded-lg`), badges 6 px, pills full.
-- Card padding 20 px. Page gutter 16 px mobile, 32 px desktop. Max content width 1360 px.
-- Shadows: `card` for resting, `pop` for menus and hover. No heavy shadows.
-- Sidebar 248 px. Top bar 64 px, white, bottom border.
+- Radius: question blocks 16 px (`rounded-2xl`), cards 12 px, controls 8 px, badges 6 px, pills full.
+- More breathing room than v0.7: the Today focus card has 24–32 px padding, sections are 40 px apart below it.
+- Page gutter 16 px mobile, 32 px desktop. Max content width 1360 px. The Investigate panel docks in a 400 px
+  right column from 1280 px; below that it is a full-width section reached from the "Ask" question chip.
+- Motion: a 0.28 s fade-up on first paint, nothing else. `prefers-reduced-motion` turns all animation off.
+- Every call has a loading, empty, error (with Try again), suppressed, insufficient, unavailable and fallback state.
 
 ## Logo
 
@@ -51,7 +76,10 @@ Files: `web/public/favicon.svg`; the React component is `Logo` in `web/src/compo
 
 ## Voice
 
-- Say "AI-assisted workflow", never "agent". Say "association, not cause" and "directional, not causal".
-  Label follow-up months as "synthetic".
-- Lead each screen with one sentence: what the manager should conclude. Give one primary action per screen.
+- Say "AI-assisted workflow" and "AI-assisted investigation", never "agent". Say "association, not cause" and
+  "directional, not causal". Label follow-up months as "synthetic".
+- Lead each screen with one sentence: what the manager should conclude. Give one primary action per screen; the
+  first-viewport action on Today is rust because it is the manager's decision.
+- The first viewport of Today has no p-values, methods or journey strip; those are one scroll or one click down.
 - Numbers come only from the API. The narration in the guided demo contains no numbers.
+- Every screen shows the demo-clock date and the dataset (demo CSV, synthetic; or the client's upload).

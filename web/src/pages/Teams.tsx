@@ -38,8 +38,8 @@ export default function Teams() {
 
   return (
     <div>
-      <PageHeader crumbs={<>{b.site} DC</>} title="Teams" sub={`Every team at ${b.site}, compared with teams on the same shift at the other sites · ${monthRange(b.window)}`}
-        actions={<Method>Observed / expected: the team's count in the last three full months vs the count comparable teams' rate predicts for a team this size. Red means both operations and engagement moved beyond normal variation; amber means one did.</Method>} />
+      <PageHeader crumbs={<>{b.site} DC</>} title="Investigate" sub={`Pick a team to investigate. Every team at ${b.site}, compared with comparable teams (same shift, every site, 4 or more people) · ${monthRange(b.window)}`}
+        actions={<Method>Observed / expected: the team's count in the last three full months vs the count comparable teams' pooled rate predicts for a team this size. Comparable teams are the teams on the same shift at every site with 4 or more people, excluding the team itself. Red means both operations and engagement moved beyond normal variation; amber means one did.</Method>} />
       <Card pad={false}>
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
           <Segmented value={f} onChange={setF} options={[{ id: 'all', label: `All ${b.teams.length}` }, { id: 'attention', label: `Needs attention ${nAtt}` }, { id: 'normal', label: 'Normal' }]} />
