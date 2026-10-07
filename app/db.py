@@ -17,7 +17,7 @@ TABLES = ["sites", "teams", "employees", "waves", "responses", "comments", "ops_
 # What the model (and the show-me panel) is allowed to query. Respondent rows are NOT here.
 ALLOWED = {"sites", "teams", "waves", "q12_items", "ownership_directory", "staffing",
            "v_team_wave_item", "v_site_wave_item", "v_company_wave_item", "v_company_shift_wave_item", "v_tenure_wave_item", "v_team_wave_n",
-           "v_team_tenure_mix", "v_ops_month", "v_ops_hour", "v_comments_reportable"}
+           "v_team_tenure_mix", "v_ops_month", "v_ops_hour", "v_comments_reportable", "v_team_ops_month"}
 
 ROW_CAP = 5000   # protects the show-me panel and the model from huge outputs; every view here is far smaller (v_team_wave_item is 576 rows)
 
@@ -165,7 +165,7 @@ def _check_query(s: str) -> None:
     if any(isinstance(n, (exp.Insert, exp.Update, exp.Delete, exp.Create, exp.Drop, exp.Alter, exp.Command, exp.Copy)) for n in tree.walk()):
         raise ValueError("Only read-only SELECT statements are allowed.")
     ctes = {c.alias_or_name.lower() for c in tree.find_all(exp.CTE)}
-    shadow = ctes & {t.lower() for t in TABLES}
+    shadow = ctes & ({t.lower() for t in TABLES} | {"team_ops_monthly"})
     if shadow:  # WITH responses AS (SELECT * FROM responses) would read the real table under a CTE's name
         raise ValueError(f"CTE names may not reuse table names: {sorted(shadow)}")
     for t in tree.find_all(exp.Table):
@@ -182,6 +182,21 @@ def _check_query(s: str) -> None:
             raise ValueError(f"File-reading functions are not allowed: {fname}")
 
 
+# Team-month operating records (the same rows the dashboards use, including an uploaded file) are loaded from
+# app/impact.py's data, not from the CSV, so a question and a dashboard can never disagree. Teams with fewer than
+# MIN_N people are left out of the view entirely: their counts identify people, and keeping them out of every
+# site or shift total is what stops a suppressed team being recovered by subtracting visible teams from a total.
+TEAM_OPS_VIEW = f"""
+CREATE OR REPLACE VIEW v_team_ops_month AS
+SELECT o.month, o.team_id, t.team_name, t.shift, t.site_id, s.site_name, o.headcount,
+       o.late_departures, o.absence_days, o.quits, o.injuries, o.rework
+FROM team_ops_monthly o
+JOIN teams t ON t.team_id = o.team_id
+JOIN sites s ON s.site_id = t.site_id
+WHERE t.headcount >= {MIN_N}
+"""
+
+
 class DB:
     def __init__(self):
         self.con = duckdb.connect(database=":memory:")
@@ -191,6 +206,23 @@ class DB:
             if stmt.strip():
                 self.con.execute(stmt)
         self.uploaded_ops_rows = 0
+        self._team_ops_src = None
+        self.sync_team_ops()
+
+    def sync_team_ops(self) -> str:
+        """Make v_team_ops_month read exactly what app/impact.py reads (demo rows, or an uploaded file replacing
+        them). Cheap when nothing changed. Returns the dataset version ('demo' or 'upload:<mtime>')."""
+        from app import impact as I  # late import: impact does not import db
+        df = I._data()[0]
+        if self._team_ops_src is not df:
+            cols = ["month", "team_id", "site_id", "shift", "headcount", "absence_days", "late_departures", "quits", "injuries", "rework"]
+            self.con.register("team_ops_src", df[cols])
+            self.con.execute("CREATE OR REPLACE TABLE team_ops_monthly AS SELECT * FROM team_ops_src")
+            self.con.unregister("team_ops_src")
+            self.con.execute(TEAM_OPS_VIEW)
+            self._team_ops_src = df
+        up = I.upload_path()
+        return f"upload:{int(up.stat().st_mtime)}" if up.exists() else "demo"
 
     # ---- guarded query -------------------------------------------------
     # The query is parsed (sqlglot, DuckDB dialect), not pattern-matched: every table it references,
@@ -245,6 +277,7 @@ class DB:
 - v_ops_month(site_id, site_name, shift, hour_band, month, departures, late_departures, late_rate, rework): operations by month.
 - v_ops_hour(site_id, site_name, shift, hour_band, period, departures, late_departures, late_rate): operations by hour band, periods 'Jan-May 2026' and 'Jun-Sep 2026'.
 - v_comments_reportable(comment_id, team_id, team_name, site_id, site_name, shift, wave_id, text): open-text comments from reportable team-waves only.
+- v_team_ops_month(month, team_id, team_name, shift, site_id, site_name, headcount, late_departures, absence_days, quits, injuries, rework): team-month operating counts; teams under 4 people are not in this view.
 - staffing(month, site_id, shift, scheduled_headcount, actual_headcount).
 - ownership_directory(process_name, site_id, site_name, owner_role, owner_name).
 - sites, teams, waves, q12_items."""

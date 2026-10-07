@@ -27,6 +27,8 @@ BLOCKED = [
     "SELECT * FROM glob('*')",
     "WITH responses AS (SELECT * FROM responses) SELECT * FROM responses",        # CTE shadowing a real table
     "SELECT * FROM sites WHERE EXISTS (SELECT 1 FROM read_csv_auto('x.csv'))",     # file read in a predicate
+    "SELECT * FROM team_ops_monthly",                                               # raw team-months incl. teams under 4 (v0.8)
+    "WITH team_ops_monthly AS (SELECT * FROM team_ops_monthly) SELECT * FROM team_ops_monthly",  # v0.8 table shadowed by a CTE
 ]
 
 
