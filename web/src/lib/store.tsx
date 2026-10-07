@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { api, type Meta, type Plan } from './api'
+import { api, type ManagerFunction, type Meta, type Plan } from './api'
 
 export const DETECT = '2026-09-15'
 export const REVIEW = '2026-11-30'
@@ -68,4 +68,18 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[]) {
   }, [key])
   const setData = (d: T | null) => setSt((p) => ({ ...p, data: d }))
   return { data: st.data, error: st.error, loading: st.key !== key, setData }
+}
+
+/** The manager functions the server ships (GET /api/functions). null while loading; [] when this server has no
+ *  investigation endpoints, in which case the screens show "unavailable" and never call them. Loaded once. */
+let fnCache: Promise<ManagerFunction[]> | null = null
+export function useFunctions(): ManagerFunction[] | null {
+  const [fns, setFns] = useState<ManagerFunction[] | null>(null)
+  useEffect(() => {
+    fnCache ??= api.functions().then((x) => (Array.isArray(x) ? x : [])).catch(() => [])
+    let live = true
+    fnCache.then((x) => { if (live) setFns(x) })
+    return () => { live = false }
+  }, [])
+  return fns
 }
