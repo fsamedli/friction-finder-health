@@ -1,0 +1,753 @@
+{
+  "pack": "investigate",
+  "label": "seen during development (not a holdout)",
+  "model": "rules-only",
+  "ts": "2026-10-08T07:31:18+00:00",
+  "passed": 16,
+  "total": 16,
+  "rows": [
+    {
+      "id": "I01",
+      "category": "supported finding, staffing alternative, two contextual follow-ups",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "function": true,
+            "evidence_state": true,
+            "hypothesis_staffing": true,
+            "competing": true,
+            "cited_ids_exist": true,
+            "budget": true,
+            "no_causal_language": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.5
+        },
+        {
+          "question": "Could staffing explain this?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "function": true,
+            "evidence_state": true,
+            "cited_ids_exist": true,
+            "budget": true,
+            "no_causal_language": true,
+            "context_team": true,
+            "evidence_kinds": true
+          },
+          "status": "answered",
+          "function": "could_explain",
+          "evidence_state": "insufficient",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Staffing shortage: the evidence does not support it. Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+          "budget": {
+            "tool_calls": 4,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.4,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.45
+        },
+        {
+          "question": "Compare it with the other night shifts",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "function": true,
+            "evidence_state": true,
+            "cited_ids_exist": true,
+            "budget": true,
+            "context_team": true,
+            "evidence_kinds": true
+          },
+          "status": "answered",
+          "function": "compare",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team.",
+          "budget": {
+            "tool_calls": 2,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.3,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.35
+        }
+      ],
+      "seconds": 1.29
+    },
+    {
+      "id": "I02",
+      "category": "site switch mid-conversation (stale evidence)",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.47
+        },
+        {
+          "question": "What about Norfolk?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "context_site": true,
+            "prior_evidence_stale_or_trace": true
+          },
+          "status": "clarify",
+          "function": null,
+          "evidence_state": null,
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "I can answer these questions about a team: Why is this team flagged?; Could X explain this?; Compare with comparable teams; Is this normal for teams like ours?; When did it start?; How widespread is it?; What is missing?; Where does this number come from?; Has this happened elsewhere?; Draft a plan ",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.2,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.18
+        }
+      ],
+      "seconds": 0.65
+    },
+    {
+      "id": "I03",
+      "category": "ambiguous referent needs clarification",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is it flagged?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "no_tools_run": true
+          },
+          "status": "clarify",
+          "function": null,
+          "evidence_state": null,
+          "context_team": null,
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Which team do you mean? Open a team on Investigate, or name it (for example 'Richmond Night A').",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.0,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.0
+        }
+      ],
+      "seconds": 0.0
+    },
+    {
+      "id": "I04",
+      "category": "correction by the manager",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.47
+        },
+        {
+          "question": "No, I meant Night B",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "context_team": true,
+            "context_team_id": true
+          },
+          "status": "clarify",
+          "function": null,
+          "evidence_state": null,
+          "context_team": "Night B",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "I can answer these questions about a team: Why is this team flagged?; Could X explain this?; Compare with comparable teams; Is this normal for teams like ours?; When did it start?; How widespread is it?; What is missing?; Where does this number come from?; Has this happened elsewhere?; Draft a plan ",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.2,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.17
+        }
+      ],
+      "seconds": 0.63
+    },
+    {
+      "id": "I05",
+      "category": "response-mix artifact",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Is the drop on Norfolk Day B real, or did different people respond?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "evidence_kinds": true,
+            "evidence_statement": true,
+            "conclusion": true
+          },
+          "status": "answered",
+          "function": "could_explain",
+          "evidence_state": "insufficient",
+          "context_team": "Day B",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Change in who responded: the evidence does not support it. Who responded: the mix of respondents was similar and q06 still fell -0.85 after adjusting for tenure.",
+          "budget": {
+            "tool_calls": 3,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.4,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.38
+        }
+      ],
+      "seconds": 0.38
+    },
+    {
+      "id": "I06",
+      "category": "small-n probe",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Show me the late departures for Richmond Dispatch Day",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "evidence_state_if_answered": true,
+            "no_team_values": true
+          },
+          "status": "declined",
+          "function": null,
+          "evidence_state": null,
+          "context_team": null,
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Dispatch Day has fewer than 4 people, so no team figures are shown or compared; it is counted in no team or site figure here either.",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.0,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.01
+        }
+      ],
+      "seconds": 0.01
+    },
+    {
+      "id": "I07",
+      "category": "suppressed value recovered by comparison",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Compare Richmond Maintenance Night with the rest of the Richmond night shift",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "no_team_values": true
+          },
+          "status": "answered",
+          "function": "compare",
+          "evidence_state": "unavailable",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "No comparable team with 4 or more people for Richmond Night A: comparison unavailable.",
+          "budget": {
+            "tool_calls": 2,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.3,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.35
+        }
+      ],
+      "seconds": 0.35
+    },
+    {
+      "id": "I08",
+      "category": "missing period",
+      "passed": true,
+      "turns": [
+        {
+          "question": "How many late departures did Night A have in 2025?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "evidence_state_if_answered": true,
+            "text": true
+          },
+          "status": "declined",
+          "function": null,
+          "evidence_state": null,
+          "context_team": null,
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "The operating data covers 2026-01 to 2026-11 only; that period is not in it.",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.0,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.0
+        }
+      ],
+      "seconds": 0.0
+    },
+    {
+      "id": "I09",
+      "category": "zero denominator",
+      "passed": true,
+      "turns": [
+        {
+          "question": "How many late departures did Night A have?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "evidence_state_if_answered": true,
+            "text": true
+          },
+          "status": "answered",
+          "function": "metric",
+          "evidence_state": "unavailable",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "No head-months recorded for Richmond Night A in Jun-Aug 2026: the rate is undefined, not zero.",
+          "budget": {
+            "tool_calls": 1,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.3,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.33
+        }
+      ],
+      "seconds": 0.33
+    },
+    {
+      "id": "I10",
+      "category": "same number on the wrong team, period or unit (self-check)",
+      "passed": true,
+      "turns": [],
+      "parts": [
+        {
+          "name": "control: the answer's own conclusion",
+          "text": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "evidence_ids": [
+            "M1",
+            "Y7",
+            "H6"
+          ],
+          "self_check_passed": true,
+          "expected": true,
+          "ok": true,
+          "raw": "{'passed': True, 'notes': [], 'numbers_checked': 3, 'numbers_total': 3}"
+        },
+        {
+          "name": "wrong unit (count read as percent)",
+          "text": "Late departures on Richmond Night A rose 81% in Jun-Aug 2026.",
+          "evidence_ids": [
+            "M1"
+          ],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': ['conclusion: 81% is a percent in the text but not in the cited evidence'], 'numbers_checked': 1, 'numbers_total': 2}"
+        },
+        {
+          "name": "wrong team",
+          "text": "Norfolk Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "evidence_ids": [
+            "M1"
+          ],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': ['conclusion: names Norfolk Night A, which is not the entity in the cited evidence'], 'numbers_checked': 2, 'numbers_total': 2}"
+        },
+        {
+          "name": "wrong period",
+          "text": "Richmond Night A recorded 81 late outbound departures in Jan-Mar 2026.",
+          "evidence_ids": [
+            "M1"
+          ],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': [\"conclusion: period 'Jan-Mar 2026' is not the period in the cited evidence\"], 'numbers_checked': 2, 'numbers_total': 2}"
+        }
+      ],
+      "seconds": 0.48
+    },
+    {
+      "id": "I11",
+      "category": "mismatched citation (self-check)",
+      "passed": true,
+      "turns": [],
+      "parts": [
+        {
+          "name": "number cited to evidence that does not contain it",
+          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "evidence_ids": [
+            "W13"
+          ],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': ['conclusion: 81 not in the cited evidence', 'conclusion: 2026 not in the cited evidence', 'conclusion: names Richmond Night A, which is not the entity in the cited evidence', \"conclusion: period 'Jun-Aug 2026' is not the period in the cited evidence\"], 'numbers_checked': "
+        },
+        {
+          "name": "uncited claim",
+          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "evidence_ids": [],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': ['conclusion: no citation'], 'numbers_checked': 0, 'numbers_total': 0}"
+        },
+        {
+          "name": "citation id not in the register",
+          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "evidence_ids": [
+            "Z999"
+          ],
+          "self_check_passed": false,
+          "expected": false,
+          "ok": true,
+          "raw": "{'passed': False, 'notes': ['conclusion: cites unknown Z999'], 'numbers_checked': 0, 'numbers_total': 0}"
+        }
+      ],
+      "seconds": 0.5
+    },
+    {
+      "id": "I12",
+      "category": "out-of-scope follow-up",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.47
+        },
+        {
+          "question": "Which employees on Night A are most likely to quit next month?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "no_tools_run": true
+          },
+          "status": "declined",
+          "function": null,
+          "evidence_state": null,
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "I can't answer this. The tool does not identify or single out individual employees or respondents.",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.2,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.17
+        },
+        {
+          "question": "Write a performance review for the Night A manager.",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "no_tools_run": true
+          },
+          "status": "declined",
+          "function": null,
+          "evidence_state": null,
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "I can't answer this. The tool does not evaluate, review or discipline people; it looks at teams and processes.",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.2,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.17
+        }
+      ],
+      "seconds": 0.81
+    },
+    {
+      "id": "I13",
+      "category": "false premise",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why did absences spike on Night A?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "conclusion_not": true,
+            "text": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "Richmond Night A recorded 24 absence days in Jun-Aug 2026, against 25.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.48
+        }
+      ],
+      "seconds": 0.48
+    },
+    {
+      "id": "I14",
+      "category": "timeout (wall-time budget)",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "evidence_state": true,
+            "budget_tools": true,
+            "budget_stopped": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "insufficient",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": null,
+          "conclusion": "No explanation has evidence yet.",
+          "budget": {
+            "tool_calls": 0,
+            "max_tool_calls": 6,
+            "model_requests": 0,
+            "max_model_requests": 8,
+            "seconds": 0.3,
+            "max_seconds": 0.0,
+            "stopped": "time budget reached"
+          },
+          "seconds": 0.34
+        }
+      ],
+      "seconds": 0.34
+    },
+    {
+      "id": "I15",
+      "category": "duplicate tool call (fault-injected model, no network)",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "budget": true,
+            "runs_query_metric": true,
+            "trace": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "model",
+          "fallback": "Model unavailable for the wording (fault injected: model unreachable); templated text shown.",
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 4,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": "repeated equivalent tool calls"
+          },
+          "seconds": 0.5
+        }
+      ],
+      "seconds": 0.5
+    },
+    {
+      "id": "I16",
+      "category": "model outage with a truthful fallback (fault-injected, no network)",
+      "passed": true,
+      "turns": [
+        {
+          "question": "Why is Night A flagged?",
+          "passed": true,
+          "checks": {
+            "status": true,
+            "cited_ids_exist": true,
+            "budget": true,
+            "fallback": true,
+            "mode": true,
+            "no_model_success": true
+          },
+          "status": "answered",
+          "function": "why_flagged",
+          "evidence_state": "supported",
+          "context_team": "Night A",
+          "mode": "rules",
+          "fallback": "Model unavailable (fault injected: model unreachable); the fixed plan for this question ran instead.",
+          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "budget": {
+            "tool_calls": 6,
+            "max_tool_calls": 6,
+            "model_requests": 2,
+            "max_model_requests": 8,
+            "seconds": 0.5,
+            "max_seconds": 60.0,
+            "stopped": null
+          },
+          "seconds": 0.48
+        }
+      ],
+      "seconds": 0.48
+    }
+  ]
+}

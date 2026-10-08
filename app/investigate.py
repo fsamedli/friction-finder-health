@@ -172,7 +172,7 @@ def plan_for(fid: str, params: dict) -> list[tuple[str, dict]]:
                           "hour_band": [("hour_bands", {}), ("retrieve_passages", {}), ("timeline", {})]}.get(x, [("timeline", {})]),
         "compare": [("compare_teams", {}), ("query_metric", {})],
         "normal": [("benchmark", {}), ("query_metric", {})],
-        "when_started": [("timeline", {}), ("signal_check", {})],
+        "when_started": [("timeline", {}), ("query_metric", {}), ("signal_check", {})],
         "how_widespread": [("hour_bands", {}), ("timeline", {}), ("query_metric", {})],
         "whats_missing": [("retrieve_passages", {}), ("hour_bands", {}), ("timeline", {}), ("owner_lookup", {}), ("signal_check", {})],
         "provenance": [("query_metric", {})],
@@ -204,7 +204,7 @@ def hypotheses(data: dict, ctx: dict, by_tool: dict) -> list[dict]:
         st = "supported" if short & months else "insufficient"
         txt = (f"Staffing fell below 90% of scheduled in {_ml_list(sorted(short)) or 'no month'}; the flagged window is {_ml(sorted(months))}. "
                + ("The shortage overlaps the window." if short & months else "No shortage month falls in the window, so staffing does not account for it."))
-        out.append({"id": "staffing", "label": "Staffing shortage", "evidence_state": st, "text": txt, "evidence_ids": by_tool.get("timeline", [])})
+        out.append({"id": "staffing", "label": "Staffing shortage", "evidence_state": st, "text": txt, "evidence_ids": by_tool.get("timeline", []) + by_tool.get("query_metric", [])})
     if "signal_check" in data:
         s = data["signal_check"]
         d = s.get("drop") or {}
@@ -695,6 +695,7 @@ def _model_loop(question, fid, params, ctx, conv, turn, db, retriever, run, data
     required = [n for n, _ in plan_for(fid, params)]
     dupes = 0
     while run.tool_calls < MAX_TOOL_CALLS and run.model_requests < MAX_MODEL_REQUESTS - 2 and run.time_left() > 8:
+        offered = [x for x in specs if x["name"] == "answer_now" or x["name"] not in data]   # a check that already ran is not offered again
         seen = "\n".join(f"[{e.id}] {e.statement[:300]}" for e in conv.register.values() if e.turn == turn) or "(nothing yet)"
         system = ("You choose the next read-only check in an AI-assisted investigation of one team's operating numbers. Code runs the check and "
                   "computes every number; you never state numbers. The team, site and dates are fixed by code; you cannot change them. "
@@ -704,7 +705,7 @@ def _model_loop(question, fid, params, ctx, conv, turn, db, retriever, run, data
         user = f"Manager's question: {question}\nContext: team {ctx.get('team_id')}, metric {ctx.get('kpi')}, item {ctx.get('item')}, as of {ctx['as_of']}\nEvidence so far:\n{seen}"
         t0 = time.time()
         try:
-            pick = llm.choose_tool(system, user, specs, effort="low")
+            pick = llm.choose_tool(system, user + f"\nChecks already run this turn: {', '.join(data) or 'none'}", offered, effort="low")
         except llm.LLMUnavailable as e:
             run.model_requests += 2          # the call and its one retry
             inv.update(mode="rules", fallback=f"Model unavailable ({str(e)[:120]}); the fixed plan for this question ran instead.")
@@ -732,7 +733,13 @@ def _model_write(question: str, answer: dict, conv: Conversation, run: Run, inv:
     """The model rewrites the conclusion and the competing explanation in plain words from the cited evidence. Code checks
     it; on any failure the templated text stays, labelled."""
     from app import llm
-    if inv.get("mode") != "model" or run.model_requests >= MAX_MODEL_REQUESTS or run.time_left() < 5:
+    if inv.get("mode") != "model":
+        return answer
+    if run.model_requests >= MAX_MODEL_REQUESTS or run.time_left() < 5:
+        inv["fallback"] = ("Model request budget used up" if run.model_requests >= MAX_MODEL_REQUESTS else "Time budget nearly used up") + \
+                          "; the answer text is the template, filled from the evidence by code."
+        run.step("Write the answer in plain words", "skipped: budget; templated text shown", "code", 0.0)
+        answer["written_by"] = "template"
         return answer
     ev = "\n".join(f"[{e.id}] {e.statement[:400]}" for e in conv.register.values() if not e.stale)
     draft = {"conclusion": {"text": answer["conclusion"], "evidence_ids": answer["evidence_ids"]},
