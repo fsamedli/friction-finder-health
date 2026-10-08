@@ -754,6 +754,8 @@ def _model_write(question: str, answer: dict, conv: Conversation, run: Run, inv:
         out = llm.chat_json(system, f"Question: {question}\nEvidence state: {answer['evidence_state']}\nDraft: {draft}\nEvidence:\n{ev}", effort="low")
     except llm.LLMUnavailable as e:
         inv["fallback"] = f"Model unavailable for the wording ({str(e)[:100]}); templated text shown."
+        run.step("Write the answer in plain words", "model unavailable: templated text shown", "code", time.time() - t0)
+        answer["written_by"] = "template"
         return answer
     cand = dict(answer)
     c = out.get("conclusion") or {}

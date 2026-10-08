@@ -1,0 +1,3147 @@
+{
+ "why is night a flagged|4|2026-09-15|first": {
+  "generated_at": "2026-10-08T07:32:04+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "22f72c2e45",
+   "conversation_id": "ceeecc855c79",
+   "question": "Why is Night A flagged?",
+   "created_at": "2026-10-08T07:31:39+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "why_flagged",
+    "label": "Why is this team flagged?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Richmond Night A had 81 late departures in Jun-Aug 2026 versus 51.4 expected. Shift handoff is the best-supported explanation (association), supported by Wave 2 comments.",
+    "evidence_state": "mixed",
+    "evidence_ids": [
+     "M1",
+     "Y5"
+    ],
+    "competing": {
+     "text": "Staffing fell below 90% of scheduled in Mar 2026; that month is outside Jun-Aug 2026, so staffing shortfall is not supported as an explanation for the Jun-Aug 2026 flag.",
+     "evidence_state": "insufficient",
+     "evidence_ids": [
+      "T12",
+      "M1"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Collect the missing records before acting (see 'What is missing?').",
+     "owner": "Priya Singh, Site Operations Manager"
+    },
+    "hypotheses": [
+     {
+      "id": "process",
+      "label": "Process or handoff (shift handoff)",
+      "evidence_state": "mixed",
+      "text": "Process: shift handoff. 4 separate wave-2 comments name it; no hour band rose materially.",
+      "evidence_ids": [
+       "Y5"
+      ]
+     },
+     {
+      "id": "staffing",
+      "label": "Staffing shortage",
+      "evidence_state": "insufficient",
+      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+      "evidence_ids": [
+       "T12",
+       "M1"
+      ]
+     },
+     {
+      "id": "who_responded",
+      "label": "Change in who responded",
+      "evidence_state": "insufficient",
+      "text": "Who responded: the mix of respondents was similar and q02 still fell -0.80 after adjusting for tenure.",
+      "evidence_ids": [
+       "G2",
+       "G3",
+       "G4"
+      ]
+     },
+     {
+      "id": "site_wide",
+      "label": "Site-wide or seasonal change",
+      "evidence_state": "insufficient",
+      "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
+      "evidence_ids": [
+       "K11"
+      ]
+     },
+     {
+      "id": "single_comment",
+      "label": "A single loud comment",
+      "evidence_state": "insufficient",
+      "text": "4 separate comments on one theme: not a single voice.",
+      "evidence_ids": [
+       "Y5"
+      ]
+     }
+    ],
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "M1",
+     "kind": "metric",
+     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "G2",
+     "kind": "tenure_mix",
+     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
+     "rows": [
+      {
+       "wave_id": 1,
+       "tenure_band": "1_to_3",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 4.0
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "over_10",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "1_to_3",
+       "n": 4,
+       "grand_mean": 3.63
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 3.88
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "over_10",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      }
+     ],
+     "source": "v_team_tenure_mix",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "G3",
+     "kind": "signal_check",
+     "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
+     "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
+     "rows": [
+      {
+       "tenure_band": "under_1",
+       "share_w1": 0.18,
+       "share_w2": 0.15,
+       "company_band_mean": 4.18,
+       "n_w1": 2,
+       "n_w2": 2
+      },
+      {
+       "tenure_band": "1_to_3",
+       "share_w1": 0.27,
+       "share_w2": 0.31,
+       "company_band_mean": 3.81,
+       "n_w1": 3,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "3_to_10",
+       "share_w1": 0.36,
+       "share_w2": 0.31,
+       "company_band_mean": 3.83,
+       "n_w1": 4,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "over_10",
+       "share_w1": 0.18,
+       "share_w2": 0.23,
+       "company_band_mean": 3.82,
+       "n_w1": 2,
+       "n_w2": 3
+      }
+     ],
+     "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "G4",
+     "kind": "item_drop_adjusted",
+     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "sql": null,
+     "rows": [],
+     "source": "app/impact.py _engagement",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "Y5",
+     "kind": "comment_themes",
+     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
+     "rows": [
+      {
+       "theme": "shift handoff",
+       "comments": 4,
+       "share": 0.67,
+       "corroborating": true
+      },
+      {
+       "theme": "equipment and maintenance",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      },
+      {
+       "theme": "recognition",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      }
+     ],
+     "source": "v_comments_reportable",
+     "origin": "computed",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C6",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C7",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C8",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C9",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:54",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "W10",
+     "kind": "owner",
+     "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
+     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure'",
+     "rows": [],
+     "source": "ownership_directory",
+     "origin": "computed",
+     "tool": "owner_lookup",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "K11",
+     "kind": "compare",
+     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Richmond Night B",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Norfolk Night A",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Norfolk Night B",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Roanoke Night A",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Roanoke Night B",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "T12",
+     "kind": "timeline",
+     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
+     "turn": 1,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+     "mode": "model",
+     "seconds": 3.3
+    },
+    {
+     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+     "detail": "1 evidence item: M1",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 1.9
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+     "detail": "3 evidence items: G2, G3, G4",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': 'Richmond Night A materials equipment q02 comments Jun-Aug 2026 \"Materials and equipment to do my work right\"'}",
+     "mode": "model",
+     "seconds": 2.6
+    },
+    {
+     "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
+     "detail": "5 evidence items: Y5, C6, C7, C8, C9",
+     "mode": "code",
+     "seconds": 1.2,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
+     "mode": "model",
+     "seconds": 3.1
+    },
+    {
+     "step": "Found who owns shift handoff procedure at Richmond",
+     "detail": "1 evidence item: W10",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "owner_lookup"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 3.1
+    },
+    {
+     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "detail": "1 evidence item: K11",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 2.9
+    },
+    {
+     "step": "Built the month-by-month timeline for Richmond Night A",
+     "detail": "1 evidence item: T12",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 7.0
+    }
+   ],
+   "budget": {
+    "tool_calls": 6,
+    "max_tool_calls": 6,
+    "model_requests": 7,
+    "max_model_requests": 8,
+    "seconds": 25.7,
+    "max_seconds": 60.0,
+    "stopped": "tool-call budget reached"
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 8,
+    "numbers_total": 8,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "Could staffing explain it?",
+     "question": "Could staffing explain this?",
+     "function": "could_explain"
+    },
+    {
+     "label": "Compare with other night shifts",
+     "question": "Compare {team} with the other night shifts",
+     "function": "compare"
+    },
+    {
+     "label": "What is missing?",
+     "question": "What is missing, and what would change the recommendation?",
+     "function": "whats_missing"
+    }
+   ]
+  }
+ },
+ "could staffing explain this|4|2026-09-15|followup": {
+  "generated_at": "2026-10-08T07:32:26+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "f34d1ea9c8",
+   "conversation_id": "ceeecc855c79",
+   "question": "Could staffing explain this?",
+   "created_at": "2026-10-08T07:32:04+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "could_explain",
+    "label": "Could X explain this?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Staffing shortfall is not a supported explanation: staffing dipped below 90% in 2026-03, outside the flagged Jun-Aug 2026 window; late departures in Jun-Aug 2026 were 81 (19.3 per 10 people per month), above the predicted 51.4.",
+    "evidence_state": "insufficient",
+    "evidence_ids": [
+     "T13",
+     "M16"
+    ],
+    "competing": {
+     "text": "Shift-handoff issues are a plausible associated explanation: four Wave 2 comments name handoff, and late departures in the 06-07 hour band rose from 7.4% (Jan-May 2026) to 17.8% (Jun-Sep 2026).",
+     "evidence_state": "supported",
+     "evidence_ids": [
+      "Y17",
+      "H15"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Ask the process owner for the shift records that would confirm or rule this out.",
+     "owner": "Priya Singh, Site Operations Manager"
+    },
+    "hypotheses": [
+     {
+      "id": "process",
+      "label": "Process or handoff (shift handoff)",
+      "evidence_state": "supported",
+      "text": "Process: shift handoff. 4 separate wave-2 comments name it, and late departures rose in the 06-07 hour band at the shift boundary.",
+      "evidence_ids": [
+       "Y17",
+       "H15"
+      ]
+     },
+     {
+      "id": "staffing",
+      "label": "Staffing shortage",
+      "evidence_state": "insufficient",
+      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+      "evidence_ids": [
+       "T13",
+       "M16"
+      ]
+     },
+     {
+      "id": "site_wide",
+      "label": "Site-wide or seasonal change",
+      "evidence_state": "insufficient",
+      "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
+      "evidence_ids": [
+       "K14"
+      ]
+     },
+     {
+      "id": "single_comment",
+      "label": "A single loud comment",
+      "evidence_state": "insufficient",
+      "text": "4 separate comments on one theme: not a single voice.",
+      "evidence_ids": [
+       "Y17"
+      ]
+     }
+    ],
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "T13",
+     "kind": "timeline",
+     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "K14",
+     "kind": "compare",
+     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Richmond Night B",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Norfolk Night A",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Norfolk Night B",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Roanoke Night A",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Roanoke Night B",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "H15",
+     "kind": "hour_bands",
+     "statement": "Richmond Night shift, departures in the 06-07 hour band: late-departure rate 7.4% in Jan-May 2026 to 17.8% in Jun-Sep 2026. Other hour bands stayed between 6.5% and 8.8% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (Dispatch is recorded per site and shift, not per team.)",
+     "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Richmond' AND shift = 'Night' ORDER BY hour_band, period",
+     "rows": [
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jan-May 2026",
+       "departures": 2710.0,
+       "late_departures": 192.0,
+       "late_rate": 0.071
+      },
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jun-Sep 2026",
+       "departures": 1850.0,
+       "late_departures": 160.0,
+       "late_rate": 0.086
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jan-May 2026",
+       "departures": 3593.0,
+       "late_departures": 265.0,
+       "late_rate": 0.074
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jun-Sep 2026",
+       "departures": 2457.0,
+       "late_departures": 438.0,
+       "late_rate": 0.178
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jan-May 2026",
+       "departures": 2719.0,
+       "late_departures": 205.0,
+       "late_rate": 0.075
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jun-Sep 2026",
+       "departures": 1870.0,
+       "late_departures": 164.0,
+       "late_rate": 0.088
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jan-May 2026",
+       "departures": 2611.0,
+       "late_departures": 235.0,
+       "late_rate": 0.09
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jun-Sep 2026",
+       "departures": 1781.0,
+       "late_departures": 115.0,
+       "late_rate": 0.065
+      }
+     ],
+     "source": "v_ops_hour",
+     "origin": "computed",
+     "tool": "hour_bands",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "M16",
+     "kind": "metric",
+     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "Y17",
+     "kind": "comment_themes",
+     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
+     "rows": [
+      {
+       "theme": "shift handoff",
+       "comments": 4,
+       "share": 0.67,
+       "corroborating": true
+      },
+      {
+       "theme": "equipment and maintenance",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      },
+      {
+       "theme": "recognition",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      }
+     ],
+     "source": "v_comments_reportable",
+     "origin": "computed",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D18",
+     "kind": "doc",
+     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Steps): ## Steps\n1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**\n   for every trailer worked during the shift: trailer number, load status (empty, partial,\n   complete), seal status, and scheduled departure time.\n2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing\n   paperwork, staffing gaps for the next shift.\n3. The inco",
+     "sql": null,
+     "rows": [],
+     "source": "doc:shift_handoff_procedure:2",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D19",
+     "kind": "doc",
+     "statement": "Document (Shift Scheduling Policy (POL-HR-006) / Shift Scheduling Policy (POL-HR-006)): # Shift Scheduling Policy (POL-HR-006)\n\nIllustrative document written for a fictional company.\n\n- Schedules are published at least 14 days in advance.\n- Minimum staffing per shift is set by the Site Operations Manager and reviewed monthly\n  against the staffing report (scheduled versus actual headcount).\n- When actual headcount falls below 85% of scheduled for a shift in a given month, the\n  Direc",
+     "sql": null,
+     "rows": [],
+     "source": "doc:shift_scheduling_policy:0",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C20",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C21",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C22",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C23",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:54",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "R24",
+     "kind": "precedent",
+     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
+     "sql": null,
+     "rows": [
+      {
+       "team": "Norfolk Day A",
+       "plan": null,
+       "result": null
+      },
+      {
+       "team": "Roanoke Yard Day",
+       "plan": null,
+       "result": null
+      }
+     ],
+     "source": "app/impact.py board, plans",
+     "origin": "computed",
+     "tool": "precedent",
+     "turn": 2,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 1.7
+    },
+    {
+     "step": "Built the month-by-month timeline for Richmond Night A",
+     "detail": "1 evidence item: T13",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 2.1
+    },
+    {
+     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "detail": "1 evidence item: K14",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked hour_bands",
+     "mode": "model",
+     "seconds": 2.3
+    },
+    {
+     "step": "Checked late departures by hour band on Richmond night shift",
+     "detail": "1 evidence item: H15",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "hour_bands"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+     "mode": "model",
+     "seconds": 2.8
+    },
+    {
+     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+     "detail": "1 evidence item: M16",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': \"Richmond Night A staffing fall late departures staffing levels comments procedures staffing change 'Richmond Night' 'staffing' 'late departures' 'shift' 'headcount' 'Jun 2026' 'Jul 2026' 'Aug 2026'\"}",
+     "mode": "model",
+     "seconds": 3.0
+    },
+    {
+     "step": "Read 4 employee comments and 2 procedures for Richmond Night A (embeddings search)",
+     "detail": "7 evidence items: Y17, D18, D19, C20, C21, C22, C23",
+     "mode": "code",
+     "seconds": 1.2,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked precedent {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 2.4
+    },
+    {
+     "step": "Looked for the same problem on other teams: 2 found",
+     "detail": "1 evidence item: R24",
+     "mode": "code",
+     "seconds": 0.6,
+     "tool": "precedent"
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 5.0
+    }
+   ],
+   "budget": {
+    "tool_calls": 6,
+    "max_tool_calls": 6,
+    "model_requests": 7,
+    "max_model_requests": 8,
+    "seconds": 21.4,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 16,
+    "numbers_total": 16,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "When did it start?",
+     "question": "When did it start?",
+     "function": "when_started"
+    },
+    {
+     "label": "What is missing?",
+     "question": "What is missing, and what would change the recommendation?",
+     "function": "whats_missing"
+    },
+    {
+     "label": "Draft a plan",
+     "question": "Draft a plan I can review",
+     "function": "draft_plan"
+    }
+   ]
+  }
+ },
+ "compare it with the other night shifts|4|2026-09-15|first": {
+  "generated_at": "2026-10-08T07:32:45+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "db239f120f",
+   "conversation_id": "731ac331b1a4",
+   "question": "Compare it with the other night shifts",
+   "created_at": "2026-10-08T07:32:26+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "compare",
+    "label": "Compare with comparable teams"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Richmond Night A had 19.3 late departures per 10 people per month in Jun-Aug 2026. Five comparable night teams ranged 9.8 to 15.5, so Richmond Night A is higher than every comparable team.",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "K1"
+    ],
+    "competing": null,
+    "next_step": {
+     "kind": "gather",
+     "text": "Open 'When did it start?' to see whether the gap is recent or long-running.",
+     "owner": "You (site manager)"
+    },
+    "chart": {
+     "type": "bars",
+     "title": "Late departures per 10 people per month",
+     "unit": "per 10 people per month",
+     "period": "Jun-Aug 2026",
+     "baseline": "comparable teams: same shift at every site, 4 or more people",
+     "x": "team",
+     "series": [
+      {
+       "key": "per_10",
+       "label": "Late departures per 10 people per month",
+       "role": "team"
+      }
+     ],
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "per_10": 19.3
+      },
+      {
+       "team": "Richmond Night B",
+       "per_10": 10.5
+      },
+      {
+       "team": "Norfolk Night A",
+       "per_10": 15.5
+      },
+      {
+       "team": "Norfolk Night B",
+       "per_10": 13.8
+      },
+      {
+       "team": "Roanoke Night A",
+       "per_10": 9.8
+      },
+      {
+       "team": "Roanoke Night B",
+       "per_10": 11.0
+      }
+     ],
+     "highlight": "Richmond Night A"
+    },
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "K1",
+     "kind": "compare",
+     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Richmond Night B",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Norfolk Night A",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Norfolk Night B",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Roanoke Night A",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Roanoke Night B",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "T2",
+     "kind": "timeline",
+     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "M3",
+     "kind": "metric",
+     "statement": "Richmond night shift (teams of 4 or more people) recorded 103 late outbound departures in Jun-Aug 2026: 16.3 per 10 people per month (63 head-months).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE site_id = 1 AND shift = 'Night' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 37,
+       "head_months": 21,
+       "per_10": 17.62
+      },
+      {
+       "month": "2026-07",
+       "events": 36,
+       "head_months": 21,
+       "per_10": 17.14
+      },
+      {
+       "month": "2026-08",
+       "events": 30,
+       "head_months": 21,
+       "per_10": 14.29
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "R4",
+     "kind": "precedent",
+     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
+     "sql": null,
+     "rows": [
+      {
+       "team": "Norfolk Day A",
+       "plan": null,
+       "result": null
+      },
+      {
+       "team": "Roanoke Yard Day",
+       "plan": null,
+       "result": null
+      }
+     ],
+     "source": "app/impact.py board, plans",
+     "origin": "computed",
+     "tool": "precedent",
+     "turn": 1,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 1.7
+    },
+    {
+     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "detail": "1 evidence item: K1",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 3.4
+    },
+    {
+     "step": "Built the month-by-month timeline for Richmond Night A",
+     "detail": "1 evidence item: T2",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'shift'}",
+     "mode": "model",
+     "seconds": 2.4
+    },
+    {
+     "step": "Counted late departures for Richmond night shift (teams of 4 or more people) in Jun-Aug 2026",
+     "detail": "1 evidence item: M3",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked precedent {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 2.5
+    },
+    {
+     "step": "Looked for the same problem on other teams: 2 found",
+     "detail": "1 evidence item: R4",
+     "mode": "code",
+     "seconds": 0.5,
+     "tool": "precedent"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 4.1
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 3.9
+    }
+   ],
+   "budget": {
+    "tool_calls": 4,
+    "max_tool_calls": 6,
+    "model_requests": 6,
+    "max_model_requests": 8,
+    "seconds": 19.0,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 5,
+    "numbers_total": 5,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "When did it start?",
+     "question": "When did it start?",
+     "function": "when_started"
+    },
+    {
+     "label": "Normal for teams like ours?",
+     "question": "Is this normal for teams like ours?",
+     "function": "normal"
+    },
+    {
+     "label": "Why flagged?",
+     "question": "Why is {team} flagged?",
+     "function": "why_flagged"
+    }
+   ]
+  }
+ },
+ "when did it start|4|2026-09-15|followup": {
+  "generated_at": "2026-10-08T07:33:11+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "0320ddf574",
+   "conversation_id": "731ac331b1a4",
+   "question": "When did it start?",
+   "created_at": "2026-10-08T07:32:45+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "when_started",
+    "label": "When did it start?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "T5"
+    ],
+    "competing": {
+     "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+     "evidence_state": "insufficient",
+     "evidence_ids": [
+      "T5",
+      "M15"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Check what changed on the shift in the first month above the range (rota, equipment, procedure).",
+     "owner": "Priya Singh, Site Operations Manager"
+    },
+    "chart": {
+     "type": "line",
+     "title": "Late departures per 10 people per month",
+     "unit": "per 10 people per month",
+     "period": "2026-01 to 2026-08",
+     "baseline": "highest comparable team each month",
+     "x": "month",
+     "series": [
+      {
+       "key": "team_per_10",
+       "label": "Richmond Night A",
+       "role": "team"
+      },
+      {
+       "key": "comparable_high",
+       "label": "Highest comparable team",
+       "role": "comparison"
+      }
+     ],
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "highlight": null
+    }
+   },
+   "evidence": [
+    {
+     "id": "T5",
+     "kind": "timeline",
+     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G6",
+     "kind": "tenure_mix",
+     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
+     "rows": [
+      {
+       "wave_id": 1,
+       "tenure_band": "1_to_3",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 4.0
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "over_10",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "1_to_3",
+       "n": 4,
+       "grand_mean": 3.63
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 3.88
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "over_10",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      }
+     ],
+     "source": "v_team_tenure_mix",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G7",
+     "kind": "signal_check",
+     "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
+     "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
+     "rows": [
+      {
+       "tenure_band": "under_1",
+       "share_w1": 0.18,
+       "share_w2": 0.15,
+       "company_band_mean": 4.18,
+       "n_w1": 2,
+       "n_w2": 2
+      },
+      {
+       "tenure_band": "1_to_3",
+       "share_w1": 0.27,
+       "share_w2": 0.31,
+       "company_band_mean": 3.81,
+       "n_w1": 3,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "3_to_10",
+       "share_w1": 0.36,
+       "share_w2": 0.31,
+       "company_band_mean": 3.83,
+       "n_w1": 4,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "over_10",
+       "share_w1": 0.18,
+       "share_w2": 0.23,
+       "company_band_mean": 3.82,
+       "n_w1": 2,
+       "n_w2": 3
+      }
+     ],
+     "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G8",
+     "kind": "item_drop_adjusted",
+     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "sql": null,
+     "rows": [],
+     "source": "app/impact.py _engagement",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "Y9",
+     "kind": "comment_themes",
+     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
+     "rows": [
+      {
+       "theme": "shift handoff",
+       "comments": 4,
+       "share": 0.67,
+       "corroborating": true
+      },
+      {
+       "theme": "equipment and maintenance",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      },
+      {
+       "theme": "recognition",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      }
+     ],
+     "source": "v_comments_reportable",
+     "origin": "computed",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C10",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C11",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C12",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C13",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:54",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "K14",
+     "kind": "compare",
+     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Richmond Night B",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Norfolk Night A",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Norfolk Night B",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Roanoke Night A",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Roanoke Night B",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "M15",
+     "kind": "metric",
+     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 2,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 2.5
+    },
+    {
+     "step": "Built the month-by-month timeline for Richmond Night A",
+     "detail": "1 evidence item: T5",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 2.6
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+     "detail": "3 evidence items: G6, G7, G8",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': \"Richmond Night A q02 'Materials and equipment to do my work right' decline when did it start comments timing 'materials' 'equipment' 'broken' 'start' 'since' 'when' 'wave 1' 'wave 2' Richmond Night A late departures start timing\"}",
+     "mode": "model",
+     "seconds": 4.5
+    },
+    {
+     "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
+     "detail": "5 evidence items: Y9, C10, C11, C12, C13",
+     "mode": "code",
+     "seconds": 0.9,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 6.3
+    },
+    {
+     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "detail": "1 evidence item: K14",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 7.8
+    },
+    {
+     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+     "detail": "1 evidence item: M15",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    }
+   ],
+   "budget": {
+    "tool_calls": 5,
+    "max_tool_calls": 6,
+    "model_requests": 6,
+    "max_model_requests": 8,
+    "seconds": 26.3,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": "Model unavailable for the wording (RateLimitError: Error code: 429 - {'error': {'message': 'Your requests to gpt-5-mini for gpt-5-mini ); templated text shown.",
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 22,
+    "numbers_total": 22,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "How widespread?",
+     "question": "How widespread is it?",
+     "function": "how_widespread"
+    },
+    {
+     "label": "Could staffing explain it?",
+     "question": "Could staffing explain this?",
+     "function": "could_explain"
+    },
+    {
+     "label": "Draft a plan",
+     "question": "Draft a plan I can review",
+     "function": "draft_plan"
+    }
+   ]
+  }
+ },
+ "is this normal for teams like ours|4|2026-09-15|first": {
+  "generated_at": "2026-10-08T07:33:41+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "c3dc804dee",
+   "conversation_id": "896e3ef7dce9",
+   "question": "Is this normal for teams like ours?",
+   "created_at": "2026-10-08T07:33:11+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "normal",
+    "label": "Is this normal for teams like ours?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "For teams like Richmond Night A (night shift, 4+ people), Jun-Aug 2026 median late departures were 11.0 per 10 people per month (range 9.8 to 15.5). Richmond Night A had 19.3 per 10 people per month.",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "B2"
+    ],
+    "competing": {
+     "text": "All night-shift teams averaged 13.8 late departures per 10 people per month in Jun-Aug 2026; all day-shift teams averaged 7.9. The norm above compares night teams with night teams, so that gap is already netted out.",
+     "evidence_state": "supported",
+     "evidence_ids": [
+      "B3"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Ask HR whether the client's Access export includes benchmark percentiles (an assumed source, not in this prototype).",
+     "owner": "Dana Whitfield, HR Business Partner"
+    },
+    "chart": {
+     "type": "bars",
+     "title": "Late departures per 10 people per month",
+     "unit": "per 10 people per month",
+     "period": "Jun-Aug 2026",
+     "baseline": "comparable teams: same shift at every site, 4 or more people",
+     "x": "team",
+     "series": [
+      {
+       "key": "per_10",
+       "label": "Late departures per 10 people per month",
+       "role": "team"
+      }
+     ],
+     "rows": [
+      {
+       "team": "Richmond Night B",
+       "per_10": 10.5
+      },
+      {
+       "team": "Norfolk Night A",
+       "per_10": 15.5
+      },
+      {
+       "team": "Norfolk Night B",
+       "per_10": 13.8
+      },
+      {
+       "team": "Roanoke Night A",
+       "per_10": 9.8
+      },
+      {
+       "team": "Roanoke Night B",
+       "per_10": 11.0
+      },
+      {
+       "team": "Richmond Night A",
+       "per_10": 19.3
+      }
+     ],
+     "highlight": "Richmond Night A"
+    },
+    "external": {
+     "text": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
+     "evidence_state": "unavailable",
+     "evidence_ids": [
+      "B4"
+     ]
+    },
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "K1",
+     "kind": "compare",
+     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night A",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Richmond Night B",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Norfolk Night A",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Norfolk Night B",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Roanoke Night A",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Roanoke Night B",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B2",
+     "kind": "benchmark_internal",
+     "statement": "Norm for teams like Richmond Night A (5 night-shift teams at every site, 4+ people), late departures, Jun-Aug 2026: median 11.0 per 10 people per month, range 9.8 to 15.5. Richmond Night A: 19.3.",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Richmond Night B",
+       "per_10": 10.5
+      },
+      {
+       "team": "Norfolk Night A",
+       "per_10": 15.5
+      },
+      {
+       "team": "Norfolk Night B",
+       "per_10": 13.8
+      },
+      {
+       "team": "Roanoke Night A",
+       "per_10": 9.8
+      },
+      {
+       "team": "Roanoke Night B",
+       "per_10": 11.0
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B3",
+     "kind": "benchmark_shift",
+     "statement": "All night-shift teams together ran 13.8 late departures per 10 people per month in Jun-Aug 2026; all day-shift teams 7.9 (teams of 4 or more people).",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Night' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Day' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B4",
+     "kind": "benchmark_external",
+     "statement": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
+     "sql": null,
+     "rows": [],
+     "source": "",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "M5",
+     "kind": "metric",
+     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "R6",
+     "kind": "precedent",
+     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
+     "sql": null,
+     "rows": [
+      {
+       "team": "Norfolk Day A",
+       "plan": null,
+       "result": null
+      },
+      {
+       "team": "Roanoke Yard Day",
+       "plan": null,
+       "result": null
+      }
+     ],
+     "source": "app/impact.py board, plans",
+     "origin": "computed",
+     "tool": "precedent",
+     "turn": 1,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 4.3
+    },
+    {
+     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "detail": "1 evidence item: K1",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked benchmark {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 5.7
+    },
+    {
+     "step": "Built the norm for teams like Richmond Night A from 5 comparable teams",
+     "detail": "3 evidence items: B2, B3, B4",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "benchmark"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+     "mode": "model",
+     "seconds": 5.2
+    },
+    {
+     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+     "detail": "1 evidence item: M5",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked precedent {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 5.8
+    },
+    {
+     "step": "Looked for the same problem on other teams: 2 found",
+     "detail": "1 evidence item: R6",
+     "mode": "code",
+     "seconds": 0.5,
+     "tool": "precedent"
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 7.9
+    }
+   ],
+   "budget": {
+    "tool_calls": 4,
+    "max_tool_calls": 6,
+    "model_requests": 7,
+    "max_model_requests": 8,
+    "seconds": 29.9,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 12,
+    "numbers_total": 12,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "What is missing?",
+     "question": "What is missing, and what would change the recommendation?",
+     "function": "whats_missing"
+    },
+    {
+     "label": "Compare with other night shifts",
+     "question": "Compare {team} with the other night shifts",
+     "function": "compare"
+    },
+    {
+     "label": "Why flagged?",
+     "question": "Why is {team} flagged?",
+     "function": "why_flagged"
+    }
+   ]
+  }
+ },
+ "what is missing|4|2026-09-15|followup": {
+  "generated_at": "2026-10-08T07:34:23+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "7f2865d7e7",
+   "conversation_id": "896e3ef7dce9",
+   "question": "What is missing?",
+   "created_at": "2026-10-08T07:33:41+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "whats_missing",
+    "label": "What is missing?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Richmond",
+    "team_id": 4,
+    "team": "Night A",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_departures",
+    "kpi_label": "Late outbound departures",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_departures",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Shift handoff is the leading supported explanation. Wave 2 shows 4 shift-handoff comments from Richmond Night A, and departures in the 06-07 hour rose from 7.4% to 17.8% in Jun-Sep 2026, an association with the handoff issue.",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "Y7",
+     "H19"
+    ],
+    "competing": null,
+    "next_step": {
+     "kind": "gather",
+     "text": "Pull the signed handoff logs for the flagged months",
+     "owner": "Priya Singh, Site Operations Manager"
+    },
+    "gaps": [
+     {
+      "gap": "Whether the handoff checklist and signed log are completed each shift",
+      "step": "Pull the signed handoff logs for the flagged months",
+      "owner": "Priya Singh, Site Operations Manager"
+     },
+     {
+      "gap": "Which trailers left late and why (dispatch notes)",
+      "step": "Export dispatch notes for the late departures",
+      "owner": "Sam Kim, Dispatch Supervisor"
+     },
+     {
+      "gap": "An external benchmark for teams like this one",
+      "step": "Ask whether the client's Access export includes benchmark percentiles (assumed source)",
+      "owner": "Dana Whitfield, HR Business Partner"
+     },
+     {
+      "gap": "A follow-up pulse on the focus item two months after a plan starts",
+      "step": "Schedule the pulse with HR when a plan is approved (an assumption for a pilot)",
+      "owner": "Dana Whitfield, HR Business Partner"
+     }
+    ],
+    "hypotheses": [
+     {
+      "id": "process",
+      "label": "Process or handoff (shift handoff)",
+      "evidence_state": "supported",
+      "text": "Process: shift handoff. 4 separate wave-2 comments name it, and late departures rose in the 06-07 hour band at the shift boundary.",
+      "evidence_ids": [
+       "Y7",
+       "H19"
+      ]
+     },
+     {
+      "id": "staffing",
+      "label": "Staffing shortage",
+      "evidence_state": "insufficient",
+      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+      "evidence_ids": [
+       "T20"
+      ]
+     },
+     {
+      "id": "who_responded",
+      "label": "Change in who responded",
+      "evidence_state": "insufficient",
+      "text": "Who responded: the mix of respondents was similar and q02 still fell -0.80 after adjusting for tenure.",
+      "evidence_ids": [
+       "G16",
+       "G17",
+       "G18"
+      ]
+     },
+     {
+      "id": "single_comment",
+      "label": "A single loud comment",
+      "evidence_state": "insufficient",
+      "text": "4 separate comments on one theme: not a single voice.",
+      "evidence_ids": [
+       "Y7"
+      ]
+     }
+    ],
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "Y7",
+     "kind": "comment_themes",
+     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
+     "rows": [
+      {
+       "theme": "shift handoff",
+       "comments": 4,
+       "share": 0.67,
+       "corroborating": true
+      },
+      {
+       "theme": "equipment and maintenance",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      },
+      {
+       "theme": "recognition",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      }
+     ],
+     "source": "v_comments_reportable",
+     "origin": "computed",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D8",
+     "kind": "doc",
+     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Steps): ## Steps\n1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**\n   for every trailer worked during the shift: trailer number, load status (empty, partial,\n   complete), seal status, and scheduled departure time.\n2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing\n   paperwork, staffing gaps for the next shift.\n3. The inco",
+     "sql": null,
+     "rows": [],
+     "source": "doc:shift_handoff_procedure:2",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D9",
+     "kind": "doc",
+     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Shift Handoff Procedure (SOP-OPS-014)): # Shift Handoff Procedure (SOP-OPS-014)\n\nIllustrative document written for a fictional company. Not a real Northline document.",
+     "sql": null,
+     "rows": [],
+     "source": "doc:shift_handoff_procedure:0",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D10",
+     "kind": "doc",
+     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Purpose): ## Purpose\nEnsure the incoming shift has complete information about loads in progress, trailers ready\nfor departure, and open issues, so that scheduled departures leave on time.",
+     "sql": null,
+     "rows": [],
+     "source": "doc:shift_handoff_procedure:1",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C11",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C12",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C13",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C14",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:54",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "W15",
+     "kind": "owner",
+     "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
+     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure'",
+     "rows": [],
+     "source": "ownership_directory",
+     "origin": "computed",
+     "tool": "owner_lookup",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G16",
+     "kind": "tenure_mix",
+     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
+     "rows": [
+      {
+       "wave_id": 1,
+       "tenure_band": "1_to_3",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 4.0
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "over_10",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "1_to_3",
+       "n": 4,
+       "grand_mean": 3.63
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 3.88
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "over_10",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      }
+     ],
+     "source": "v_team_tenure_mix",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G17",
+     "kind": "signal_check",
+     "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
+     "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
+     "rows": [
+      {
+       "tenure_band": "under_1",
+       "share_w1": 0.18,
+       "share_w2": 0.15,
+       "company_band_mean": 4.18,
+       "n_w1": 2,
+       "n_w2": 2
+      },
+      {
+       "tenure_band": "1_to_3",
+       "share_w1": 0.27,
+       "share_w2": 0.31,
+       "company_band_mean": 3.81,
+       "n_w1": 3,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "3_to_10",
+       "share_w1": 0.36,
+       "share_w2": 0.31,
+       "company_band_mean": 3.83,
+       "n_w1": 4,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "over_10",
+       "share_w1": 0.18,
+       "share_w2": 0.23,
+       "company_band_mean": 3.82,
+       "n_w1": 2,
+       "n_w2": 3
+      }
+     ],
+     "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G18",
+     "kind": "item_drop_adjusted",
+     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "sql": null,
+     "rows": [],
+     "source": "app/impact.py _engagement",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "H19",
+     "kind": "hour_bands",
+     "statement": "Richmond Night shift, departures in the 06-07 hour band: late-departure rate 7.4% in Jan-May 2026 to 17.8% in Jun-Sep 2026. Other hour bands stayed between 6.5% and 8.8% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (Dispatch is recorded per site and shift, not per team.)",
+     "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Richmond' AND shift = 'Night' ORDER BY hour_band, period",
+     "rows": [
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jan-May 2026",
+       "departures": 2710.0,
+       "late_departures": 192.0,
+       "late_rate": 0.071
+      },
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jun-Sep 2026",
+       "departures": 1850.0,
+       "late_departures": 160.0,
+       "late_rate": 0.086
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jan-May 2026",
+       "departures": 3593.0,
+       "late_departures": 265.0,
+       "late_rate": 0.074
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jun-Sep 2026",
+       "departures": 2457.0,
+       "late_departures": 438.0,
+       "late_rate": 0.178
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jan-May 2026",
+       "departures": 2719.0,
+       "late_departures": 205.0,
+       "late_rate": 0.075
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jun-Sep 2026",
+       "departures": 1870.0,
+       "late_departures": 164.0,
+       "late_rate": 0.088
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jan-May 2026",
+       "departures": 2611.0,
+       "late_departures": 235.0,
+       "late_rate": 0.09
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jun-Sep 2026",
+       "departures": 1781.0,
+       "late_departures": 115.0,
+       "late_rate": 0.065
+      }
+     ],
+     "source": "v_ops_hour",
+     "origin": "computed",
+     "tool": "hour_bands",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "T20",
+     "kind": "timeline",
+     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
+     "turn": 2,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': 'team 4 q02 late_departures site team 4 item q02 comments procedures related to late departures and handoff scheduling as of 2026-09-15'}",
+     "mode": "model",
+     "seconds": 3.4
+    },
+    {
+     "step": "Read 4 employee comments and 3 procedures for Richmond Night A (embeddings search)",
+     "detail": "8 evidence items: Y7, D8, D9, D10, C11, C12, C13, C14",
+     "mode": "code",
+     "seconds": 1.1,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
+     "mode": "model",
+     "seconds": 3.9
+    },
+    {
+     "step": "Found who owns shift handoff procedure at Richmond",
+     "detail": "1 evidence item: W15",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "owner_lookup"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 7.1
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+     "detail": "3 evidence items: G16, G17, G18",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked hour_bands",
+     "mode": "model",
+     "seconds": 6.3
+    },
+    {
+     "step": "Checked late departures by hour band on Richmond night shift",
+     "detail": "1 evidence item: H19",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "hour_bands"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "mode": "model",
+     "seconds": 9.1
+    },
+    {
+     "step": "Built the month-by-month timeline for Richmond Night A",
+     "detail": "1 evidence item: T20",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 10.2
+    }
+   ],
+   "budget": {
+    "tool_calls": 5,
+    "max_tool_calls": 6,
+    "model_requests": 7,
+    "max_model_requests": 8,
+    "seconds": 41.7,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 7,
+    "numbers_total": 7,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "Draft a plan",
+     "question": "Draft a plan I can review",
+     "function": "draft_plan"
+    },
+    {
+     "label": "Happened elsewhere?",
+     "question": "Has this happened on other teams, and what was tried?",
+     "function": "precedent"
+    }
+   ]
+  }
+ }
+}

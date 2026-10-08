@@ -2,7 +2,7 @@
   "pack": "investigate",
   "label": "seen during development (not a holdout)",
   "model": "rules-only",
-  "ts": "2026-10-08T07:31:18+00:00",
+  "ts": "2026-10-08T07:34:48+00:00",
   "passed": 16,
   "total": 16,
   "rows": [
@@ -40,7 +40,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.5
+          "seconds": 0.55
         },
         {
           "question": "Could staffing explain this?",
@@ -67,11 +67,11 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.4,
+            "seconds": 0.5,
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.45
+          "seconds": 0.49
         },
         {
           "question": "Compare it with the other night shifts",
@@ -97,14 +97,14 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.3,
+            "seconds": 0.4,
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.35
+          "seconds": 0.39
         }
       ],
-      "seconds": 1.29
+      "seconds": 1.44
     },
     {
       "id": "I02",
@@ -133,7 +133,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.53
         },
         {
           "question": "What about Norfolk?",
@@ -160,10 +160,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.18
+          "seconds": 0.21
         }
       ],
-      "seconds": 0.65
+      "seconds": 0.75
     },
     {
       "id": "I03",
@@ -225,7 +225,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.51
         },
         {
           "question": "No, I meant Night B",
@@ -252,10 +252,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.19
         }
       ],
-      "seconds": 0.63
+      "seconds": 0.7
     },
     {
       "id": "I05",
@@ -288,10 +288,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.38
+          "seconds": 0.43
         }
       ],
-      "seconds": 0.38
+      "seconds": 0.43
     },
     {
       "id": "I06",
@@ -352,14 +352,14 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.3,
+            "seconds": 0.4,
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.35
+          "seconds": 0.37
         }
       ],
-      "seconds": 0.35
+      "seconds": 0.37
     },
     {
       "id": "I08",
@@ -420,14 +420,14 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.3,
+            "seconds": 0.4,
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.33
+          "seconds": 0.4
         }
       ],
-      "seconds": 0.33
+      "seconds": 0.4
     },
     {
       "id": "I10",
@@ -482,7 +482,7 @@
           "raw": "{'passed': False, 'notes': [\"conclusion: period 'Jan-Mar 2026' is not the period in the cited evidence\"], 'numbers_checked': 2, 'numbers_total': 2}"
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.53
     },
     {
       "id": "I11",
@@ -551,7 +551,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.52
         },
         {
           "question": "Which employees on Night A are most likely to quit next month?",
@@ -576,7 +576,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.18
         },
         {
           "question": "Write a performance review for the Night A manager.",
@@ -604,7 +604,7 @@
           "seconds": 0.17
         }
       ],
-      "seconds": 0.81
+      "seconds": 0.86
     },
     {
       "id": "I13",
@@ -636,10 +636,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.48
+          "seconds": 0.52
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.52
     },
     {
       "id": "I14",
@@ -667,14 +667,14 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.3,
+            "seconds": 0.4,
             "max_seconds": 0.0,
             "stopped": "time budget reached"
           },
-          "seconds": 0.34
+          "seconds": 0.36
         }
       ],
-      "seconds": 0.34
+      "seconds": 0.36
     },
     {
       "id": "I15",
@@ -707,10 +707,10 @@
             "max_seconds": 60.0,
             "stopped": "repeated equivalent tool calls"
           },
-          "seconds": 0.5
+          "seconds": 0.53
         }
       ],
-      "seconds": 0.5
+      "seconds": 0.53
     },
     {
       "id": "I16",
@@ -744,10 +744,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.48
+          "seconds": 0.51
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.51
     }
   ]
 }
