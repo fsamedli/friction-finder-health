@@ -19,29 +19,31 @@ function Architecture() {
   }
   const arrow = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#98A2B3" strokeWidth={1.3} markerEnd="url(#ah)" />
   return (
-    <svg viewBox="0 0 1000 400" className="w-full h-auto min-w-[720px]" role="img" aria-label="Architecture: client data flows through suppressed views and a SQL guard into two computing engines; the AI reads the question and writes the brief; a checker verifies it; a person decides.">
+    <svg viewBox="0 0 1000 430" className="w-full h-auto min-w-[720px]" role="img" aria-label="Architecture: client data flows through suppressed views and a SQL guard into read-only tools. A question passes the out-of-scope guard; the AI model, or without a key a fixed plan, chooses which read-only tool runs next under a budget; code runs the tool and computes every number; a self-check verifies the answer; a person approves every action.">
       <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#98A2B3" /></marker></defs>
       {box(10, 20, 190, 'Client data (synthetic)', 'survey export · ops CSVs · docs')}
       {box(10, 110, 190, 'Suppressed views', 'n ≥ 4 enforced in SQL', 'guard')}
       {box(10, 200, 190, 'SQL guard (sqlglot)', 'allowlist · no table functions', 'guard')}
-      {box(10, 300, 190, 'Question', 'from the manager')}
-      {box(250, 300, 200, 'Out-of-scope guard', 'no individuals, no judging people', 'guard')}
+      {box(10, 330, 190, 'Question + context', 'team · site · date · finding')}
+      {box(250, 330, 200, 'Out-of-scope guard', 'runs first, on every follow-up', 'guard')}
       {box(250, 20, 230, 'Impact engine', 'Poisson excess · OLS · DiD · no AI', 'code')}
-      {box(250, 110, 230, 'Evidence engine', 'templated SQL · retrieval · counts', 'code')}
-      {box(250, 200, 230, 'Verdict rules', 'computed by code, not the AI', 'code')}
-      {box(510, 300, 200, 'AI · read the question', 'into a fixed schema (gpt-5-mini)', 'ai')}
-      {box(530, 200, 200, 'AI · write the brief', 'from the evidence only', 'ai')}
-      {box(530, 110, 200, 'Checker', 'every number & citation in evidence', 'guard')}
-      {box(780, 60, 200, 'Web app', 'board · team · plan · impact · ask')}
-      {box(780, 170, 200, 'Person decides', 'approve · reject · flag · plan', 'person')}
+      {box(250, 110, 230, 'Read-only tools (registry)', 'metric · compare · benchmark · timeline…', 'code')}
+      {box(250, 200, 230, 'Evidence states', 'set by rules in code', 'code')}
+      {box(510, 330, 220, 'AI · choose the next check', 'or a fixed plan without a key', 'ai')}
+      {box(510, 240, 220, 'Budget (host code)', '6 checks · 8 model calls · 60 s', 'guard')}
+      {box(530, 150, 200, 'AI · write the answer', 'from tool results only', 'ai')}
+      {box(530, 60, 200, 'Self-check', 'citations · numbers · provenance', 'guard')}
+      {box(780, 60, 200, 'Web app', 'Today · Investigate · plans · review')}
+      {box(780, 170, 200, 'Person decides', 'approve · edit · reject · plan', 'person')}
       {arrow(105, 74, 105, 108)}{arrow(105, 164, 105, 198)}{arrow(200, 227, 248, 137)}{arrow(200, 137, 248, 47)}
-      {arrow(200, 327, 248, 327)}{arrow(450, 327, 508, 327)}{arrow(610, 300, 480, 164)}{arrow(365, 164, 365, 198)}
-      {arrow(480, 227, 528, 227)}{arrow(630, 200, 630, 166)}{arrow(730, 137, 778, 94)}{arrow(480, 47, 778, 80)}{arrow(880, 114, 880, 168)}
+      {arrow(200, 357, 248, 357)}{arrow(450, 357, 508, 357)}{arrow(560, 330, 470, 166)}{arrow(365, 164, 365, 198)}
+      {arrow(620, 330, 620, 296)}{arrow(480, 227, 528, 177)}{arrow(630, 150, 630, 116)}{arrow(730, 87, 778, 87)}{arrow(480, 47, 778, 74)}{arrow(880, 114, 880, 168)}
     </svg>
   )
 }
 
 const TECHNIQUES = [
+  { t: 'Bounded AI-assisted investigation: the model picks the next read-only check from a fixed registry', pro: 'Answers follow-ups ("could staffing explain this?") without a template per sentence; every step is in the trace; host code enforces the budget and the scope guard', con: 'Tool choice can be wrong or wasteful; more model calls means more latency; needs its own eval pack', alt: 'A fixed pipeline only (v0.7); an agent framework; free-form tool use with no budget', why: 'Fixed pipeline could not answer challenges; frameworks out of scope (SPEC); no budget = unbounded cost and latency. Without a key a fixed plan per question type runs the same tools' },
   { t: 'Question → fixed schema → templated SQL on views, sqlglot guard', pro: 'The model never writes SQL; every query is auditable; suppression lives in the views', con: 'Only answers question types that have a template', alt: 'Free-form model-written SQL; vanna.ai; the earlier regex guard', why: 'vanna.ai archived (last release Feb 2, 2026); regex guard was bypassable, replaced Sept 23; free-form SQL: Farid to confirm' },
   { t: 'Retrieval with citations (embeddings, keyword fallback)', pro: 'No extra service; every passage cited; works without a key', con: 'No reranker; retrieval quality not yet measured', alt: 'A vector database; RAGAS', why: 'Vector DB out of scope for this cut (SPEC); RAGAS development has slowed' },
   { t: 'Rule-based verdict', pro: 'Transparent; the model cannot overclaim; tested on planted cases', con: 'Screening rules, not significance tests', alt: 'A trained classifier (EBM, as FraudLens); an agent framework', why: '24 teams × 2 waves is too small to train or report an AUC; agent frameworks out of scope (SPEC)' },
@@ -145,13 +147,13 @@ export default function Trust() {
         ))}
         {t === 'architecture' && (
           <Card>
-            <CardHeader title="An AI-assisted workflow" sub="Fixed steps; the AI model at two of them; deterministic queries and statistical checks; a person at every decision. No autonomous actions."
-              right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI reads & writes</Badge><Badge tone="act">person decides</Badge><Badge tone="neutral">guard</Badge></>} />
+            <CardHeader title="An AI-assisted workflow" sub="The model chooses which of a fixed set of read-only tools to run next, under a budget; code computes every number; a person approves every action. Nothing is done outside the app."
+              right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI chooses checks & writes</Badge><Badge tone="act">person decides</Badge><Badge tone="neutral">guard</Badge></>} />
             <div className="overflow-x-auto scroll-thin"><Architecture /></div>
             <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 text-[13px]">
-              <div className="rounded-lg bg-canvas p-3"><b>What the AI does</b><p className="mt-1 text-fg-soft">Turns a question into a structured request, and writes the brief from evidence it is handed. Model: {meta?.model ?? 'none configured (rules mode)'}.</p></div>
-              <div className="rounded-lg bg-canvas p-3"><b>What the AI never does</b><p className="mt-1 text-fg-soft">Produce a number, decide a verdict, see respondent rows, or approve a plan. Every number in a brief is checked against the evidence.</p></div>
-              <div className="rounded-lg bg-canvas p-3"><b>Without a model key</b><p className="mt-1 text-fg-soft">Everything except the written brief still works: rules-based question reading, keyword retrieval, templated text.</p></div>
+              <div className="rounded-lg bg-canvas p-3"><b>What the AI does</b><p className="mt-1 text-fg-soft">Chooses which read-only check runs next for a manager's question, within a budget, and writes the answer from the tool results it is handed. Model: {meta?.model ?? 'none configured (rules mode)'}.</p></div>
+              <div className="rounded-lg bg-canvas p-3"><b>What the AI never does</b><p className="mt-1 text-fg-soft">Produce a number, set an evidence state, see respondent rows, approve a plan, or act outside the app. Every number and citation in an answer is checked against the tool results.</p></div>
+              <div className="rounded-lg bg-canvas p-3"><b>Without a model key</b><p className="mt-1 text-fg-soft">A fixed plan per question type runs the same tools; answers are templated from the results; retrieval uses keywords. Everything except model-written wording still works.</p></div>
             </div>
             <h4 className="mt-8 text-[14px] font-semibold">Why these techniques</h4>
             <Techniques />

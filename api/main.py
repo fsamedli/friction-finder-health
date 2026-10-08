@@ -496,6 +496,11 @@ def quality():
         if first.exists():
             packs.append({"pack": "Adversarial", "note": "seen during development, not a holdout", "mode": mode,
                           "first": summ(_load(first), first), "now": summ(_load(latest), latest)})
+    for mode in ("rules-only", "gpt-5-mini"):   # v0.8 investigation pack (evals/investigate/)
+        first, latest = ev / "investigate" / "results" / f"first_run_{mode}.json", ev / "investigate" / "results" / f"latest_{mode}.json"
+        if first.exists():
+            packs.append({"pack": "Investigation", "note": "multi-turn and fault-injected cases; seen during development, not a holdout", "mode": mode,
+                          "first": summ(_load(first), first), "now": summ(_load(latest), latest)})
     hq = ev / "holdout" / "questions.json"
     hold = []
     for mode in ("rules-only", "gpt-5-mini"):
