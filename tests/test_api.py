@@ -159,7 +159,10 @@ def test_quality_reads_saved_files_and_feedback_starts_empty(monkeypatch, tmp_pa
     assert q["feedback"]["total"] == 0
     assert c.post("/api/useful", json={"target": "ask", "target_id": "x", "useful": False}).status_code == 422  # a reason is required
     assert c.post("/api/useful", json={"target": "plan", "target_id": "p1", "useful": False, "reason": "wrong owner"}).status_code == 200
-    assert c.get("/api/quality").json()["feedback"] == {"file": "feedback.jsonl", "total": 1, "useful": 0, "not_useful": 1, "reasons": {"wrong owner": 1}}
+    zero = {r: 0 for r in M.FEEDBACK_REASONS}
+    assert c.get("/api/quality").json()["feedback"] == {"file": "feedback.jsonl", "total": 1, "useful": 0, "not_useful": 1, "reasons": {"wrong owner": 1},
+                                                        "investigation": {"total": 0, "by_reason": zero},
+                                                        "note": "Approvals are never evidence that an answer was correct: a person approves an action, not the analysis behind it."}
 
 
 def test_ops_upload_validates_updates_board_and_resets(monkeypatch, tmp_path):

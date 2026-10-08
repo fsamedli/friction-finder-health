@@ -144,8 +144,20 @@ class PlanIn(BaseModel):
     actions: list[Action] = Field(min_length=1)
     start: str
     review: str | None = None
-    status: str = "approved"
+    status: str = Field(default="approved", pattern="^(draft|approved)$")
     note: str = ""
+    # v0.8: the thinnest plan the review needs, plus where it came from and what the manager changed
+    owner: str | None = None
+    measure: str | None = None
+    baseline: str | None = None
+    success: str | None = None
+    assumptions: list[str] = Field(default_factory=list)
+    finding: str | None = None
+    rationale: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    investigation_id: str | None = None
+    request_id: str | None = Field(default=None, max_length=80)
+    edits: list[dict] = Field(default_factory=list)
 
 
 def _default_review(start: date) -> date:
@@ -163,15 +175,137 @@ def plans():
     return [{**p, "team_label": label.get(int(p["team_id"]), "")} for p in I.load_plans()]
 
 
+SEED_PLAN_ID = "plan-richmond-night-a"
+
+
+def _same_issue(team_id: int, kpi: str, start: str, review: str | None = None) -> list[dict]:
+    """Approved plans on the same team and KPI whose start-to-review period overlaps this one. The seeded demo plan
+    is a fallback the app hides as soon as a plan is approved live, so it never blocks one."""
+    s0 = date.fromisoformat(start)
+    r0 = date.fromisoformat(review) if review else _default_review(s0)
+    out = []
+    for x in I.load_plans():
+        if x["id"] == SEED_PLAN_ID or x.get("status") != "approved" or int(x["team_id"]) != int(team_id) or x.get("kpi", "late_departures") != kpi:
+            continue
+        if date.fromisoformat(x["start"]) <= r0 and date.fromisoformat(x["review"]) >= s0:
+            out.append(x)
+    return out
+
+
+_plan_lock = threading.Lock()
+
+
 @app.post("/api/plans")
 def create_plan(p: PlanIn):
+    """Save a draft or an approved plan. Approval is the manager's: this records it with the edits and the time.
+    A repeated request_id, or an approved plan already covering the same team, KPI and period, returns that plan
+    with an explanation instead of a second copy (a 200, so a double click is never an error)."""
     if p.kpi not in I.KPIS:
         raise HTTPException(422, "unknown kpi")
     start = date.fromisoformat(p.start)
-    plan = p.model_dump()
-    plan["review"] = p.review or _default_review(start).isoformat()
-    plan["id"] = f"plan-{uuid.uuid4().hex[:8]}"
-    return I.save_plan(plan)
+    with _plan_lock:
+        if p.request_id:
+            prior = next((x for x in I.load_plans() if x.get("request_id") == p.request_id), None)
+            if prior:
+                return {**prior, "duplicate": True, "explanation": "This approval was already recorded (same request); no second plan was created."}
+        if p.status == "approved":
+            same = _same_issue(p.team_id, p.kpi, p.start, p.review)
+            if same:
+                x = same[-1]
+                return {**x, "duplicate": True, "explanation": f"An approved plan already covers this team and KPI from {x['start']} to {x['review']} ({x['id']}); no second plan was created."}
+        plan = p.model_dump()
+        plan["review"] = p.review or _default_review(start).isoformat()
+        plan["id"] = f"plan-{uuid.uuid4().hex[:8]}"
+        plan["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        if p.status == "approved":
+            plan["decided_at"] = plan["created_at"]
+        saved = I.save_plan(plan)
+        if p.status == "approved":
+            _record_plan_decision(saved, "approved", p.edits)
+        return saved
+
+
+@app.get("/api/plans/check")
+def plan_check(team_id: int, kpi: str = "late_departures", start: str = "2026-09-21"):
+    """Before approval: is there already an approved plan on the same team, KPI and period? Explained in words."""
+    if kpi not in I.KPIS:
+        raise HTTPException(422, "unknown kpi")
+    try:
+        same = _same_issue(team_id, kpi, start)
+    except ValueError:
+        raise HTTPException(422, "start must be YYYY-MM-DD")
+    label = {int(r["team_id"]): r["label"] for r in _team_labels()}
+    rows = [{**x, "team_label": label.get(int(x["team_id"]), "")} for x in same]
+    review = _default_review(date.fromisoformat(start)).isoformat()
+    expl = (f"Checked approved plans for this team on {I.KPI_LABELS[kpi].lower()} between {start} and {review}: "
+            + (f"{len(rows)} already cover this period. Approving again would not create a second plan." if rows else "none found."))
+    return {"existing": rows, "explanation": expl}
+
+
+def _team_labels() -> list[dict]:
+    teams = pd.read_csv(config.DATA_DIR / "teams.csv").merge(pd.read_csv(config.DATA_DIR / "sites.csv"), on="site_id")
+    return [{"team_id": int(t.team_id), "label": f"{t.site_name} {t.team_name}"} for t in teams.itertuples()]
+
+
+def _visible(plans: list[dict], as_of: str) -> list[dict]:
+    """Same rule as the web app (visiblePlans): approved plans; the seeded plan only once the clock passes its start
+    and only when no plan for that team was approved live."""
+    live = [p for p in plans if p["id"] != SEED_PLAN_ID and p.get("status") == "approved"]
+    return [p for p in plans if p.get("status") == "approved"
+            and (p["id"] != SEED_PLAN_ID or (as_of >= p["start"] and not any(int(l["team_id"]) == int(p["team_id"]) for l in live)))]
+
+
+@app.get("/api/plans/board")
+def plans_board(as_of: str = I.AS_OF_DETECT):
+    """Plans with a state (draft, approved, in review, reviewed) and the review queue, for the Action plans screen.
+    in_review = the review date has passed but the follow-up months are not complete; reviewed = the computed result exists."""
+    _check_as_of(as_of)
+    all_ = I.load_plans()
+    label = {r["team_id"]: r["label"] for r in _team_labels()}
+    rows = []
+    for p in _visible(all_, as_of) + [x for x in all_ if x.get("status") == "draft"]:
+        r = None if p.get("status") == "draft" else _jsonable(I.did_all(p, as_of, _costs())[0])
+        state = ("draft" if p.get("status") == "draft" else "approved" if (r is None or r["status"] == "not_reached")
+                 else "in_review" if r["status"] == "insufficient" else "reviewed")
+        rows.append({**p, "team_label": label.get(int(p["team_id"]), ""), "state": state, "result": r})
+    return {"plans": rows, "queue": {
+        "due_reviews": [p["id"] for p in rows if p["state"] in ("in_review", "reviewed")],
+        "missing_follow_ups": [p["id"] for p in rows if p["state"] == "in_review"],
+        "inconclusive": [p["id"] for p in rows if (p["result"] or {}).get("status") == "ok" and p["result"].get("verdict") == "inconclusive"]}}
+
+
+class ApprovePlanIn(BaseModel):
+    request_id: str = Field(min_length=1, max_length=80)
+    edits: list[dict] = Field(default_factory=list)
+
+
+@app.post("/api/plans/{plan_id}/approve")
+def approve_plan(plan_id: str, a: ApprovePlanIn):
+    """Approve a saved draft. Idempotent on request_id; an overlapping approved plan is explained, not duplicated."""
+    with _plan_lock:
+        plan = next((x for x in I.load_plans() if x["id"] == plan_id), None)
+        if not plan:
+            raise HTTPException(404, "unknown plan")
+        if plan.get("status") == "approved":
+            return {**plan, "duplicate": True, "explanation": "This plan is already approved; nothing changed."}
+        same = _same_issue(int(plan["team_id"]), plan.get("kpi", "late_departures"), plan["start"], plan["review"])
+        if same:
+            x = same[-1]
+            return {**x, "duplicate": True, "explanation": f"An approved plan already covers this team and KPI from {x['start']} to {x['review']} ({x['id']}); the draft was not approved."}
+        new = {**plan, "status": "approved", "request_id": a.request_id, "edits": list(plan.get("edits", [])) + a.edits,
+               "decided_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        I.save_plan(new)   # load_plans keeps the last line per id
+        _record_plan_decision(new, "approved", a.edits)
+        return new
+
+
+def _record_plan_decision(plan: dict, decision: str, edits: list[dict]) -> None:
+    """approvals.jsonl gets the person's decision on a plan: what was approved, what they changed, when."""
+    rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "who": "manager", "target": "plan", "decision": decision,
+           "plan_id": plan["id"], "team_id": plan["team_id"], "kpi": plan.get("kpi"), "start": plan["start"], "review": plan["review"],
+           "edits": edits, "investigation_id": plan.get("investigation_id"), "evidence_ids": plan.get("evidence_ids", [])}
+    with open(config.APPROVALS_PATH, "a") as f:
+        f.write(json.dumps(rec) + "\n")
 
 
 @app.delete("/api/demo")
@@ -400,24 +534,33 @@ def quality():
     fb = [json.loads(l) for l in fb_path.read_text().splitlines() if l.strip()] if fb_path.exists() else []
     feedback = {"file": str(fb_path.name), "total": len(fb), "useful": sum(1 for x in fb if x.get("useful")),
                 "not_useful": sum(1 for x in fb if not x.get("useful")),
-                "reasons": {r: sum(1 for x in fb if x.get("reason") == r) for r in sorted({x.get("reason") for x in fb if x.get("reason")})}}
+                "reasons": {r: sum(1 for x in fb if x.get("reason") == r) for r in sorted({x.get("reason") for x in fb if x.get("reason")})},
+                # v0.8: answers in the investigation panel, every reason listed from zero
+                "investigation": {"total": sum(1 for x in fb if x.get("target") == "investigation"),
+                                  "by_reason": {r: sum(1 for x in fb if x.get("target") == "investigation" and x.get("reason") == r) for r in FEEDBACK_REASONS}},
+                "note": "Approvals are never evidence that an answer was correct: a person approves an action, not the analysis behind it."}
     return {"packs": packs, "declines": declines, "grounding": grounding, "latency": lat, "feedback": feedback}
 
 
 FEEDBACK_PATH = config.APPROVALS_PATH.parent / "feedback.jsonl"
 
 
+FEEDBACK_REASONS = ["wrong context", "not actionable", "missing evidence", "wrong number", "wrong owner", "other"]
+
+
 class FeedbackIn(BaseModel):
-    target: str = Field(pattern="^(ask|plan)$")
+    target: str = Field(pattern="^(ask|plan|investigation)$")
     target_id: str = Field(min_length=1, max_length=80)
     useful: bool
-    reason: str | None = Field(default=None, pattern="^(wrong number|wrong owner|not actionable|other)$")
+    reason: str | None = Field(default=None, pattern="^(wrong context|not actionable|missing evidence|wrong number|wrong owner|other)$")
     note: str = Field(default="", max_length=500)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=60)
 
 
 @app.post("/api/useful")
 def post_feedback(f: FeedbackIn):
-    """'Useful? yes / no' on an Ask brief or a plan. Appended next to approvals.jsonl; starts empty."""
+    """'Useful? yes / no' on an Ask brief or a plan, and 'what was wrong' on an investigation answer (with the evidence
+    ids it cited). Appended next to approvals.jsonl; starts empty. evals/from_feedback.py turns rows into draft cases."""
     if not f.useful and not f.reason:
         raise HTTPException(422, "say why it was not useful")
     rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), **f.model_dump()}
