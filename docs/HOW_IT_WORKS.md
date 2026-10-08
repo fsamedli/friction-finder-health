@@ -44,7 +44,8 @@ date. That link is this product. It is built to sit next to Access, not to repea
   with a number, team or period that is not in the evidence it cites; then the template is shown, labelled.
 - The model (gpt-5-mini on GW's Azure OpenAI) **never writes SQL, never produces a number, never sets an
   evidence state, never sees individual survey answers, and never approves anything.** Without a key everything
-  works in rules mode; with a key a question takes about 18 to 58 s (four live turns, Oct 8).
+  works in rules mode; with a key a question takes about 18 to 58 s (ten live turns, Oct 8). The demo's six scripted turns are saved
+  model runs, shown labelled "Prepared answer" with a **Run live** button.
 
 ## Privacy rules (in the database, not the prompt)
 Teams with fewer than 4 respondents are never shown on their own. Teams under 4 people show no team numbers and

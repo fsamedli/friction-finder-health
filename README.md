@@ -1,5 +1,32 @@
 # Friction Finder prototype (Group 4, DNSC 6317)
 
+## v0.8 (Oct 8, 2026): manager-first screens and a bounded AI-assisted investigation
+
+Branch `v0.8-investigate`. What changed and why: `docs/overnight/v0.8/MORNING_REPORT.md`. Research behind the
+choices: `docs/research/2026-10-08_Gallup_Access_Overlap.md` (what Gallup Access already does; what this adds).
+
+```bash
+cd web && npm run build && cd ..   # run_demo.sh builds only when web/dist is missing
+./run_demo.sh                      # http://127.0.0.1:8000, then user menu > Reset demo, demo clock Sept 15
+./scripts/gate.sh                  # every check, keyless, raw output in docs/overnight/v0.8/_verify/
+```
+
+- **Screens:** Today → Investigate → Action plans → Review; Workspace: Insights, Data sources, Business case,
+  Trust & method. Old URLs (`/teams`, `/impact`, `/why`, `/plan`, `/proof`, `/hood`) redirect.
+- **Today** names one team, why it matters in operating terms, and one rust button. **Investigate** is organised
+  by the manager's questions. **Review** leads with improved / deteriorated / inconclusive (directional, not causal).
+- **Investigation panel** (docked on Investigate; full width at `/ask`): one coordinator (`app/investigate.py`)
+  lets the model choose which of 11 read-only tools (`app/tools.py`) runs next, by function calling, under a budget
+  of 6 tool calls, 8 model requests and 60 s. Code computes every number and sets the evidence state (supported,
+  mixed, insufficient, unavailable). A code self-check rejects any model wording whose numbers, team or period are
+  not in the cited evidence. Keyless, fixed plans per question give the same output shape.
+- **Operating metrics** have one definition (`app/metrics.py`) used by the dashboards, Ask and the tools; Ask now
+  answers absence, quits, injury and rework questions. The model writes no SQL.
+- **Plans:** drafts, an existing-plan check, double-submission guard, approvals logged with edits and time.
+- **Evals:** gold 13/13 (first run 12/13), adversarial 15/15, investigation pack 16/16 keyless (first run 11/16),
+  all rules mode, all written during development. Run `python -m evals.investigate.run --no-model`.
+
+
 ## v0.6 (Sept 23, 2026): detect → explain → act → prove
 
 Branch `v0.6-detect-explain-act-prove`. Spec and plan: `docs/specs/2026-09-23-detect-explain-act-prove-*.md`.
@@ -163,7 +190,7 @@ said and what changed because of it.
   causal language is rejected, the owner must be the directory's owner when supported and "Not
   assigned" otherwise. Two failures and the templated brief is shown, labelled.
 - **Team-level results are watch items.** Inference belongs at site level (n about 50 here).
-- **No autonomous action.** A person approves, rejects, or flags; the plan is a draft until then.
+- **No action without a person.** A person approves, rejects, or flags; the plan is a draft until then.
 - GW-provided OpenAI API only, via `.env`. No fine-tuning. The key never leaves the laptop.
 
 ## Layout
