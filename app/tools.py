@@ -142,7 +142,7 @@ def signal_check(conv, ctx, args, turn, db):
     if not ev:
         ev.append(Ev(conv.new_id("G"), "signal_unavailable", f"A survey wave on {team['label']} has fewer than {config.MIN_N} respondents: the who-responded check is not shown.", "signal_check", turn))
     verdict = next((e.value.get("verdict") for e in ev if e.kind == "signal_check"), None)
-    return ev, f"Checked whether a change in who responded explains the survey drop on {team['label']}", {"verdict": verdict, "drop": d}
+    return ev, f"Checked whether a change in who responded explains the survey drop on {team['label']}", {"verdict": verdict, "drop": d, "mix_shift": any(e.value.get("mix_shift") for e in ev if e.kind == "tenure_mix")}
 
 
 def timeline(conv, ctx, args, turn, db):
