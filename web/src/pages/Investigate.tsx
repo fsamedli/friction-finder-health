@@ -307,6 +307,7 @@ function deriveSeed(w: Why, ev: AskResult | null): DraftSeed {
     team_id: w.team.team_id, team_label: `${w.team.site} ${w.team.team_name}`, kpi, item: drop?.item ?? 'grand',
     focus: drop ? `${drop.label} (${drop.item})` : 'Overall engagement', obstacle: theme.charAt(0).toUpperCase() + theme.slice(1), start, owner,
     measure: `${KPI_SHORT[kpi]} per 10 people a month`,
+    success: `${KPI_SHORT[kpi]} back inside the range of comparable teams by the review date`,
     actions: [
       { text: `Fix the ${theme} step the comments describe, and write the new routine down`, owner, due: add(7) },
       { text: `Ask the team in the next huddle what gets in the way of “${drop?.label ?? 'doing the work right'}”`, owner: `${w.team.team_name} team manager`, due: add(14) },

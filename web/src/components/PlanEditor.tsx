@@ -46,9 +46,11 @@ export default function PlanEditor({ seed, onSaved, title = 'Draft action plan' 
   const requestId = useRef<string>(saved?.request_id ?? rid())
   const review = seed.review ?? defaultReview(seed.start)
 
-  useEffect(() => {
+  const [dirty, setDirty] = useState<boolean>(!!saved)
+  useEffect(() => {  // only the manager's own edits are kept, never an untouched prefill
+    if (!dirty) return
     try { localStorage.setItem(KEY(seed.team_id), JSON.stringify({ obstacle, actions, owner, measure, success, request_id: requestId.current })) } catch { /* private mode */ }
-  }, [seed.team_id, obstacle, actions, owner, measure, success])
+  }, [dirty, seed.team_id, obstacle, actions, owner, measure, success])
   const fns = useFunctions()
   const v08 = !!fns?.length
   useEffect(() => {
@@ -79,19 +81,19 @@ export default function PlanEditor({ seed, onSaved, title = 'Draft action plan' 
       onSaved(p)
     } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
   }
-  const set = (i: number, k: keyof PlanAction, v: string) => setActions((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x)))
+  const set = (i: number, k: keyof PlanAction, v: string) => { setDirty(true); setActions((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x))) }
   const input = 'rounded-lg border border-border-strong bg-surface px-3 py-2 text-[13.5px] focus:outline-none focus:ring-4 focus:ring-brand/10'
   return (
     <Card>
       <CardHeader title={title} sub="Drafted from this team's evidence. Edit anything, then approve. Nothing reaches the team until a person approves." right={<Provenance kind="person" />} />
       {seed.finding && <p className="mb-3 rounded-lg bg-canvas px-3 py-2 text-[13px] text-fg-soft"><b className="text-fg">Finding:</b> {seed.finding}</p>}
       <label className="block"><span className="label">Obstacle to test</span>
-        <input value={obstacle} onChange={(e) => setObstacle(e.target.value)} className={`mt-1 w-full ${input} text-[15px] font-medium`} /></label>
+        <input value={obstacle} onChange={(e) => { setDirty(true); setObstacle(e.target.value) }} className={`mt-1 w-full ${input} text-[15px] font-medium`} /></label>
       <p className="mt-2 text-[12.5px] text-fg-mute">Focus item: {seed.focus} · KPI to watch: {KPI_SHORT[seed.kpi]} · starts {longDate(seed.start).replace(', 2026', '')}, reviewed {longDate(review)} (two full months of operating data)</p>
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <label className="block"><span className="label">Owner</span><input aria-label="Plan owner" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Owner needed" className={`mt-1 w-full ${input}`} /></label>
-        <label className="block"><span className="label">Operational measure</span><input aria-label="Operational measure" value={measure} onChange={(e) => setMeasure(e.target.value)} className={`mt-1 w-full ${input}`} /></label>
-        <label className="block"><span className="label">Success criterion</span><input aria-label="Success criterion" value={success} onChange={(e) => setSuccess(e.target.value)} className={`mt-1 w-full ${input}`} /></label>
+        <label className="block"><span className="label">Owner</span><input aria-label="Plan owner" value={owner} onChange={(e) => { setDirty(true); setOwner(e.target.value) }} placeholder="Owner needed" className={`mt-1 w-full ${input}`} /></label>
+        <label className="block"><span className="label">Operational measure</span><input aria-label="Operational measure" value={measure} onChange={(e) => { setDirty(true); setMeasure(e.target.value) }} className={`mt-1 w-full ${input}`} /></label>
+        <label className="block"><span className="label">Success criterion</span><input aria-label="Success criterion" value={success} onChange={(e) => { setDirty(true); setSuccess(e.target.value) }} className={`mt-1 w-full ${input}`} /></label>
       </div>
       {seed.baseline && <p className="mt-2 text-[12.5px] text-fg-mute">Baseline: {seed.baseline}</p>}
       <div className="mt-4 space-y-2">
