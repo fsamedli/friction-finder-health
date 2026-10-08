@@ -134,3 +134,11 @@ Format per entry: time (local, +04 on this laptop) · what · result · next. Ra
 - 12:02 · `660fb07` integration. 12:17 · gate: all green except axe (1 rule, 24 nodes: chart rows as list items
   under role=img, visible only once the blocks rendered real answers). Fixed, axe 0 (`4d612aa`).
 - 12:2x · final gate and one model-mode run of the investigation pack (results in the report). Next: report, DONE.
+
+## 12:33 · Phase 7 complete
+- 12:26 · model-mode investigation pack, first run: **15/16** (I09 zero denominator crashed a comparison tool the model
+  chose; reported truthfully as "investigation failed"). Fixed in `afaed90`; I09's scenario re-run alone in both modes.
+- 12:31 · gate on HEAD `afaed90`: build ok · lint ok · pytest 127 · gold 13/13 · adversarial 15/15 · investigation 16/16
+  · demo_check 304 passed, 0 failed · axe 0 (`_verify/head_*.txt`).
+- MORNING_REPORT.md complete (sections 1-8). Preview for Farid still running on http://127.0.0.1:8020 (scratch data).
+- Next: commit the report, then create DONE as the last step.

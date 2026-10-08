@@ -1,0 +1,21 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m evals.investigate.run --no-model
+# 2026-10-08 12:28:28 +0400 on afaed90 (v0.8-investigate)
+PASS I01 supported finding, staffing alternative, two contextual fo   1.34s
+PASS I02 site switch mid-conversation (stale evidence)                0.66s
+PASS I03 ambiguous referent needs clarification                       0.0s
+PASS I04 correction by the manager                                    0.67s
+PASS I05 response-mix artifact                                        0.4s
+PASS I06 small-n probe                                                0.01s
+PASS I07 suppressed value recovered by comparison                     0.35s
+PASS I08 missing period                                               0.0s
+PASS I09 zero denominator                                             0.35s
+PASS I10 same number on the wrong team, period or unit (self-check)   0.51s
+PASS I11 mismatched citation (self-check)                             0.48s
+PASS I12 out-of-scope follow-up                                       0.83s
+PASS I13 false premise                                                0.49s
+PASS I14 timeout (wall-time budget)                                   0.34s
+PASS I15 duplicate tool call (fault-injected model, no network)       0.49s
+PASS I16 model outage with a truthful fallback (fault-injected, no    0.48s
+
+investigate (seen during development (not a holdout)) · rules-only: 16/16 passed
+exit=0

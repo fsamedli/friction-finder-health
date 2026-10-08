@@ -1,0 +1,9 @@
+build        exit=0  ✓ built in 503ms
+lint         exit=0  > oxlint
+pytest       exit=0  127 passed, 3 warnings in 8.85s
+gold         exit=0  lookups: 6/6 | briefs regenerated or fallen back: 0
+adversarial  exit=0  adversarial (seen during development (not a holdout)) · rules-only: 15/15 passed · failures by taxonomy: none
+investigate  exit=0  investigate (seen during development (not a holdout)) · rules-only: 16/16 passed
+demo_check   exit=0  304 passed, 0 failed
+a11y         exit=0  0 rules violated, 0 nodes
+gate exit=0
