@@ -125,7 +125,7 @@ _RULES = [  # order matters: the first match wins
     ("how_widespread", r"\bhow (widespread|broad|big|wide)\b|\bwidespread\b|\bjust one (hour|month|kpi)\b"),
     ("when_started", r"\bwhen did (it|this|that|the .*) (start|begin)\b|\bsince when\b|\bhow long has\b"),
     ("normal", r"\bnormal for\b|\bis (this|that|it) normal\b|\bteams like (ours|us|this)\b|\bbenchmark\b|\bhow do we compare\b|\btypical\b"),
-    ("could_explain", r"\bcould .*explain\b|\bis it (because of|due to)\b|\bexplained by\b|\bbecause of (staffing|who)"),
+    ("could_explain", r"\bcould .*explain\b|\bis it (because of|due to)\b|\bexplained by\b|\bbecause of (staffing|who)|\b(is|was) (the|this|that) (drop|decline|fall) real\b|\breally (decline|drop|fall)\b|\bdifferent people (respond|answer)"),
     ("compare", r"\bcompare\b|\bversus\b|\bvs\.?\b|\bother night shifts?\b|\bother day shifts?\b|\bcomparable teams\b"),
     ("why_flagged", r"\bwhy (is|was|are) .*(flagged|red|attention|high|up|late)\b|\bwhat explains\b|\bwhy did .* (drop|fall|rise|go up)\b|\bwhat('s| is) going on\b|\bwhy\b"),
 ]
@@ -144,7 +144,7 @@ def classify(question: str) -> tuple[str | None, dict]:
         params["kpi"] = k
     if re.search(r"staff|short-?staffed|headcount|understaffed", q):
         params["x"] = "staffing"
-    elif re.search(r"who (responded|answered)|response mix|new hires|different people", q):
+    elif re.search(r"who (responded|answered)|response mix|new hires|different people|\breal\b|really (decline|drop)", q):
         params["x"] = "who_responded"
     elif re.search(r"site-?wide|whole site|season|everyone|all teams", q):
         params["x"] = "site_wide"
@@ -606,6 +606,10 @@ def self_check(answer: dict, evidence: list, notes: list | None = None) -> dict:
     do not count); a percent must be a percent there and points must be points. No causal wording."""
     from app.agent import _numbers_in
     notes = list(notes or [])
+    if isinstance(answer, list):   # also accepts [(text, [evidence ids]), ...]: first part = conclusion, second = competing
+        parts_in = [((x.get("text", ""), list(x.get("evidence_ids") or [])) if isinstance(x, dict) else (x[0], list(x[1]))) for x in answer]
+        answer = {"conclusion": parts_in[0][0] if parts_in else "", "evidence_ids": parts_in[0][1] if parts_in else [],
+                  "competing": {"text": parts_in[1][0], "evidence_ids": parts_in[1][1]} if len(parts_in) > 1 else None}
     reg = {e.id if hasattr(e, "id") else e["id"]: e for e in evidence}
     text_of = lambda i: (reg[i].statement + " " + str(reg[i].rows)[:4000] + " " + str(reg[i].value)) if hasattr(reg[i], "statement") else str(reg[i])
     allowed_all = _numbers_in(" ".join(text_of(i) for i in reg))
@@ -630,9 +634,25 @@ def self_check(answer: dict, evidence: list, notes: list | None = None) -> dict:
                 notes.append(f"{name}: {n}% is a percent in the text but not in the cited evidence")
                 continue
             checked += 1
+        if _nums(text):   # provenance beyond digits: the team and the period named next to a number must be the cited ones
+            for lab in _team_labels(text):
+                if lab not in cited_text:
+                    notes.append(f"{name}: names {lab}, which is not the entity in the cited evidence")
+            for per in PERIOD.findall(text):
+                if per not in cited_text:
+                    notes.append(f"{name}: period '{per}' is not the period in the cited evidence")
         if CAUSAL.search(text):
             notes.append(f"{name}: causal wording")
     return {"passed": not notes, "notes": notes, "numbers_checked": checked, "numbers_total": total}
+
+
+PERIOD = re.compile(r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))? 20\d\d\b")
+
+
+def _team_labels(text: str) -> list[str]:
+    from app import relations as R
+    t = R.teams()
+    return [f"{x.site_name} {x.team_name}" for x in t.itertuples() if f"{x.site_name} {x.team_name}" in text]
 
 
 def _suggest(fid: str) -> list[dict]:
