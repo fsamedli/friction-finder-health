@@ -1,43 +1,59 @@
-# Friction Finder demo script (v0.7)
+# Friction Finder demo script (v0.8)
 
-About 5 minutes of demo inside a longer talk. The timings are **targets for rehearsal**, not measurements.
-The guided demo (top bar → **Start demo**) follows exactly this path.
+About **5 minutes of demo inside a 15 to 20 minute talk of about 10 slides** (class, Oct 8: leave time for
+questions). Timings are **targets for rehearsal**, not measurements, except where a measured time is given.
+The guided demo (top bar → **Start demo**: Today → Investigate → Decide → Review) follows the same path and makes
+no model call.
 
 ## Before you go on stage (5 minutes before)
-1. `./scripts/demo_check.sh` must end with `… passed, 0 failed`. If it doesn't, use the fallback laptop (below).
-2. `./run_demo.sh`, then user menu → **Reset demo**. Check the demo clock reads **Sept 15**.
-3. Browser zoom **100%** (⌘0). Close other tabs. Turn off notifications.
-4. Open Ask once and click the first example, so the prepared answer loads instantly later.
+1. `./scripts/demo_check.sh` must end with `… passed, 0 failed` (keyless, 1440 and 390 px). If not, use the
+   fallback laptop.
+2. `cd web && npm run build` if you pulled new code (`run_demo.sh` only builds when `web/dist` is missing), then
+   `./run_demo.sh`, user menu → **Reset demo**, demo clock reads **Sept 15**.
+3. Browser zoom **100%** (⌘0). Close other tabs. Notifications off.
+4. Decide the mode for the panel before you start (see "What breaks first"): with the GW key the panel runs the
+   model (measured 17.6 to 57.8 s per question on Oct 8); without it, rules mode answers in under a second and
+   says "rules mode, no model".
 
 ## The click path
 
-| # | Target time | Click | Say (one sentence) | If it breaks | Judge question most likely here → where the answer is |
+| # | Target | Click | Say (one sentence) | If it breaks | Likely judge question → where the answer is |
 |---|---|---|---|---|---|
-| 1 | 0:00–0:45 | Today (home) | "A site manager opens this on Monday: it names the team whose operating numbers are running above comparable teams, and whose engagement fell at the same time." | Page blank → reload; still blank → fallback laptop | "How do you know it isn't noise?" → **Method** on "Needs your attention" (Poisson test p < 0.01, "too rare to judge") |
-| 2 | 0:45–1:45 | **Investigate Night A** → Overview | "Late departures ran well above what comparable night teams predict, and 'materials and equipment' fell, even after adjusting for who answered the survey." | Chart missing → the stat cards above carry the same numbers | "Isn't that just who responded?" → the survey card note (adjusted for tenure mix) and the Evidence tab "Is the drop real?" |
-| 3 | 1:45–2:30 | **Drivers** tab | "Across every team, that item moves with late departures. That's an association, not a cause, and we say so." | — | "How many things did you test?" → Insights: 65 pairs, "about 3 would light up by chance" |
-| 4 | 2:30–3:00 | **Evidence** tab | "Four separate employees describe the same shift-handoff problem, and the directory says who owns that process." | — | "Can the AI make this up?" → comments are quoted from source; Trust › Architecture: the AI never produces numbers |
-| 5 | 3:00–3:40 | **Create plan** tab → **Approve plan** (rust button) | "The tool drafts one plan; the manager edits it and approves it. Nothing happens without a person." | Approve fails → set the demo clock to Nov 30 and open **Impact**: it shows the seeded Night A plan's review | "Where is the human in the loop?" → rust means a person decides (legend in the sidebar) |
-| 6 | 3:40–4:40 | **See if the plan worked** → **Fast-forward to the review date** | "At the review date, Night A is compared with similar teams that didn't act: late departures fell by this much more than theirs, with a 95% interval and a placebo check." | Fast-forward stuck → demo clock (top bar) → Nov 30 | "Is that causal?" → "Directional, not causal", and the follow-up months are synthetic (on screen). Placebo card |
-| 7 | 4:40–5:00 | **What is this worth across sites?** (Business case) | "The buyer can replace every unit cost with their own; the value range and the board recompute." | — | "Where do these numbers come from?" → each cost shows its source or "Assumption"; pricing is labelled a hypothesis |
+| 1 | 0:00–0:40 | **Today** (home) | "The site manager opens this on Monday: one team needs attention, why it matters in operating terms, and one next step." | Blank page → reload; still blank → fallback laptop | "How do you know it isn't noise?" → **Method** below the fold (Poisson test vs comparable teams, "too rare to judge") |
+| 2 | 0:40–1:20 | Rust **Review Night A and decide** → Investigate Night A | "The team screen is organised by the manager's questions: is it real, is it normal for teams like ours, what explains it, what is missing, what do I do." | A block shows "unavailable" → the API is down: restart `./run_demo.sh` | "Isn't that just who responded?" → **Is it real?** block (adjusted for tenure mix) |
+| 3 | 1:20–2:20 | Panel chip **Why flagged?** | "The AI-assisted investigation chooses which read-only checks to run; code computes every number; the answer says how strong the evidence is." Point at the evidence state and one citation. | Slow (model) → keep talking over the live trace; over 30 s → see fallbacks | "Can the AI make numbers up?" → citations open the SQL and rows; Trust › Architecture: the model never writes SQL or numbers; a code check rejects any number, team or period not in the cited evidence |
+| 4 | 2:20–3:10 | Type **Could staffing explain this?** | "The manager challenges the explanation. Staffing was short only in March; the rise is from June, so the evidence does not support it." Point at the competing explanation and its own state. | Answer asks "which team?" → the context chip lost the team: click the Night A chip | "What if the data can't answer?" → evidence states *insufficient* / *unavailable*, and the next step becomes collecting a record, with an owner |
+| 5 | 3:10–3:50 | Rust **Draft a plan** → edit → rust **Approve plan** | "The plan has an owner from the directory, the operating measure, a review date and a success criterion. The manager edits and approves; nothing is sent anywhere." | Approve fails → demo clock → Nov 30 → Review shows the seeded Night A plan (it starts Sept 21) | "Where's the human?" → rust = a person decides (sidebar legend); approvals are logged with edits and time |
+| 6 | 3:50–4:40 | **See if the plan worked** → **Fast-forward to the review date** | "At the review date Night A is compared with similar teams that didn't act. Improved, with an interval and a placebo check. Directional, not causal; the follow-up months are synthetic." | Fast-forward stuck → demo clock (top bar) → Nov 30 → Review | "Is that causal?" → no, and it says so on screen; limits list the two-month pulse as an assumption |
+| 7 | 4:40–5:00 | **Business case** (optional) | "The buyer replaces every unit cost with their own; pricing is a labelled hypothesis." | — | "Where do these numbers come from?" → each cost shows its source or "Assumption" |
 
-**Q&A only (not in the main path):**
-- **Ask:** type or click an example. Scripted questions show "Prepared answer · generated … with gpt-5-mini ·
-  Run live". Say so if asked. **Run live** takes about 10–20 s with the model; the progress steps show while
-  it works.
-- **Trust & method:** Quality (eval packs, first run vs now, holdout pending), Assumptions, Architecture
-  (diagram and technique table), "You told us → we changed".
-- **Data sources:** "every source here is a synthetic CSV; in a pilot the client uploads its own team-month
-  file"; show the Template.
+**Q&A only, one click away:**
+- **Trust & method › Quality:** the gold and adversarial packs, first run beside now, declines, numbers checked,
+  feedback counts from zero, and "approvals are never evidence that an answer was correct". The investigation
+  pack's results are in `evals/investigate/results/` (first run 11/16, now 16/16 keyless); the Quality tab does not
+  show them yet.
+- **Trust & method › Architecture:** the loop, the tool registry, the budgets, where the model is used.
+- **Trust & method › Assumptions:** includes the external benchmark (assumed source, unavailable) and the
+  two-month follow-up pulse (assumed for a pilot, not in the demo data).
+- **Data sources:** every source is a synthetic CSV; in a pilot the client uploads its own team-month file.
+- **/ask** (top bar **Ask**): the panel full width; `/ask?view=brief` keeps the v0.7 one-page brief.
 
-## Fallbacks
+## What breaks first, and the fallback
+
+| Step | Mode | Latency | What breaks first | Fallback |
+|---|---|---|---|---|
+| Today, Investigate blocks, Plans, Review | code only | under 1 s (no model call) | the server dies | `./run_demo.sh` in a second terminal (seconds once `web/dist` exists) |
+| Panel question (key present) | model chooses checks; code computes; model words the answer, then code checks it | 17.6, 22.5, 27.8, 57.8 s in four live turns on Oct 8 (the 57.8 s turn reached the 60 s budget and showed the templated text) | **model latency or GW Azure down** | If the model is unreachable the app falls back to the fixed plan by itself and says so. For a predictable demo, run keyless: `env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= ./run_demo.sh` (rules mode, under a second, labelled "rules mode, no model"); say so if asked |
+| Panel, prepared answer | — | instant | — | **Not available yet:** the loader exists (`app/investigate.py` `prepared()`, labelled "Prepared answer · generated … · Run live"), but `data/prepared/investigations.json` has not been generated as of this commit. Until it is, use rules mode on stage and **Run live** with the model only in Q&A |
+| Approve plan | code | under 1 s | a double click | blocked: one `request_id` per draft; a repeat returns the saved plan with an explanation |
+
+Other fallbacks:
+
 | Problem | Do this |
 |---|---|
-| Ask is slow (more than 20 s) or the network is down | Use the prepared answer (it's instant and labelled). With no key at all, Ask runs rules mode and says so. |
-| The server dies | In the terminal: `./run_demo.sh` (a few seconds once `web/dist` exists). Keep a second terminal ready. |
-| The laptop dies | Fallback laptop, cloned and checked the same morning with `scripts/demo_check.sh`. Last resort: `docs/overnight/before_after.html` screenshots (**judges penalise screenshots; use only if everything else fails**). |
-| A plan was approved in rehearsal | User menu → **Reset demo**. |
-| Wrong date showing | Top bar → demo clock → Sept 15. |
+| The laptop dies | Fallback laptop, cloned and checked the same morning with `scripts/demo_check.sh`. Last resort: the before/after screenshot page (`docs/overnight/before_after.html` for v0.7; a v0.8 page is produced at the end of the v0.8 run). Judges penalise screenshots; only if everything else fails |
+| A plan was approved in rehearsal | User menu → **Reset demo** |
+| Wrong date showing | Top bar → demo clock → Sept 15 |
 
 ## Speaker handoffs (fill in names)
 | Step | Speaker | Backup for Q&A |
