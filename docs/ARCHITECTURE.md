@@ -1,10 +1,12 @@
-# Friction Finder architecture (v0.7)
+# Friction Finder architecture (v0.8)
 
-Drawn from the code on branch `v0.7-saas-ui` (Sept 24, 2026). File:line references were checked on that
-day and point at the start of the function or block named.
+Drawn from the code on branch `v0.8-investigate` (Oct 8, 2026). References name the function; line numbers
+are left out because several of these files changed during the night.
 
-Friction Finder is an **AI-assisted workflow**, not an autonomous agent. The steps are fixed; the AI model
-is used at exactly two of them; every number is computed by code; a person makes every decision.
+Friction Finder is an **AI-assisted workflow** with one **AI-assisted investigation** inside it. The model
+chooses which of a fixed set of read-only tools to run next, under a budget; code computes every number and
+sets every evidence state; a person approves every action. Nothing is sent anywhere and nothing changes in the
+client's systems.
 
 ```mermaid
 flowchart LR
@@ -13,75 +15,170 @@ flowchart LR
     O[Operating records<br/>team-month, dispatch by hour]
     D[Procedures &<br/>ownership directory]
   end
-  S & O & D --> V[(DuckDB<br/>views with n ≥ 4<br/>suppression in SQL)]
-  V --> G{{sqlglot guard<br/>allowlist every table,<br/>no table functions}}
-  G --> A[Evidence engine<br/>agent.py]
-  O --> I[Impact engine<br/>impact.py<br/>Poisson · OLS · DiD]
-  Q[Manager's question] --> OOS{{Out-of-scope guard<br/>no individuals}}
-  OOS --> M1([AI: read the question<br/>into a fixed schema])
-  M1 --> A
-  A --> R[Retrieval<br/>comments & docs,<br/>small teams excluded]
-  A --> VR[Verdict rules<br/>computed by code]
-  VR --> M2([AI: write the brief<br/>from evidence only])
-  M2 --> CK{{Checker: every number<br/>and citation must be<br/>in the evidence}}
-  CK --> UI[Web app]
-  I --> UI
-  UI --> H[/Person: approve, reject,<br/>flag, approve a plan/]
+  S & O & D --> V[(DuckDB views<br/>n ≥ 4 in SQL; teams under 4<br/>left out of v_team_ops_month)]
+  V --> G{{sqlglot guard<br/>allowlist, no table functions}}
+  Q[Manager's question<br/>+ context chips] --> OOS{{out_of_scope<br/>every turn, before any tool}}
+  OOS --> RD[Question reader<br/>rules; model only if no match]
+  RD --> CO[Coordinator<br/>app/investigate.py]
+  CO <--> M1([AI: choose the next tool<br/>function calling])
+  CO --> T[11 read-only tools<br/>app/tools.py · numbers in code]
+  T --> G
+  T --> EV[Evidence register<br/>ids across turns]
+  EV --> ES[Evidence-state rules<br/>code]
+  ES --> M2([AI: wording of conclusion<br/>and competing explanation])
+  M2 --> CK{{Self-check: citations, numbers,<br/>entity, period, unit, causal words}}
+  CK --> UI[Web app: panel, Investigate, Review]
+  UI --> H[/Person: edit and approve a plan;<br/>keep, change or stop at review/]
 ```
+
+## The investigation loop (`app/investigate.py`, `investigate()`)
+
+1. **Scope first, every turn.** `agent.out_of_scope` declines questions about individuals, individual answers,
+   or judging or predicting a person before any tool or query runs, on the first question and on every
+   follow-up. Places not in the data, periods not in the data (`PAST_YEAR`), and questions asking what
+   *caused* quits or injuries (`CAUSE_OF_RARE`: the data has counts, not reasons) are declined too; the causal
+   decline still reports the counts.
+2. **Context.** `{site, team, as_of, kpi, item, dataset version}` is kept server-side per conversation
+   (`Conversation`, 4-hour TTL). `app/relations.py` `resolve()` turns "it", "the other night shifts", "Norfolk",
+   "No, I meant Night B" into a context change, or asks which team when the referent is ambiguous. A context
+   change marks earlier evidence `stale`; it stays in the register so old citations still open.
+3. **Question reader.** `classify()`: regular expressions map the question to one manager function and its
+   parameters (for example `could_explain` with `x = staffing`). Only when nothing matches and a key is present
+   does the model read it into the same fixed list of function ids (`_model_read`).
+4. **Tools.** Rules mode: a fixed plan per function (`plan_for`). Model mode (`_model_loop`): the model picks
+   the next tool by function calling with strict JSON schemas (`app/llm.py` `choose_tool`); code validates the
+   arguments against the registry's enums, runs the tool, appends evidence, and asks again. Checks the model
+   skipped that the function requires are then run by code, labelled in the trace. Team, site and dates are
+   fixed by code; the model cannot change them.
+5. **Answer.** `compose()` builds the structured answer from tool results: conclusion, evidence state,
+   evidence ids, competing explanation with its own state, next step (an action, or an information-gathering
+   step with an owner from the directory), plus hypotheses, gaps, a chart or table spec, a plan draft or a
+   review where the function has one. The text is a template filled only from tool results.
+6. **Wording (model mode).** `_model_write` asks the model to rewrite the conclusion and the competing
+   explanation in plain words. `self_check()` must pass or the template stays and the rejection is recorded
+   (`check.rejected`, `fallback`).
+
+**Budgets, enforced in host code** (`MAX_TOOL_CALLS, MAX_MODEL_REQUESTS, MAX_SECONDS = 6, 8, 60.0`; class `Run`):
+at most 6 tool calls, 8 model requests, 1 retry per failed model call (`llm._retry`, backoff 1.5 s), 60 s wall
+time per turn. An equivalent repeated tool call is refused ("Skip a repeated check" in the trace) and two
+refusals stop the loop; a tool that already ran this turn is not offered to the model again. At a limit the
+answer is built from what was gathered and `budget.stopped` says why. If the model cannot be reached after
+the retry, the fixed plan runs instead and `fallback` says so. These are engineering defaults, not promised
+latency. Every step appears in the trace with its mode (code or AI model) and real seconds; the panel polls
+`GET /api/investigate/{id}` while a turn runs (`async: true`), so the trace is real activity, never a timer.
+
+**Tool registry** (`app/tools.py` `REGISTRY`; every tool is read-only and computes its numbers in code):
+
+| Tool | What it does |
+|---|---|
+| `query_metric` | one operating metric for the team over the board's 3-month window, plus the comparable teams' pooled rate (`app/metrics.py`) |
+| `compare_teams` | the team vs its comparable teams (same shift at every site, 4+ people, excluding itself) on the metric and the focus item, with n; teams under 4 named, never numbered |
+| `benchmark` | internal norm (median and range of comparable teams); all-night vs all-day shift rates; the external Gallup benchmark returns **unavailable** (assumed source) |
+| `signal_check` | the v0.5 who-responded check (shift-share by tenure band) and the board's tenure-adjusted largest item change |
+| `timeline` | month by month: the metric vs the comparable range, staffing months under 90% of scheduled, survey waves, plan dates |
+| `hour_bands` | late-departure share by hour band, Jan–May vs Jun–Sep (dispatch is recorded per site and shift, not per team) |
+| `retrieve_passages` | reportable comments counted by theme in code, wave-2 comments re-ranked for the top theme (keyword + embeddings), procedures; deduplicated; instruction-like text labelled as data (`INJECTION`) |
+| `owner_lookup` | the process owner at the team's site (ownership directory) |
+| `precedent` | other teams flagged on the same metric or with the same item drop, their plans and results, or "no precedent" |
+| `draft_plan` | the thinnest plan the review needs: owner, action, operational measure, baseline, review date (end of the second full month after start), success criterion (back inside the comparable range), assumptions. It cannot approve, notify or write |
+| `review_result` | `impact.did_all` for the team's approved plan: improved / deteriorated / inconclusive, or not ready |
+
+**Evidence states** are set by explicit rules (`hypotheses()`, `compose()`), never by the model, and there are
+no confidence percentages:
+
+| Explanation or answer | supported | mixed | insufficient | unavailable |
+|---|---|---|---|---|
+| Process or handoff | 3+ separate comments on one theme **and** an hour-band rise at the shift boundary | one of the two | neither | — |
+| Staffing | a month under 90% of scheduled falls inside the flagged window | — | no shortage month in the window | — |
+| Who responded | a large change in who answered and the item change within noise after adjusting | — | the drop persists after adjusting | a wave under 4 respondents |
+| Site-wide or seasonal | — | team inside the comparable range | team above every comparable team (same months, so shared seasonality is netted out) | — |
+| A single loud comment | one long comment and no theme with 3+ comments | — | 3+ separate comments | — |
+| Why flagged (overall) | the top explanation's state; **mixed** when two explanations are both supported | | | |
+| Compare / normal | 2+ comparable teams with data | | fewer than 2 | none, or the external benchmark |
+| Did it work | improved or deteriorated (95% interval excludes zero) | | inconclusive | before the review date, or no plan |
+
+**Self-check** (`self_check()`), run on every answer in both modes. Coverage: the conclusion and the competing
+explanation must cite evidence ids that exist. Numbers: every number must appear in the evidence that part
+cites; the same digits elsewhere do not count. Provenance: a team named next to a number must be the team in
+the cited evidence, and a period such as "Jun-Aug 2026" must be the cited period; a percent must be a percent in
+the evidence. No causal wording. A model rewrite that fails any of these is discarded; the template is shown.
 
 ## Where the AI model is used (and only there)
 
-Both calls go through `app/llm.py` to the GW Azure OpenAI deployment (`gpt-5-mini`).
+All calls go through `app/llm.py` to the GW Azure OpenAI deployment (`gpt-5-mini`). Without a key every
+function still runs (rules reader, fixed plans, templated text, keyword retrieval).
 
-| # | Step | Code | What the model sees | What it returns |
+| # | Step | Code | Calls per question | What it returns |
 |---|---|---|---|---|
-| 1 | Read the question | `app/agent.py:243` `_scope_llm` | the question, site and team names | JSON: intent, site, team, items. Every entity is checked against the tables; unknown names are declined. |
-| 2 | Write the brief | `app/agent.py:1052` `write_brief` | the evidence records (statements and ids) and the computed verdict | JSON brief: obstacle, evidence for and against with ids, missing, owner, test, limits |
+| 1 | Ask: read the question | `agent._scope_llm` | 1 | JSON intent, site, team, items; checked against the tables |
+| 2 | Ask: write the brief | `agent.write_brief` → `explain` | 1, plus 1 regeneration if the check fails | JSON brief from evidence only; `check_brief` |
+| 3 | Investigation: read the question | `investigate._model_read` | 0 or 1 (only when the rules reader matches nothing) | one function id from a fixed list |
+| 4 | Investigation: choose the next tool | `investigate._model_loop` → `llm.choose_tool` | up to 6 (each may retry once; all count against 8) | one tool name and its arguments, validated by code |
+| 5 | Investigation: word the answer | `investigate._model_write` | 1 | conclusion and competing explanation text with citations; `self_check` |
 
-Also: embeddings for retrieval (`app/retrieval.py:76`, text-embedding-3-small; keyword search without a
-key). The v0.5 plan writer and follow-up chat (`agent.py:1119`, `:1396`) still exist but are **not used**
-by the v0.7 web app.
+Also: embeddings for retrieval (`app/retrieval.py`, text-embedding-3-small; keyword search without a key).
+`choose_tool` uses function calling with strict schemas; on a 400 from the deployment it would fall back to a
+JSON next-tool object. **Verified live on Oct 8, 2026:** the GW deployment accepted function calling
+(`selection: "function_calling"` in four live turns: 22.5 s, 17.6 s, 27.8 s, 57.8 s; the 57.8 s turn reached
+the time budget and showed the templated text). The JSON fallback has not run.
 
-**The model never writes SQL, never produces a number, never decides the verdict, never sees respondent
-rows, and never approves anything.** Text-to-SQL here is *question → structured intent → parameterized SQL
-templates* (`app/agent.py:329` `analyze`). Every query still goes through the sqlglot guard.
+**The model never writes SQL, never produces a number, never sets an evidence state, never sees respondent
+rows, and never approves anything.** Text-to-SQL is tier 1 only: question → structured plan → validated →
+templated SQL. Model-written SQL (tier 2) was not shipped.
+
+## Question → validated query → computed result → plain-English sentence (`app/metrics.py`)
+
+One definition per operating metric the screens show (`METRICS`: late departures, absence days, quits,
+injuries, rework, plus the late-departure share by hour band): view, numerator, denominator (head-months),
+unit (per 10 people per month), period, grain, source. `validate()` checks metric, entity, team size, period
+and grain; missing periods, unknown metrics or entities, suppressed teams and zero denominators come back as
+named statuses, never as zeros. `query_metric()` compiles the plan to templated SQL on `v_team_ops_month`,
+which reads exactly the rows `app/impact.py` uses (uploads included, `DB.sync_team_ops`) and leaves out teams
+under 4 people, so no site or shift total can be differenced to recover them. `sentence()` writes the rules-mode
+explanation with unit and period. `tests/test_metrics.py` checks that the board and `query_metric` agree for
+Night A on all five metrics at both demo dates. Ask (`agent._ops_metric`) and the investigation tools use the
+same path, so a question and a dashboard cannot disagree.
 
 ## What is deterministic
 
-| Component | Code | What it does |
-|---|---|---|
-| Suppression | `app/db.py` views (`CASE WHEN COUNT(*) >= {MIN_N}`), `app/db.py:135` `v_comments_reportable` | team means are NULL under 4 respondents; comments from those team-waves are never indexed |
-| SQL guard | `app/db.py:154` `_check_query`, called by `run_sql` (`:201`) | parses with sqlglot (DuckDB dialect); one read-only SELECT; every table must be allowlisted; table functions (`read_csv`, `glob`, …), schema-qualified names and CTEs shadowing tables are refused |
-| Out-of-scope guard | `app/agent.py:984` `out_of_scope`, applied at `:995` | declines questions about individuals, individual answers, or judging or predicting a person, before any query |
-| Evidence | `app/agent.py:329` `analyze`, `:636` `retrieve` | survey deltas, who-responded signal check, operating bands, staffing, comment themes counted in code, owner from the directory |
-| Verdict | `app/agent.py:704` `assess` | screening rules (thresholds in `SPEC.md`): supported / insufficient / no material change / suppressed |
-| Brief checker | `app/agent.py:793` `check_brief`; `api/main.py:463` `_grounding` | rejects uncited ids and numbers not in the evidence; one regeneration, then a templated fallback |
-| Detect | `app/impact.py:185` `_elevation`, `:199` `board` | observed vs expected from comparable teams' pooled rate; Poisson p < 0.01; "too rare to judge" under 3 expected; engagement change adjusted for who responded, Welch t-test with Bonferroni over 12 items; teams under 4 people rolled up (`:207`) |
-| Explain | `app/impact.py:264` `association`, `quartile_link` | OLS of KPI rate on item mean over team-waves, SEs clustered by team; quartile comparison |
-| Prove | `app/impact.py:353` `did` | difference-in-differences vs other-site teams on the same shift; Poisson SE; placebo run per comparison team |
+| Component | Code |
+|---|---|
+| Suppression | `app/db.py` views (`CASE WHEN COUNT(*) >= MIN_N`), `v_comments_reportable`, `v_team_ops_month` (teams under 4 excluded) |
+| SQL guard | `app/db.py` `_check_query` via `run_sql`: one read-only SELECT, every table allowlisted, no table functions, no schema-qualified names, CTEs may not shadow real tables (now including `team_ops_monthly`) |
+| Out of scope | `app/agent.py` `out_of_scope`, first in `agent.run` and in `investigate()` on every turn |
+| Detect / explain / prove | `app/impact.py` `_elevation`, `board`, `association`, `did` (unchanged in v0.8) |
+| Ask verdict and brief check | `app/agent.py` `assess`, `check_brief` (unchanged) |
+| Investigation evidence states and self-check | `app/investigate.py` `hypotheses`, `compose`, `self_check` |
 
 ## Where the human decides
 
 | Decision | Screen | Code |
 |---|---|---|
-| Approve, edit or reject a drafted action plan | Team detail › Create plan | `POST /api/plans` (`api/main.py:157`) |
-| Approve / reject / "this doesn't sound right" on a brief | Ask | `POST /api/approve` (`api/main.py:504`) → `approvals.jsonl` |
-| "Useful? yes / no" plus a reason | Ask, action plan | `POST /api/useful` → `feedback.jsonl` |
-| Unit costs used for dollars | Business case | `PUT /api/costs`; validation `app/impact.py:85` |
-
-Nothing is sent to anyone and nothing changes in the client's systems. The tool reads data and records decisions.
+| Edit and approve a plan (drafts can be saved) | Investigate › What do I do?; panel › Draft a plan | `POST /api/plans`; an existing plan for the same team, KPI and period is shown first (`GET /api/plans/check`); a repeated `request_id` returns the saved plan; every approval appends edits, decision and time to `approvals.jsonl` |
+| Keep, change or stop at the review date | Review | `GET /api/plans/{id}/result` |
+| Approve / reject / flag an Ask brief | `/ask?view=brief` (the v0.7 one-page brief) | `POST /api/approve` |
+| Feedback on an answer (wrong context, not actionable, missing evidence, wrong number, other) | panel | `POST /api/useful` → `feedback.jsonl`; `evals/from_feedback.py` drafts eval cases for a person to review. Approvals are never evidence that an answer was correct |
+| Unit costs | Business case | `PUT /api/costs` |
 
 ## Why these techniques
 
-Alternatives are taken only from `SPEC.md`, `docs/specs/`, git history and
+Alternatives are taken only from `SPEC.md`, `docs/specs/`, git history, the Oct 8 overnight prompt and
 `My Notes/2026-09-23_Winner_Repos_and_Prototype_Gaps.md`. Where no reason was recorded, the table says
 **Farid to confirm**.
 
 | Technique | Pros | Cons | Alternatives considered | Why not used (recorded source) |
 |---|---|---|---|---|
-| **Question → fixed schema → parameterized SQL on views, with a sqlglot guard** | the model cannot write arbitrary SQL; every query is auditable ("Show SQL"); suppression lives in the views, not the prompt | can only answer question types that have a template; new question types need code | free-form model-written SQL; vanna.ai; the earlier regex guard | vanna.ai: archived on GitHub, last release Feb 2, 2026 (Gaps note). Regex guard: bypassed by comma joins and `read_csv`, replaced Sept 23 (`260d248`). Free-form SQL: **Farid to confirm** (no recorded reason; SPEC §6 specifies views plus an allowlist) |
-| **Retrieval with citations** (embeddings + cosine in numpy; keyword fallback) | small corpus, no extra service; every passage cited with an id; works without a key | no reranker; quality not yet measured with a retrieval metric | a vector database; RAGAS for retrieval evals | vector DB: out of scope for this cut (SPEC §3). RAGAS: development has slowed (Gaps note) |
-| **Rule-based verdict** (thresholds in code; the model is told the verdict) | transparent; the model cannot overclaim; testable against planted cases | screening rules, not significance tests (SPEC); thresholds are judgement calls | a trained classifier, e.g. an EBM as in FraudLens; an agent framework | EBM / trained model: 24 teams × 2 waves is too small, "do not report an AUC" (Gaps note, gap 2). LangGraph or any agent framework: out of scope (SPEC §3) |
-| **Poisson excess vs comparable teams** (detect) | flags only what exceeds normal variation; "too rare to judge" is explicit; costs only the excess | assumes Poisson counts (no overdispersion); about 1 false flag per site at p < 0.01 | positive excess over the median of comparable teams (v0.6 design spec) | tried on Sept 23: it turned half the teams red on noise (one chance quit = $10.7K). Replaced by the Poisson test in commit "v0.6 analytics: excess vs normal variation" (`git log`) |
-| **Difference-in-differences with a placebo check** (prove) | cancels site-wide and seasonal shifts; the placebo shows how unusual the result is | one treated team, 4 comparison teams; directional, not causal; the follow-up data is synthetic | bootstrap CI over comparison teams (v0.6 design spec §4); causal-inference libraries (DoWhy) | bootstrap: the plan (`docs/specs/…-plan.md`, Task 2) switched to Poisson SEs, reason not recorded, **Farid to confirm**. DoWhy: the data cannot defend causal claims (Gaps note) |
+| **One bounded coordinator: the model picks the next read-only tool from a fixed registry** (v0.8) | the manager can challenge an explanation and get a checked answer; the model never touches data directly; budgets and a duplicate guard bound cost and time; keyless rules plans give the same output shape | live latency (17.6 to 57.8 s measured on Oct 8); the model repeated a tool in the first live test until already-run tools stopped being offered; tool choice in model mode is not yet covered by a model-mode eval run | fixed steps only (v0.7); an orchestration framework (LangGraph) | fixed steps: superseded by Farid's approval of this scope on Oct 8, 2026 (overnight prompt, "authorization"). Frameworks: out of scope (SPEC §3) |
+| **Question → structured plan → templated SQL on views, sqlglot guard** (tier 1) | the model cannot write arbitrary SQL; every query auditable ("Show SQL"); suppression in the views; one metric definition for screens and questions | only answers question types with a plan; new metrics need a definition | free-form model-written SQL (tier 2); vanna.ai; the earlier regex guard | tier 2: not shipped in v0.8 (the prompt allowed it only after tier 1 fails to match). vanna.ai: archived, last release Feb 2, 2026 (Gaps note). Regex guard: bypassed by comma joins and `read_csv`, replaced Sept 23 (`260d248`). Free-form SQL in general: **Farid to confirm** (no recorded reason; SPEC §6 specifies views plus an allowlist) |
+| **Retrieval with citations** (embeddings + keyword re-rank for the code-counted theme; keyword fallback) | small corpus, no extra service; every passage cited; works without a key | no reranker model; retrieval quality not measured with a retrieval metric | a vector database; RAGAS | vector DB: out of scope for this cut (SPEC §3). RAGAS: development has slowed (Gaps note) |
+| **Rule-based verdict and evidence states** | transparent; the model cannot overclaim; tested on planted cases | screening rules, not significance tests; thresholds are judgement calls | a trained classifier (EBM, as in FraudLens); an orchestration framework | 24 teams × 2 waves is too small, "do not report an AUC" (Gaps note, gap 2); frameworks out of scope (SPEC §3) |
+| **Poisson excess vs comparable teams** (detect) | flags only what exceeds normal variation; "too rare to judge" is explicit | assumes Poisson counts; about 1 false flag per site at p < 0.01 | positive excess over the comparable-team median (v0.6 design spec) | tried Sept 23: it turned half the teams red on noise; replaced ("v0.6 analytics: excess vs normal variation") |
+| **Difference-in-differences with a placebo check** (prove) | cancels site-wide and seasonal shifts; the placebo shows how unusual the result is | one treated team, 4 comparison teams; directional, not causal; the follow-up data is synthetic | bootstrap CI over comparison teams (v0.6 design spec §4); DoWhy | bootstrap: the plan switched to Poisson SEs, reason not recorded, **Farid to confirm**. DoWhy: the data cannot defend causal claims (Gaps note) |
 | **OLS association + quartile comparison** (explain) | the same presentation as Gallup's meta-analysis; CIs and n shown; clustered SEs | 34 team-waves; about 3 of 65 pairs light up by chance (shown on screen) | a driver model with statsmodels (Gaps note, gap 2) | adopted in this form (statsmodels OLS) |
+
+## Known gaps (reported, not changed)
+
+- `app/impact.py` `_comparables` uses the same shift at **every** site (Richmond Night B is a comparable for
+  Night A). The v0.7 Method text said "other sites"; the v0.8 UI text now matches the code. The DiD comparison
+  uses other-site teams only. Statistical logic was not changed.
+- Complementary suppression on survey roll-ups is still not enforced (`docs/risk/TEVV_EVIDENCE.md`).

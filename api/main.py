@@ -441,6 +441,8 @@ def assumptions():
         {"k": "First-year effect", "v": "New hires score about 0.35 points higher; the signal check adjusts for who responded", "why": "A drop can be a change in who answered, not in how people feel."},
         {"k": "Follow-up months", "v": "Oct-Nov 2026 are synthetic, planted so the plan's effect can be tested", "why": "Real follow-up needs a pilot; the method is what we are showing."},
         {"k": "Inference level", "v": "Team results are screening signals; associations use 34 team-waves; nothing here is causal", "why": "24 teams x 2 waves is small. We say so on screen."},
+        {"k": "External benchmark", "v": "Assumed data source: Gallup's database norms for similar roles or industries. Unavailable in the demo; the app shows 'unavailable' and computes only an internal norm (comparable teams)", "why": "Class, Oct 8: stating benchmark access as an assumption is acceptable. With a client's Access export it would be read from the export, never estimated."},
+        {"k": "Follow-up pulse", "v": "Assumed: a pilot adds a two-month follow-up pulse on the plan's focus item. Not in the demo data", "why": "Class, Oct 8: a two-month follow-up survey may be assumed if stated. The demo's review uses operating data only."},
     ], "with_real_data": ["Response counts and rates from Gallup Access exports", "The client's own cost per late departure and per absence day",
                           "Team-to-cost-center mapping from the client's timekeeping system", "12+ months of history for rare events (quits, injuries)"]}
 
