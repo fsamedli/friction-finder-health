@@ -50,6 +50,9 @@ def compare_teams(conv, ctx, args, turn, db):
         return [e], "Compared with comparable teams: none available", {"rows": [], "status": "unavailable"}
     months = _period(ctx)
     mine = M.query_metric(M.MetricQuery(metric=kpi, team_id=team["team_id"], as_of=ctx["as_of"]), db)
+    if mine.status != "ok":     # e.g. zero head-months: the rate is undefined, so there is nothing to compare
+        e = Ev(conv.new_id("K"), "compare_unavailable", f"Comparison unavailable: {mine.message}", "compare_teams", turn, sql=";\n".join(mine.sql))
+        return [e], f"Compared {team['label']}: {mine.status.replace('_', ' ')}", {"rows": [], "status": "unavailable"}
     rows, sqls = [], list(mine.sql)
     for t in comp:
         r = M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db)
@@ -61,7 +64,10 @@ def compare_teams(conv, ctx, args, turn, db):
     for r in rows:
         r["item_change"] = items.get(r["team_id"], {}).get("delta")
         r["item_n"] = items.get(r["team_id"], {}).get("n")
-    peers = [r["per_10"] for r in rows[1:]]
+    peers = [r["per_10"] for r in rows[1:] if r["per_10"] is not None]
+    if not peers:
+        e = Ev(conv.new_id("K"), "compare_unavailable", f"No comparable team has a defined rate for {M.months_label(months)}: comparison unavailable.", "compare_teams", turn)
+        return [e], "Compared with comparable teams: no defined rates", {"rows": [], "status": "unavailable"}
     lo, hi = min(peers), max(peers)
     pos = "above every comparable team" if mine.shown > hi else "below every comparable team" if mine.shown < lo else "inside the comparable range"
     ex_txt = f" Left out (fewer than {config.MIN_N} people, never shown): {', '.join(x['label'] for x in excluded)}." if excluded else ""
@@ -98,12 +104,14 @@ def benchmark(conv, ctx, args, turn, db):
     kpi, team = args.get("kpi") or ctx["kpi"], R.team_info(ctx["team_id"])
     comp, _ = R.comparable_teams(ctx["team_id"])
     mine = M.query_metric(M.MetricQuery(metric=kpi, team_id=team["team_id"], as_of=ctx["as_of"]), db)
-    rates = [M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db).shown for t in comp]
+    rates = [x for x in (M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db).shown for t in comp) if x is not None]
     other_shift = "Day" if team["shift"] == "Night" else "Night"
     pooled = {s: M.query_metric(M.MetricQuery(metric=kpi, shift=s, as_of=ctx["as_of"]), db) for s in (team["shift"], other_shift)}
     period = M.months_label(_period(ctx))
     ev = []
-    if len(rates) >= 2:
+    if mine.status != "ok":
+        ev.append(Ev(conv.new_id("B"), "benchmark_internal", f"No norm comparison: {mine.message}", "benchmark", turn, value={"n": 0}))
+    elif len(rates) >= 2:
         med = round(statistics.median(rates), 1)
         above = sum(1 for r in rates if r > med)
         stmt = (f"Norm for teams like {team['label']} ({len(rates)} {team['shift'].lower()}-shift teams at every site, {config.MIN_N}+ people), {KPI_WORD[kpi]}, "
@@ -153,10 +161,10 @@ def timeline(conv, ctx, args, turn, db):
     rows, above = [], []
     for m in months:
         mine = M.query_metric(M.MetricQuery(metric=kpi, team_id=team["team_id"], months=[m]), db).shown
-        peers = [M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], months=[m]), db).shown for t in comp]
+        peers = [x for x in (M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], months=[m]), db).shown for t in comp) if x is not None]
         hi = max(peers) if peers else None
         rows.append({"month": m, "team_per_10": mine, "comparable_low": min(peers) if peers else None, "comparable_high": hi})
-        if hi is not None and mine > hi:
+        if hi is not None and mine is not None and mine > hi:
             above.append(m)
     run = []
     for m in reversed(months):           # the run of months above the range that ends at the latest month
@@ -278,7 +286,7 @@ def draft_plan(conv, ctx, args, turn, db):
     process = {"handoff": "Shift handoff procedure", "equipment": "Forklift and equipment maintenance", "schedule": "Shift scheduling policy"}.get(theme, "Shift handoff procedure")
     o = R.owner(process, team["site"])
     res = M.query_metric(M.MetricQuery(metric=kpi, team_id=team["team_id"], as_of=ctx["as_of"], compare_to="comparable"), db)
-    comp = [M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db).shown for t in R.comparable_teams(team["team_id"])[0]]
+    comp = [x for x in (M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db).shown for t in R.comparable_teams(team["team_id"])[0]) if x is not None]
     d0 = date.fromisoformat(ctx["as_of"])
     start = (d0 + timedelta(days=(7 - d0.weekday()) % 7 or 7)).isoformat()      # next Monday
     y, m = int(start[:4]), int(start[5:7]) + 3

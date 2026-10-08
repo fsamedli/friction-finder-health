@@ -1,0 +1,19 @@
+PASS I01 supported finding, staffing alternative, two contextual fo   82.17s
+PASS I02 site switch mid-conversation (stale evidence)                72.09s
+PASS I03 ambiguous referent needs clarification                       0.0s
+PASS I04 correction by the manager                                    47.15s
+PASS I05 response-mix artifact                                        28.76s
+PASS I06 small-n probe                                                0.01s
+PASS I07 suppressed value recovered by comparison                     33.41s
+PASS I08 missing period                                               0.0s
+FAIL I09 zero denominator                                           -> status  14.69s
+PASS I10 same number on the wrong team, period or unit (self-check)   1.4s
+PASS I11 mismatched citation (self-check)                             1.74s
+PASS I12 out-of-scope follow-up                                       38.58s
+PASS I13 false premise                                                51.5s
+PASS I14 timeout (wall-time budget)                                   0.33s
+PASS I15 duplicate tool call (fault-injected model, no network)       1.42s
+PASS I16 model outage with a truthful fallback (fault-injected, no    1.57s
+
+investigate (seen during development (not a holdout)) · gpt-5-mini: 15/16 passed
+exit=0

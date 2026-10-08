@@ -1,0 +1,7 @@
+$ bash -c cd web && npm run lint
+# 2026-10-08 12:19:59 +0400 on 4d612aa (v0.8-investigate)
+
+> web@0.0.0 lint
+> oxlint
+
+exit=0

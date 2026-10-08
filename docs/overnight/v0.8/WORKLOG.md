@@ -108,3 +108,29 @@ Format per entry: time (local, +04 on this laptop) · what · result · next. Ra
   Mitigation: write long files in parts of about 150 lines, commit often.
 - State at restart: clean except app/llm.py (choose_tool helper), app/relations.py (new), MORNING_REPORT.md,
   and the UI subagent's two deliberate uncommitted files. Committing llm.py and relations.py now.
+- 11:17 · Agent A · gold E13 + matches_board check committed; first run (rules, before fix) 12/13, E13 refused · next: metric intent in agent.scope
+- 11:19 · Agent B: Phase 6 backend committed (2fe2bb3): plan fields/check/board/approve, double-submit guard (explained 200), approvals.jsonl record, feedback on investigation answers, Quality counts from zero, evals/from_feedback.py · pytest 120 passed (no key) · next: none (handed back)
+- 11:19 · Agent A · Phase 5 fix committed: ops_metric intent, rule declines (cause of quits/injuries, pre-2026 periods); pytest 127, gold 13/13 (first 12/13), adversarial 15/15 · next: none (Agent A done)
+- 11:21 · Agent C: investigation pack (evals/investigate/: 16 cases, runner, first run) committed before any fix · first run rules-only **11/16** (I05 clarify instead of answer; I10/I11 runner passes a list of parts but self_check takes an answer dict; I15/I16 model path not exercised: mode stayed rules, no repeat note, fallback empty) · next: parent decides fixes
+- 11:33 · Agent D docs 1: ARCHITECTURE.md, HOW_IT_WORKS.md rewritten from the code; /api/assumptions + external benchmark and two-month pulse rows; pytest 127 passed keyless · commit b4682ea · next: DEMO_SCRIPT, README, TEVV
+- 11:34 · Agent D docs 2: DEMO_SCRIPT.md (v0.8 click path, fallbacks, what breaks first) · commit 046db00 · next: README, TEVV
+- 11:39 · Agent D docs 3: README v0.8 section; prepared-investigation facts corrected in DEMO_SCRIPT/ARCHITECTURE/HOW_IT_WORKS after 15aca9a · commit afe5738 · next: TEVV
+- 11:43 · Agent D docs 4: TEVV v0.8 section (4 loop risks, Oct 8 results, gaps incl. no injection case in the investigation pack and no model-mode pack run); pytest 127 passed keyless · commit 779085b · next: none (docs done)
+
+## 09:37 · Restart after the third gap (05:52-09:37); Farid awake from about 09:40
+- Interim status written to the top of MORNING_REPORT.md. Long files written in parts of about 80 lines from here on.
+- 09:38-09:40 · app/tools.py (11 read-only tools) smoke-tested on Night A: numbers match the board (81 observed).
+- 11:16 · `d3933af` tools + coordinator skeleton + router mount. Farid asked for a team: Agents A (Phase 5), B (Phase 6
+  backend), C (investigation eval pack) launched on disjoint files; Agent D (docs) at 11:31.
+- 11:21 · `ff4e495` coordinator, rules plans, evidence-state rules, self-check, /api/functions, /api/investigate.
+- 11:21 · `dfa5dc5` (Agent C) pack first run 11/16, recorded before any fix -> 14/16 (`2882f47`) -> 16/16 (`f8611f6`).
+- 11:2x · first live model runs: function calling accepted by the GW deployment; model re-picked a finished check
+  (duplicate guard stopped it); my staffing text cited the wrong evidence for its period. Fixed in `924b3bb`.
+- 11:32-11:34 · prepared answers generated live (6 turns, 19.0-41.7 s, one GW 429 on a wording call -> labelled
+  template) `15aca9a`.
+- 11:35-12:02 · demo_check found a real bug: background investigations and request threads shared one DuckDB
+  connection (/api/ask 500). Lock added (`7c41a69`); a stale wedged server on port 8010 then hung two demo_check
+  runs (killed with -9; probes now time out, demo_check refuses a busy port). demo_check **304 passed, 0 failed**.
+- 12:02 · `660fb07` integration. 12:17 · gate: all green except axe (1 rule, 24 nodes: chart rows as list items
+  under role=img, visible only once the blocks rendered real answers). Fixed, axe 0 (`4d612aa`).
+- 12:2x · final gate and one model-mode run of the investigation pack (results in the report). Next: report, DONE.
