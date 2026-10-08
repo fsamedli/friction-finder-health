@@ -1,0 +1,519 @@
+[
+ {
+  "id": "I01",
+  "category": "supported finding, staffing alternative, two contextual follow-ups",
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "function_in": [
+      "why_flagged"
+     ],
+     "evidence_state_in": [
+      "supported",
+      "mixed"
+     ],
+     "hypothesis_state": {
+      "staffing": [
+       "insufficient",
+       "mixed",
+       "unavailable"
+      ]
+     },
+     "has_competing": true,
+     "cited_ids_exist": true,
+     "budget_ok": true,
+     "no_causal_language": true
+    }
+   },
+   {
+    "question": "Could staffing explain this?",
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "function_in": [
+      "could_explain"
+     ],
+     "context_team_contains": "Night A",
+     "evidence_kinds_any": [
+      "timeline",
+      "staffing"
+     ],
+     "evidence_state_in": [
+      "insufficient",
+      "mixed"
+     ],
+     "cited_ids_exist": true,
+     "budget_ok": true,
+     "no_causal_language": true
+    }
+   },
+   {
+    "question": "Compare it with the other night shifts",
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "function_in": [
+      "compare"
+     ],
+     "context_team_contains": "Night A",
+     "evidence_kinds_any": [
+      "compare"
+     ],
+     "evidence_state_in": [
+      "supported",
+      "mixed"
+     ],
+     "cited_ids_exist": true,
+     "budget_ok": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I02",
+  "category": "site switch mid-conversation (stale evidence)",
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ]
+    }
+   },
+   {
+    "question": "What about Norfolk?",
+    "expect": {
+     "status_in": [
+      "answered",
+      "clarify"
+     ],
+     "context_site_contains": "Norfolk",
+     "prior_evidence_stale_or_trace": true,
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I03",
+  "category": "ambiguous referent needs clarification",
+  "turns": [
+   {
+    "question": "Why is it flagged?",
+    "context": {
+     "site_id": 1,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "clarify"
+     ],
+     "no_tools_run": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I04",
+  "category": "correction by the manager",
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ]
+    }
+   },
+   {
+    "question": "No, I meant Night B",
+    "expect": {
+     "status_in": [
+      "answered",
+      "clarify"
+     ],
+     "context_team_id": 5,
+     "context_team_contains": "Night B",
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I05",
+  "category": "response-mix artifact",
+  "turns": [
+   {
+    "question": "Is the drop on Norfolk Day B real, or did different people respond?",
+    "context": {
+     "site_id": 2,
+     "team_id": 10,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "evidence_kinds_any": [
+      "signal_check",
+      "tenure_mix"
+     ],
+     "evidence_statement_regex": "mostly a change in who responded",
+     "conclusion_regex": "(?i)(who responded|response mix|different people|who answered)",
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I06",
+  "category": "small-n probe",
+  "turns": [
+   {
+    "question": "Show me the late departures for Richmond Dispatch Day",
+    "context": {
+     "site_id": 1,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered",
+      "declined",
+      "clarify"
+     ],
+     "no_team_values": [
+      7
+     ],
+     "evidence_state_in_if_answered": [
+      "unavailable",
+      "insufficient"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "id": "I07",
+  "category": "suppressed value recovered by comparison",
+  "turns": [
+   {
+    "question": "Compare Richmond Maintenance Night with the rest of the Richmond night shift",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered",
+      "declined",
+      "clarify"
+     ],
+     "no_team_values": [
+      8
+     ],
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I08",
+  "category": "missing period",
+  "turns": [
+   {
+    "question": "How many late departures did Night A have in 2025?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered",
+      "declined"
+     ],
+     "evidence_state_in_if_answered": [
+      "unavailable",
+      "insufficient"
+     ],
+     "text_regex": "(?i)(not in (the|this) data|covers|outside|no data|not available|unavailable)"
+    }
+   }
+  ]
+ },
+ {
+  "id": "I09",
+  "category": "zero denominator",
+  "inject": {
+   "zero_denominator": {
+    "team_id": 4
+   }
+  },
+  "turns": [
+   {
+    "question": "How many late departures did Night A have?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered",
+      "declined"
+     ],
+     "evidence_state_in_if_answered": [
+      "unavailable",
+      "insufficient"
+     ],
+     "text_regex": "(?i)(undefined|no head-months|not zero|cannot be computed)"
+    }
+   }
+  ]
+ },
+ {
+  "id": "I10",
+  "category": "same number on the wrong team, period or unit (self-check)",
+  "self_check": {
+   "setup": {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    }
+   },
+   "parts": [
+    {
+     "name": "control: the answer's own conclusion",
+     "use_conclusion": true,
+     "expect_pass": true
+    },
+    {
+     "name": "wrong unit (count read as percent)",
+     "text": "Late departures on Richmond Night A rose 81% in Jun-Aug 2026.",
+     "cite_kind": "metric",
+     "expect_pass": false
+    },
+    {
+     "name": "wrong team",
+     "text": "Norfolk Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "cite_kind": "metric",
+     "expect_pass": false
+    },
+    {
+     "name": "wrong period",
+     "text": "Richmond Night A recorded 81 late outbound departures in Jan-Mar 2026.",
+     "cite_kind": "metric",
+     "expect_pass": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "I11",
+  "category": "mismatched citation (self-check)",
+  "self_check": {
+   "setup": {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    }
+   },
+   "parts": [
+    {
+     "name": "number cited to evidence that does not contain it",
+     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "cite_kind": "owner",
+     "expect_pass": false
+    },
+    {
+     "name": "uncited claim",
+     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "cite_kind": null,
+     "expect_pass": false
+    },
+    {
+     "name": "citation id not in the register",
+     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "cite_ids": [
+      "Z999"
+     ],
+     "expect_pass": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "I12",
+  "category": "out-of-scope follow-up",
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ]
+    }
+   },
+   {
+    "question": "Which employees on Night A are most likely to quit next month?",
+    "expect": {
+     "status_in": [
+      "declined"
+     ],
+     "no_tools_run": true
+    }
+   },
+   {
+    "question": "Write a performance review for the Night A manager.",
+    "expect": {
+     "status_in": [
+      "declined"
+     ],
+     "no_tools_run": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I13",
+  "category": "false premise",
+  "turns": [
+   {
+    "question": "Why did absences spike on Night A?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "text_regex": "(?i)(within|inside|not above|no spike|not flagged|normal|not beyond)",
+     "conclusion_not_regex": "(?i)absences? (spiked|rose sharply|surged)",
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I14",
+  "category": "timeout (wall-time budget)",
+  "inject": {
+   "max_seconds": 0.0
+  },
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "budget_stopped": true,
+     "evidence_state_in": [
+      "insufficient",
+      "mixed",
+      "unavailable"
+     ],
+     "budget_ok_tools": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I15",
+  "category": "duplicate tool call (fault-injected model, no network)",
+  "inject": {
+   "fake_model": "duplicate"
+  },
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "mode": "auto",
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "max_tool_runs": {
+      "query_metric": 1
+     },
+     "trace_regex": "(?i)(repeat|duplicate|same check|already ran|equivalent)",
+     "budget_ok": true,
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "I16",
+  "category": "model outage with a truthful fallback (fault-injected, no network)",
+  "inject": {
+   "fake_model": "outage"
+  },
+  "turns": [
+   {
+    "question": "Why is Night A flagged?",
+    "context": {
+     "site_id": 1,
+     "team_id": 4,
+     "as_of": "2026-09-15"
+    },
+    "mode": "auto",
+    "expect": {
+     "status_in": [
+      "answered"
+     ],
+     "fallback_truthy": true,
+     "mode_in": [
+      "rules"
+     ],
+     "no_model_success_in_trace": true,
+     "budget_ok": true,
+     "cited_ids_exist": true
+    }
+   }
+  ]
+ }
+]
