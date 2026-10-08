@@ -119,10 +119,10 @@ function still runs (rules reader, fixed plans, templated text, keyword retrieva
 Also: embeddings for retrieval (`app/retrieval.py`, text-embedding-3-small; keyword search without a key).
 `choose_tool` uses function calling with strict schemas; on a 400 from the deployment it would fall back to a
 JSON next-tool object. **Verified live on Oct 8, 2026:** the GW deployment accepted function calling
-(`selection: "function_calling"` in four test turns, 22.5, 17.6, 27.8 and 57.8 s, the last reaching the time budget
-and showing the templated text; and in the six turns saved as prepared answers by `scripts/prepare_investigations.py`,
-19.0 to 41.7 s, where one wording call got a GW 429 rate-limit error and kept the labelled template). The JSON
-fallback has not run.
+(`selection: "function_calling"`) in ten live turns. Four test turns took 22.5, 17.6, 27.8 and 57.8 s; in the
+57.8 s turn under 5 s of the 60 s budget remained, so the wording step was skipped and the templated text shown.
+Six turns saved as prepared answers by `scripts/prepare_investigations.py` took 19.0 to 41.7 s; in one, the
+wording call got a GW 429 rate-limit error and the labelled template was kept. The JSON fallback has not run.
 
 **The model never writes SQL, never produces a number, never sets an evidence state, never sees respondent
 rows, and never approves anything.** Text-to-SQL is tier 1 only: question → structured plan → validated →
