@@ -667,6 +667,11 @@ table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E
     return HTMLResponse(doc, headers=headers)
 
 
+# ------------------------------------------------------------------ v0.8 investigation (api/investigate_routes.py)
+from api.investigate_routes import router as _investigate_router  # noqa: E402
+app.include_router(_investigate_router)
+
+
 # ------------------------------------------------------------------ static app
 if DIST.exists():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
