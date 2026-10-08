@@ -2,6 +2,7 @@
 read-only query function. The suppression rule lives here, in SQL, not in prompts."""
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 
 import duckdb
@@ -199,6 +200,8 @@ WHERE t.headcount >= {MIN_N}
 
 class DB:
     def __init__(self):
+        # one connection shared by request threads and background investigations: every use goes through this lock
+        self.lock = threading.RLock()
         self.con = duckdb.connect(database=":memory:")
         for t in TABLES:
             self.con.execute(f"CREATE TABLE {t} AS SELECT * FROM read_csv_auto('{DATA_DIR / (t + '.csv')}')")
@@ -214,6 +217,12 @@ class DB:
         them). Cheap when nothing changed. Returns the dataset version ('demo' or 'upload:<mtime>')."""
         from app import impact as I  # late import: impact does not import db
         df = I._data()[0]
+        with self.lock:
+            self._sync(df)
+        up = I.upload_path()
+        return f"upload:{int(up.stat().st_mtime)}" if up.exists() else "demo"
+
+    def _sync(self, df) -> None:
         if self._team_ops_src is not df:
             cols = ["month", "team_id", "site_id", "shift", "headcount", "absence_days", "late_departures", "quits", "injuries", "rework"]
             self.con.register("team_ops_src", df[cols])
@@ -221,8 +230,6 @@ class DB:
             self.con.unregister("team_ops_src")
             self.con.execute(TEAM_OPS_VIEW)
             self._team_ops_src = df
-        up = I.upload_path()
-        return f"upload:{int(up.stat().st_mtime)}" if up.exists() else "demo"
 
     # ---- guarded query -------------------------------------------------
     # The query is parsed (sqlglot, DuckDB dialect), not pattern-matched: every table it references,
@@ -233,22 +240,27 @@ class DB:
     def run_sql(self, sql: str) -> QueryResult:
         s = sql.strip().rstrip(";").strip()
         _check_query(s)
-        rows = self.con.execute(f"SELECT * FROM ({s}) LIMIT {ROW_CAP}").df()
+        with self.lock:
+            rows = self.con.execute(f"SELECT * FROM ({s}) LIMIT {ROW_CAP}").df()
         return QueryResult(sql=s, rows=rows)
 
     # ---- catalog helpers used by scope() ----------------------------------
     def sites(self) -> list[str]:
-        return self.con.execute("SELECT site_name FROM sites ORDER BY 1").df().site_name.tolist()
+        with self.lock:
+            return self.con.execute("SELECT site_name FROM sites ORDER BY 1").df().site_name.tolist()
 
     def teams(self) -> pd.DataFrame:
-        return self.con.execute(
+        with self.lock:
+            return self.con.execute(
             "SELECT t.team_id, s.site_name, t.team_name, t.shift, t.manager_name FROM teams t JOIN sites s USING (site_id) ORDER BY 1").df()
 
     def items(self) -> pd.DataFrame:
-        return self.con.execute("SELECT item, label FROM q12_items ORDER BY 1").df()
+        with self.lock:
+            return self.con.execute("SELECT item, label FROM q12_items ORDER BY 1").df()
 
     def waves(self) -> pd.DataFrame:
-        return self.con.execute("SELECT * FROM waves ORDER BY 1").df()
+        with self.lock:
+            return self.con.execute("SELECT * FROM waves ORDER BY 1").df()
 
     # ---- upload path (Keegan's second question) -----------------------------
     def add_ops_upload(self, df: pd.DataFrame) -> int:
@@ -258,11 +270,15 @@ class DB:
             raise ValueError(f"Upload is missing columns: {sorted(missing)}")
         df = df[sorted(required)].copy()
         df["date"] = df["date"].astype(str)
+        with self.lock:
+            self._insert_upload(df)
+        self.uploaded_ops_rows += len(df)
+        return len(df)
+
+    def _insert_upload(self, df: pd.DataFrame) -> None:
         self.con.register("upload_df", df)
         self.con.execute("INSERT INTO ops_daily SELECT CAST(date AS DATE), CAST(site_id AS BIGINT), shift, hour_band, CAST(departures AS BIGINT), CAST(late_departures AS BIGINT), CAST(rework_count AS BIGINT) FROM upload_df")
         self.con.unregister("upload_df")
-        self.uploaded_ops_rows += len(df)
-        return len(df)
 
     def schema_for_prompt(self) -> str:
         """Compact description of the allowed views for the model."""
