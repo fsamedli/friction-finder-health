@@ -70,3 +70,59 @@ def embed(texts: list[str]) -> list[list[float]]:
         raise
     except Exception as e:
         raise LLMUnavailable(f"{type(e).__name__}: {e}") from e
+
+
+def _retry(call, retries: int = 1, backoff: float = 1.5):
+    """Run call(); on a transient failure wait and try once more. Raises the last error."""
+    import time
+    for attempt in range(retries + 1):
+        try:
+            return call()
+        except Exception as e:  # noqa: BLE001 - classified below
+            status = getattr(e, "status_code", None)
+            if attempt >= retries or (status is not None and 400 <= status < 500 and status != 429):
+                raise
+            time.sleep(backoff * (attempt + 1))
+
+
+def choose_tool(system: str, user: str, tools: list[dict], effort: str = "low", strict: bool = True) -> dict[str, Any]:
+    """The model picks the next tool from a fixed registry by function calling.
+
+    `tools` = [{"name", "description", "parameters" (JSON schema)}]. Returns
+    {"name": str, "args": dict, "selection": "function_calling", "attempts": int}. On a deployment that rejects
+    function calling, falls back to a JSON object {"tool": name, "args": {...}} validated by the caller
+    ("selection": "json_schema"). Raises LLMUnavailable when the model cannot be reached after one retry."""
+    attempts = {"n": 0}
+    specs = [{"type": "function", "function": {"name": t["name"], "description": t["description"],
+                                              "parameters": t["parameters"], **({"strict": True} if strict else {})}} for t in tools]
+
+    def call():
+        attempts["n"] += 1
+        kwargs: dict[str, Any] = dict(model=config.MODEL, messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+                                      tools=specs, tool_choice="required", max_completion_tokens=1200)
+        if _reasoning_family(config.MODEL):
+            kwargs["reasoning_effort"] = effort
+        return client().chat.completions.create(**kwargs)
+
+    try:
+        resp = _retry(call)
+        tc = (resp.choices[0].message.tool_calls or [None])[0]
+        if tc is None:
+            raise LLMUnavailable("the model returned no tool call")
+        return {"name": tc.function.name, "args": json.loads(tc.function.arguments or "{}"), "selection": "function_calling", "attempts": attempts["n"]}
+    except LLMUnavailable:
+        raise
+    except Exception as e:
+        status = getattr(e, "status_code", None)
+        if status == 400:  # this deployment or API version does not take tools (or strict schemas): JSON next-tool schema
+            names = [t["name"] for t in tools]
+            sys2 = system + ("\n\nReturn ONLY a JSON object {\"tool\": one of " + json.dumps(names) +
+                             ", \"args\": object matching that tool's parameters}. Tools:\n" +
+                             "\n".join(f"- {t['name']}: {t['description']} parameters={json.dumps(t['parameters'])}" for t in tools))
+            try:
+                out = _retry(lambda: chat_json(sys2, user, effort=effort))
+            except LLMUnavailable:
+                raise
+            attempts["n"] += 1
+            return {"name": str(out.get("tool", "")), "args": out.get("args") or {}, "selection": "json_schema", "attempts": attempts["n"]}
+        raise LLMUnavailable(f"{type(e).__name__}: {e}") from e
