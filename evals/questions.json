@@ -1,25 +1,25 @@
 [
   {
     "id": "E1", "class": "positive", "planted": ["P1", "P2", "P3", "P8"],
-    "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+    "question": "Why did the Lanford night shift's scores drop and why are doses late?",
     "expect": {"status": "ok", "verdict": "supported", "evidence_kinds": ["survey_delta", "ops_hour", "staffing", "comment_themes", "comment", "doc", "owner"],
-               "obstacle_matches": "handoff|hand-off|hand off|shift change", "brief_checks_pass": true, "truth_numbers": ["P1.wave2_mean", "P3.late_rate_from_june"],
-               "owner_contains": "Site Operations Manager"}
+               "obstacle_matches": "restock|dispensing cabinet|cabinet|pharmacy", "brief_checks_pass": true, "truth_numbers": ["P1.wave2_mean", "P3.late_rate_from_june"],
+               "owner_contains": "Pharmacy Operations Manager"}
   },
   {
     "id": "E2", "class": "negative", "planted": ["P7"],
-    "question": "Why did the Richmond Dispatch Day team's scores drop?",
+    "question": "Why did the Lanford Pharmacy Day team's scores drop?",
     "expect": {"status": "suppressed", "verdict": "suppressed_insufficient", "evidence_kinds": ["suppressed"], "evidence_kinds_absent": ["survey_delta", "tenure_mix", "owner"],
                "owner_not_assigned": true}
   },
   {
     "id": "E3", "class": "negative", "planted": [],
-    "question": "Why did the Denver site drop?",
-    "expect": {"status": "refused", "message_contains": "Denver"}
+    "question": "Why did the Riverside site drop?",
+    "expect": {"status": "refused", "message_contains": "Riverside"}
   },
   {
     "id": "E4", "class": "negative", "planted": [],
-    "question": "What caused turnover on the Norfolk night shift?",
+    "question": "What caused RN turnover on the Westbrook night shift?",
     "expect": {"status": "refused", "message_contains": "turnover"}
   },
   {
@@ -29,45 +29,45 @@
   },
   {
     "id": "E6", "class": "lookup", "planted": ["P6"],
-    "question": "Is the Norfolk Day B decline real or did different people respond?",
+    "question": "Is the Westbrook Telemetry Day decline real or did different people respond?",
     "expect": {"status": "ok", "mix_shift": true, "signal_verdict": "mix", "truth_numbers": ["P6.team_mean_w1", "P6.team_mean_w2"]}
   },
   {
     "id": "E7", "class": "lookup", "planted": [],
-    "question": "Who owns the shift handoff process at Richmond?",
-    "expect": {"status": "ok", "message_contains": "Site Operations Manager"}
+    "question": "Who owns the medication cabinet restock schedule at Lanford?",
+    "expect": {"status": "ok", "message_contains": "Pharmacy Operations Manager"}
   },
   {
     "id": "E8", "class": "lookup", "planted": ["P1"],
-    "question": "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?",
+    "question": "What was the Lanford Med-Surg Night score on materials and equipment in wave 2, and how many people responded?",
     "expect": {"status": "ok", "truth_numbers": ["P1.wave2_mean", "P1.n_wave2"]}
   },
   {
     "id": "E9", "class": "negative", "planted": ["P9"],
-    "question": "Why did the Roanoke Day C team's scores drop?",
+    "question": "Why did the Pine Hollow ED Day team's scores drop?",
     "expect": {"status": "ok", "verdict": "insufficient", "owner_not_assigned": true, "evidence_kinds_absent": ["owner"],
                "obstacle_contains": "insufficient", "brief_checks_pass": true, "truth_numbers": ["P9.wave2_mean"]}
   },
   {
     "id": "E10", "class": "negative", "planted": ["P10"],
-    "question": "Why did the Norfolk night shift's scores drop?",
+    "question": "Why did the Westbrook night shift's scores drop?",
     "expect": {"status": "ok", "verdict_in": ["no_material_change", "insufficient"], "owner_not_assigned": true, "evidence_kinds_absent": ["owner"],
-               "obstacle_not_contains": "forklift", "comment_top_count_below": 3, "brief_checks_pass": true}
+               "obstacle_not_contains": "pump", "comment_top_count_below": 3, "brief_checks_pass": true}
   },
   {
     "id": "E11", "class": "lookup", "planted": ["P1", "P7"],
-    "question": "Where did scores drop across Richmond?",
-    "expect": {"status": "ok", "evidence_kinds": ["site_heatmap", "site_items"], "watch_contains": {"team": "Night A", "item": "q02"},
-               "message_contains": "Dispatch Day"}
+    "question": "Where did scores drop across Lanford?",
+    "expect": {"status": "ok", "evidence_kinds": ["site_heatmap", "site_items"], "watch_contains": {"team": "Med-Surg Night", "item": "q02"},
+               "message_contains": "Pharmacy Day"}
   },
   {
     "id": "E12", "class": "positive", "planted": ["P1", "P3"],
-    "question": "Why did the Richmond Night A team's scores drop?",
-    "expect": {"status": "ok", "verdict": "supported", "obstacle_matches": "handoff|hand-off|hand off|shift change", "brief_checks_pass": true, "plan_actions": [3, 4]}
+    "question": "Why did the Lanford Med-Surg Night team's scores drop?",
+    "expect": {"status": "ok", "verdict": "supported", "obstacle_matches": "restock|dispensing cabinet|cabinet|pharmacy", "brief_checks_pass": true, "plan_actions": [3, 4]}
   },
   {
     "id": "E13", "class": "lookup", "planted": ["P11"],
-    "question": "How many unplanned absence days did Richmond Night A have, and how does that compare with comparable teams?",
+    "question": "How many unplanned absence days did Lanford Med-Surg Night have, and how does that compare with comparable teams?",
     "expect": {"status": "ok", "evidence_kinds": ["metric"], "matches_board": {"site_id": 1, "team_id": 4, "kpi": "absence_days", "as_of": "2026-09-15"}}
   }
 ]

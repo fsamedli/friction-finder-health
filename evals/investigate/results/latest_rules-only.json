@@ -2,7 +2,7 @@
   "pack": "investigate",
   "label": "seen during development (not a holdout)",
   "model": "rules-only",
-  "ts": "2026-10-08T08:28:36+00:00",
+  "ts": "2026-10-08T09:53:06+00:00",
   "passed": 16,
   "total": 16,
   "rows": [
@@ -12,7 +12,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true,
@@ -27,10 +27,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -40,7 +40,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.5
+          "seconds": 0.51
         },
         {
           "question": "Could staffing explain this?",
@@ -58,7 +58,7 @@
           "status": "answered",
           "function": "could_explain",
           "evidence_state": "insufficient",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
           "conclusion": "Staffing shortage: the evidence does not support it. Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
@@ -71,7 +71,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.49
         },
         {
           "question": "Compare it with the other night shifts",
@@ -88,10 +88,10 @@
           "status": "answered",
           "function": "compare",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team.",
+          "conclusion": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team.",
           "budget": {
             "tool_calls": 2,
             "max_tool_calls": 6,
@@ -104,7 +104,7 @@
           "seconds": 0.37
         }
       ],
-      "seconds": 1.34
+      "seconds": 1.38
     },
     {
       "id": "I02",
@@ -112,7 +112,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true
@@ -120,10 +120,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -133,10 +133,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.48
+          "seconds": 0.49
         },
         {
-          "question": "What about Norfolk?",
+          "question": "What about Westbrook?",
           "passed": true,
           "checks": {
             "status": true,
@@ -147,7 +147,7 @@
           "status": "clarify",
           "function": null,
           "evidence_state": null,
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
           "conclusion": "I can answer these questions about a team: Why is this team flagged?; Could X explain this?; Compare with comparable teams; Is this normal for teams like ours?; When did it start?; How widespread is it?; What is missing?; Where does this number come from?; Has this happened elsewhere?; Draft a plan ",
@@ -163,7 +163,7 @@
           "seconds": 0.18
         }
       ],
-      "seconds": 0.66
+      "seconds": 0.67
     },
     {
       "id": "I03",
@@ -183,7 +183,7 @@
           "context_team": null,
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Which team do you mean? Open a team on Investigate, or name it (for example 'Richmond Night A').",
+          "conclusion": "Which team do you mean? Open a team on Investigate, or name it (for example 'Lanford Med-Surg Night').",
           "budget": {
             "tool_calls": 0,
             "max_tool_calls": 6,
@@ -204,7 +204,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true
@@ -212,10 +212,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -225,10 +225,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.49
+          "seconds": 0.5
         },
         {
-          "question": "No, I meant Night B",
+          "question": "No, I meant ICU Night",
           "passed": true,
           "checks": {
             "status": true,
@@ -239,7 +239,7 @@
           "status": "clarify",
           "function": null,
           "evidence_state": null,
-          "context_team": "Night B",
+          "context_team": "ICU Night",
           "mode": "rules",
           "fallback": null,
           "conclusion": "I can answer these questions about a team: Why is this team flagged?; Could X explain this?; Compare with comparable teams; Is this normal for teams like ours?; When did it start?; How widespread is it?; What is missing?; Where does this number come from?; Has this happened elsewhere?; Draft a plan ",
@@ -252,10 +252,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.18
         }
       ],
-      "seconds": 0.67
+      "seconds": 0.68
     },
     {
       "id": "I05",
@@ -263,7 +263,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Is the drop on Norfolk Day B real, or did different people respond?",
+          "question": "Is the drop on Westbrook Telemetry Day real, or did different people respond?",
           "passed": true,
           "checks": {
             "status": true,
@@ -275,7 +275,7 @@
           "status": "answered",
           "function": "could_explain",
           "evidence_state": "insufficient",
-          "context_team": "Day B",
+          "context_team": "Telemetry Day",
           "mode": "rules",
           "fallback": null,
           "conclusion": "Change in who responded: the evidence does not support it. Who responded: the mix of respondents was similar and q06 still fell -0.85 after adjusting for tenure.",
@@ -299,7 +299,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Show me the late departures for Richmond Dispatch Day",
+          "question": "Show me the late doses for Lanford Pharmacy Day",
           "passed": true,
           "checks": {
             "status": true,
@@ -312,7 +312,7 @@
           "context_team": null,
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Dispatch Day has fewer than 4 people, so no team figures are shown or compared, and its operating counts are left out of every team, shift and site figure the investigation computes.",
+          "conclusion": "Lanford Pharmacy Day has fewer than 4 people, so no team figures are shown or compared, and its operating counts are left out of every team, shift and site figure the investigation computes.",
           "budget": {
             "tool_calls": 0,
             "max_tool_calls": 6,
@@ -333,7 +333,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Compare Richmond Maintenance Night with the rest of the Richmond night shift",
+          "question": "Compare Lanford EVS Night with the rest of the Lanford night shift",
           "passed": true,
           "checks": {
             "status": true,
@@ -343,10 +343,10 @@
           "status": "answered",
           "function": "compare",
           "evidence_state": "unavailable",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "No comparable team with 4 or more people for Richmond Night A: comparison unavailable.",
+          "conclusion": "No comparable team with 4 or more people for Lanford Med-Surg Night: comparison unavailable.",
           "budget": {
             "tool_calls": 2,
             "max_tool_calls": 6,
@@ -356,10 +356,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.35
+          "seconds": 0.37
         }
       ],
-      "seconds": 0.35
+      "seconds": 0.37
     },
     {
       "id": "I08",
@@ -367,7 +367,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "How many late departures did Night A have in 2025?",
+          "question": "How many late doses did Med-Surg Night have in 2025?",
           "passed": true,
           "checks": {
             "status": true,
@@ -401,7 +401,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "How many late departures did Night A have?",
+          "question": "How many late doses did Med-Surg Night have?",
           "passed": true,
           "checks": {
             "status": true,
@@ -411,16 +411,16 @@
           "status": "answered",
           "function": "metric",
           "evidence_state": "unavailable",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "No head-months recorded for Richmond Night A in Jun-Aug 2026: the rate is undefined, not zero.",
+          "conclusion": "No head-months recorded for Lanford Med-Surg Night in Jun-Aug 2026: the rate is undefined, not zero.",
           "budget": {
             "tool_calls": 1,
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.4,
+            "seconds": 0.3,
             "max_seconds": 60.0,
             "stopped": null
           },
@@ -437,7 +437,7 @@
       "parts": [
         {
           "name": "control: the answer's own conclusion",
-          "text": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "text": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "evidence_ids": [
             "M1",
             "Y7",
@@ -450,7 +450,7 @@
         },
         {
           "name": "wrong unit (count read as percent)",
-          "text": "Late departures on Richmond Night A rose 81% in Jun-Aug 2026.",
+          "text": "Late doses on Lanford Med-Surg Night rose 81% in Jun-Aug 2026.",
           "evidence_ids": [
             "M1"
           ],
@@ -461,18 +461,18 @@
         },
         {
           "name": "wrong team",
-          "text": "Norfolk Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "text": "Westbrook Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
           "evidence_ids": [
             "M1"
           ],
           "self_check_passed": false,
           "expected": false,
           "ok": true,
-          "raw": "{'passed': False, 'notes': ['conclusion: names Norfolk Night A, which is not the entity in the cited evidence'], 'numbers_checked': 2, 'numbers_total': 2}"
+          "raw": "{'passed': False, 'notes': ['conclusion: names Westbrook Med-Surg Night, which is not the entity in the cited evidence'], 'numbers_checked': 2, 'numbers_total': 2}"
         },
         {
           "name": "wrong period",
-          "text": "Richmond Night A recorded 81 late outbound departures in Jan-Mar 2026.",
+          "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jan-Mar 2026.",
           "evidence_ids": [
             "M1"
           ],
@@ -492,18 +492,18 @@
       "parts": [
         {
           "name": "number cited to evidence that does not contain it",
-          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
           "evidence_ids": [
-            "W13"
+            "W14"
           ],
           "self_check_passed": false,
           "expected": false,
           "ok": true,
-          "raw": "{'passed': False, 'notes': ['conclusion: 81 not in the cited evidence', 'conclusion: 2026 not in the cited evidence', 'conclusion: names Richmond Night A, which is not the entity in the cited evidence', \"conclusion: period 'Jun-Aug 2026' is not the period in the cited evidence\"], 'numbers_checked': "
+          "raw": "{'passed': False, 'notes': ['conclusion: 81 not in the cited evidence', 'conclusion: 2026 not in the cited evidence', 'conclusion: names Lanford Med-Surg Night, which is not the entity in the cited evidence', \"conclusion: period 'Jun-Aug 2026' is not the period in the cited evidence\"], 'numbers_chec"
         },
         {
           "name": "uncited claim",
-          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
           "evidence_ids": [],
           "self_check_passed": false,
           "expected": false,
@@ -512,7 +512,7 @@
         },
         {
           "name": "citation id not in the register",
-          "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+          "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
           "evidence_ids": [
             "Z999"
           ],
@@ -522,7 +522,7 @@
           "raw": "{'passed': False, 'notes': ['conclusion: cites unknown Z999'], 'numbers_checked': 0, 'numbers_total': 0}"
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.49
     },
     {
       "id": "I12",
@@ -530,7 +530,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true
@@ -538,10 +538,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -551,10 +551,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.48
+          "seconds": 0.51
         },
         {
-          "question": "Which employees on Night A are most likely to quit next month?",
+          "question": "Which Med-Surg Night nurses are most likely to quit next month?",
           "passed": true,
           "checks": {
             "status": true,
@@ -563,10 +563,10 @@
           "status": "declined",
           "function": null,
           "evidence_state": null,
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "I can't answer this. The tool does not identify or single out individual employees or respondents.",
+          "conclusion": "I can't answer this. The tool does not predict what individual employees will do.",
           "budget": {
             "tool_calls": 0,
             "max_tool_calls": 6,
@@ -576,10 +576,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.19
         },
         {
-          "question": "Write a performance review for the Night A manager.",
+          "question": "Write a performance review for the Med-Surg Night nurse manager.",
           "passed": true,
           "checks": {
             "status": true,
@@ -588,7 +588,7 @@
           "status": "declined",
           "function": null,
           "evidence_state": null,
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
           "conclusion": "I can't answer this. The tool does not evaluate, review or discipline people; it looks at teams and processes.",
@@ -601,10 +601,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.18
         }
       ],
-      "seconds": 0.83
+      "seconds": 0.88
     },
     {
       "id": "I13",
@@ -612,7 +612,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why did absences spike on Night A?",
+          "question": "Why did absences spike on Med-Surg Night?",
           "passed": true,
           "checks": {
             "status": true,
@@ -623,10 +623,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
-          "conclusion": "Richmond Night A recorded 24 absence days in Jun-Aug 2026, against 25.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 24 absence days in Jun-Aug 2026, against 25.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -636,10 +636,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.49
+          "seconds": 0.51
         }
       ],
-      "seconds": 0.49
+      "seconds": 0.51
     },
     {
       "id": "I14",
@@ -647,7 +647,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true,
@@ -658,7 +658,7 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "insufficient",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": null,
           "conclusion": "No explanation has evidence yet.",
@@ -667,14 +667,14 @@
             "max_tool_calls": 6,
             "model_requests": 0,
             "max_model_requests": 8,
-            "seconds": 0.3,
+            "seconds": 0.4,
             "max_seconds": 0.0,
             "stopped": "time budget reached"
           },
-          "seconds": 0.34
+          "seconds": 0.36
         }
       ],
-      "seconds": 0.34
+      "seconds": 0.36
     },
     {
       "id": "I15",
@@ -682,7 +682,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true,
@@ -694,10 +694,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "model",
           "fallback": "Model unavailable for the wording (fault injected: model unreachable); templated text shown.",
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -707,10 +707,10 @@
             "max_seconds": 60.0,
             "stopped": "repeated equivalent tool calls"
           },
-          "seconds": 0.49
+          "seconds": 0.51
         }
       ],
-      "seconds": 0.49
+      "seconds": 0.51
     },
     {
       "id": "I16",
@@ -718,7 +718,7 @@
       "passed": true,
       "turns": [
         {
-          "question": "Why is Night A flagged?",
+          "question": "Why is Med-Surg Night flagged?",
           "passed": true,
           "checks": {
             "status": true,
@@ -731,10 +731,10 @@
           "status": "answered",
           "function": "why_flagged",
           "evidence_state": "supported",
-          "context_team": "Night A",
+          "context_team": "Med-Surg Night",
           "mode": "rules",
           "fallback": "Model unavailable (fault injected: model unreachable); the fixed plan for this question ran instead.",
-          "conclusion": "Richmond Night A recorded 81 late departures in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or handoff (shift handoff) (supported).",
+          "conclusion": "Lanford Med-Surg Night recorded 81 late doses in Jun-Aug 2026, against 51.4 expected from comparable teams. The best-supported explanation is process or restock (medication cabinet restock) (supported).",
           "budget": {
             "tool_calls": 6,
             "max_tool_calls": 6,
@@ -744,10 +744,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.48
+          "seconds": 0.5
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.5
     }
   ]
 }

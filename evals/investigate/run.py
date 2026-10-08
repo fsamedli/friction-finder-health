@@ -75,7 +75,7 @@ def _inject(case, config, INV, llm, db):
             raise llm.LLMUnavailable("fault injected: model unreachable")
 
         def duplicate(*a, **k):
-            return {"name": "query_metric", "args": {"kpi": "late_departures", "scope": "team"}, "selection": "function_calling", "attempts": 1}
+            return {"name": "query_metric", "args": {"kpi": "late_doses", "scope": "team"}, "selection": "function_calling", "attempts": 1}
 
         llm.choose_tool = duplicate if inj["fake_model"] == "duplicate" else outage
         llm.chat_json = outage

@@ -1,7 +1,9 @@
 # Friction Finder architecture (v0.8)
 
-Drawn from the code on branch `v0.8-investigate` (Oct 8, 2026). References name the function; line numbers
-are left out because several of these files changed during the night.
+Drawn from the code on branch `v0.8-investigate` (Oct 8, 2026); v0.9-health keeps this architecture unchanged and
+renames the data (Lanford Health, fictional; late doses, overtime shifts; `docs/specs/2026-10-08-healthcare-variant.md`).
+References name the function; line numbers are left out because several of these files changed during the night.
+No patient-level data exists anywhere in the pipeline: every operating record is a count at unit, shift or site level.
 
 Friction Finder is an **AI-assisted workflow** with one **AI-assisted investigation** inside it. The model
 chooses which of a fixed set of read-only tools to run next, under a budget; code computes every number and
@@ -12,7 +14,7 @@ client's systems.
 flowchart LR
   subgraph Client data (synthetic CSVs in the demo)
     S[Survey export<br/>responses, comments]
-    O[Operating records<br/>team-month, dispatch by hour]
+    O[Operating records<br/>team-month, eMAR doses by hour]
     D[Procedures &<br/>ownership directory]
   end
   S & O & D --> V[(DuckDB views<br/>n ≥ 4 in SQL; teams under 4<br/>left out of v_team_ops_month)]
@@ -39,8 +41,8 @@ flowchart LR
    *caused* quits or injuries (`CAUSE_OF_RARE`: the data has counts, not reasons) are declined too; the causal
    decline still reports the counts.
 2. **Context.** `{site, team, as_of, kpi, item, dataset version}` is kept server-side per conversation
-   (`Conversation`, 4-hour TTL). `app/relations.py` `resolve()` turns "it", "the other night shifts", "Norfolk",
-   "No, I meant Night B" into a context change, or asks which team when the referent is ambiguous. A context
+   (`Conversation`, 4-hour TTL). `app/relations.py` `resolve()` turns "it", "the other night shifts", "Westbrook",
+   "No, I meant ICU Night" into a context change, or asks which team when the referent is ambiguous. A context
    change marks earlier evidence `stale`; it stays in the register so old citations still open.
 3. **Question reader.** `classify()`: regular expressions map the question to one manager function and its
    parameters (for example `could_explain` with `x = staffing`). Only when nothing matches and a key is present
@@ -76,7 +78,7 @@ latency. Every step appears in the trace with its mode (code or AI model) and re
 | `benchmark` | internal norm (median and range of comparable teams); all-night vs all-day shift rates; the external Gallup benchmark returns **unavailable** (assumed source) |
 | `signal_check` | the v0.5 who-responded check (shift-share by tenure band) and the board's tenure-adjusted largest item change |
 | `timeline` | month by month: the metric vs the comparable range, staffing months under 90% of scheduled, survey waves, plan dates |
-| `hour_bands` | late-departure share by hour band, Jan–May vs Jun–Sep (dispatch is recorded per site and shift, not per team) |
+| `hour_bands` | late-dose share by hour band, Jan–May vs Jun–Sep (the eMAR export is recorded per site and shift, not per team) |
 | `retrieve_passages` | reportable comments counted by theme in code, wave-2 comments re-ranked for the top theme (keyword + embeddings), procedures; deduplicated; instruction-like text labelled as data (`INJECTION`) |
 | `owner_lookup` | the process owner at the team's site (ownership directory) |
 | `precedent` | other teams flagged on the same metric or with the same item drop, their plans and results, or "no precedent" |
@@ -88,7 +90,7 @@ no confidence percentages:
 
 | Explanation or answer | supported | mixed | insufficient | unavailable |
 |---|---|---|---|---|
-| Process or handoff | 3+ separate comments on one theme **and** an hour-band rise at the shift boundary | one of the two | neither | — |
+| Process or restock | 3+ separate comments on one theme **and** an hour-band rise in the medication pass before the shift change | one of the two | neither | — |
 | Staffing | a month under 90% of scheduled falls inside the flagged window | — | no shortage month in the window | — |
 | Who responded | a large change in who answered and the item change within noise after adjusting | — | the drop persists after adjusting | a wave under 4 respondents |
 | Site-wide or seasonal | — | team inside the comparable range | team above every comparable team (same months, so shared seasonality is netted out) | — |
@@ -130,15 +132,15 @@ templated SQL. Model-written SQL (tier 2) was not shipped.
 
 ## Question → validated query → computed result → plain-English sentence (`app/metrics.py`)
 
-One definition per operating metric the screens show (`METRICS`: late departures, absence days, quits,
-injuries, rework, plus the late-departure share by hour band): view, numerator, denominator (head-months),
+One definition per operating metric the screens show (`METRICS`: late doses, absence days, quits,
+injuries, overtime shifts, plus the late-dose share by hour band): view, numerator, denominator (head-months),
 unit (per 10 people per month), period, grain, source. `validate()` checks metric, entity, team size, period
 and grain; missing periods, unknown metrics or entities, suppressed teams and zero denominators come back as
 named statuses, never as zeros. `query_metric()` compiles the plan to templated SQL on `v_team_ops_month`,
 which reads exactly the rows `app/impact.py` uses (uploads included, `DB.sync_team_ops`) and leaves out teams
 under 4 people, so no site or shift total can be differenced to recover them. `sentence()` writes the rules-mode
 explanation with unit and period. `tests/test_metrics.py` checks that the board and `query_metric` agree for
-Night A on all five metrics at both demo dates. Ask (`agent._ops_metric`) and the investigation tools use the
+the planted team (Lanford Med-Surg Night) on all five metrics at both demo dates. Ask (`agent._ops_metric`) and the investigation tools use the
 same path, so a question and a dashboard cannot disagree.
 
 ## What is deterministic
@@ -180,7 +182,7 @@ Alternatives are taken only from `SPEC.md`, `docs/specs/`, git history, the Oct 
 
 ## Known gaps (reported, not changed)
 
-- `app/impact.py` `_comparables` uses the same shift at **every** site (Richmond Night B is a comparable for
-  Night A). The v0.7 Method text said "other sites"; the v0.8 UI text now matches the code. The DiD comparison
+- `app/impact.py` `_comparables` uses the same shift at **every** site (Lanford ICU Night is a comparable for
+  Lanford Med-Surg Night). The v0.7 Method text said "other sites"; the v0.8 UI text now matches the code. The DiD comparison
   uses other-site teams only. Statistical logic was not changed.
 - Complementary suppression on survey roll-ups is still not enforced (`docs/risk/TEVV_EVIDENCE.md`).

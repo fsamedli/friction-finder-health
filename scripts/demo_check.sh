@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Demo safety net. Builds the web app, starts a private server on :8010 with NO model key (deterministic rules
+# Demo safety net (v0.9-health). Builds the web app, starts a private server on :8020 with NO model key (deterministic rules
 # mode) and a scratch cache folder (your demo state is untouched), walks the demo path at 1440 px and 390 px,
 # and exits non-zero on any failure. Run before every commit and before every rehearsal.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-PORT="${CHECK_PORT:-8010}"
+PORT="${CHECK_PORT:-8020}"
 if curl -s -m 2 -o /dev/null "http://127.0.0.1:$PORT/" ; then echo "port $PORT is already in use (a stale server?); stop it or set CHECK_PORT" >&2; exit 2; fi
 SCRATCH="$(mktemp -d)"
 (cd web && npm run build >/dev/null)

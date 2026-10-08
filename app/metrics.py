@@ -2,7 +2,7 @@
 
 One definition per metric the screens show: name, view, numerator, denominator, unit, period, grain. The
 dashboards' numbers come from app/impact.py; the same rows sit behind v_team_ops_month (app/db.py), and
-tests/test_metrics.py checks that a question about Night A returns the board's figures.
+tests/test_metrics.py checks that a question about Med-Surg Night returns the board's figures.
 
 Text-to-SQL here is tier 1 only: a question is read into a structured plan (metric, entity, months,
 comparison), the plan is validated, and code compiles it to templated SQL over the views. The model never
@@ -10,6 +10,7 @@ writes this SQL. Every query still goes through db.run_sql and its sqlglot guard
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from app import config
@@ -32,35 +33,44 @@ class Metric:
 
 
 METRICS: dict[str, Metric] = {
-    "late_departures": Metric("late_departures", I.KPI_LABELS["late_departures"], "v_team_ops_month", "late_departures", "head-months (people x months)",
-                              "per 10 people per month", 10, "calendar month", "team-month", "dispatch / WMS export"),
+    "late_doses": Metric("late_doses", I.KPI_LABELS["late_doses"], "v_team_ops_month", "late_doses", "head-months (people x months)",
+                         "per 10 people per month", 10, "calendar month", "team-month", "eMAR / barcode medication administration export"),
     "absence_days": Metric("absence_days", I.KPI_LABELS["absence_days"], "v_team_ops_month", "absence_days", "head-months (people x months)",
                            "per 10 people per month", 10, "calendar month", "team-month", "timekeeping and attendance"),
     "quits": Metric("quits", I.KPI_LABELS["quits"], "v_team_ops_month", "quits", "head-months (people x months)",
                     "per 10 people per month", 10, "calendar month", "team-month", "HRIS (voluntary separations)"),
     "injuries": Metric("injuries", I.KPI_LABELS["injuries"], "v_team_ops_month", "injuries", "head-months (people x months)",
-                       "per 10 people per month", 10, "calendar month", "team-month", "safety log (days-away cases)"),
-    "rework": Metric("rework", I.KPI_LABELS["rework"], "v_team_ops_month", "rework", "head-months (people x months)",
-                     "per 10 people per month", 10, "calendar month", "team-month", "WMS (rework events)"),
-    "late_rate": Metric("late_rate", "Share of departures that left late", "v_ops_hour", "late_departures", "departures",
-                        "% of departures", 100, "Jan-May 2026 vs Jun-Sep 2026", "site-shift-hour band", "dispatch / WMS export (kept per site and shift, not per team)"),
+                       "per 10 people per month", 10, "calendar month", "team-month", "employee health / safety log (days-away cases)"),
+    "overtime_shifts": Metric("overtime_shifts", I.KPI_LABELS["overtime_shifts"], "v_team_ops_month", "overtime_shifts", "head-months (people x months)",
+                              "per 10 people per month", 10, "calendar month", "team-month", "timekeeping (overtime)"),
+    "late_rate": Metric("late_rate", "Share of doses given late", "v_ops_hour", "late_doses", "scheduled_doses",
+                        "% of doses", 100, "Jan-May 2026 vs Jun-Sep 2026", "site-shift-hour band", "eMAR export (kept per site and shift, not per team)"),
 }
 
-# words a manager uses -> metric key (the question reader's vocabulary for operating metrics)
+# words a manager uses -> metric key (the question reader's vocabulary for operating metrics). First match wins,
+# so the specific late-rate phrases come before the bare "late".
 METRIC_WORDS = [
-    ("late_rate", ["late rate", "share of departures", "percent of departures", "% of departures", "hour band", "hour bands"]),
-    ("late_departures", ["late departure", "late departures", "late trucks", "late truck", "deliveries late", "late deliveries", "delays", "on-time", "on time", "late"]),
-    ("absence_days", ["absence", "absences", "absent", "sick", "call-out", "callouts", "call outs", "unplanned absence"]),
-    ("quits", ["quit", "quits", "turnover", "attrition", "resignation", "resignations", "leavers", "separations"]),
-    ("injuries", ["injury", "injuries", "safety", "incident", "incidents", "days-away", "accident", "accidents"]),
-    ("rework", ["rework", "re-work", "errors", "mispicks"]),
+    ("late_rate", ["late rate", "share of doses", "percent of doses", "% of doses", "hour band", "hour bands", "med pass"]),
+    ("late_doses", ["late dose", "late doses", "late med", "late meds", "late medication", "late medications", "medication delays",
+                    "med pass late", "delays", "on-time", "on time", "late"]),
+    ("absence_days", ["absence", "absences", "absent", "sick", "sick calls", "sick call", "call-ins", "call ins", "call-in",
+                      "call-out", "callouts", "call outs", "unplanned absence"]),
+    ("quits", ["quit", "quits", "turnover", "rn turnover", "nurses leaving", "attrition", "resignation", "resignations", "leavers", "separations"]),
+    ("injuries", ["injury", "injuries", "safety", "incident", "incidents", "days-away", "accident", "accidents",
+                  "needlestick", "needlesticks", "sharps", "patient handling"]),
+    ("overtime_shifts", ["overtime", "ot", "extra shifts", "extra shift", "stayed late", "held over", "holdover"]),
 ]
+
+
+def _has_word(phrase: str, text: str) -> bool:
+    """Whole-word match (so 'OT' does not fire on 'both' or 'note'); phrases may contain spaces, hyphens or '%'."""
+    return re.search(r"(?<![a-z0-9])" + re.escape(phrase) + r"(?![a-z0-9])", text) is not None
 
 
 def metric_in(text: str) -> str | None:
     t = text.lower()
     for key, words in METRIC_WORDS:
-        if any(w in t for w in words):
+        if any(_has_word(w, t) for w in words):
             return key
     return None
 
@@ -221,26 +231,26 @@ def _comparable(q: MetricQuery, m: Metric, months: list[str], db: DB) -> dict:
 
 
 def _late_rate(q: MetricQuery, db: DB) -> MetricResult:
-    """Late-departure share by hour band and period, from dispatch records kept per site and shift."""
+    """Late-dose share by hour band and period, from eMAR records kept per site and shift (unit counts, nothing patient-level)."""
     m = METRICS["late_rate"]
     if q.site_id is None:
-        return MetricResult("unknown_entity", "Dispatch records are kept per site and shift; name a site (or a team).", q.metric, definition=definition(q.metric))
+        return MetricResult("unknown_entity", "eMAR dose records are kept per site and shift; name a site (or a team).", q.metric, definition=definition(q.metric))
     shift = q.shift
     if q.team_id is not None:
         t = I._team(q.team_id)
         shift = shift or t["shift"]
     sites = I._data()[2].set_index("site_id")
-    label = f"{sites.loc[int(q.site_id), 'site_name']} {(shift or 'all').lower()} shift (all teams on that shift; dispatch is not recorded per team)"
-    sql = (f"SELECT hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_id = {int(q.site_id)}"
+    label = f"{sites.loc[int(q.site_id), 'site_name']} {(shift or 'all').lower()} shift (all teams on that shift; the eMAR export is not recorded per team)"
+    sql = (f"SELECT hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_id = {int(q.site_id)}"
            + (f" AND shift = {_q(shift)}" if shift else "") + " ORDER BY hour_band, period")
     r = db.run_sql(sql)
     rows = r.to_records()
     if not rows:
-        return MetricResult("missing_period", f"No dispatch records for {label}.", q.metric, label, sql=[r.sql], definition=definition(q.metric))
-    dep = float(sum(x["departures"] for x in rows))
-    late = float(sum(x["late_departures"] for x in rows))
+        return MetricResult("missing_period", f"No eMAR dose records for {label}.", q.metric, label, sql=[r.sql], definition=definition(q.metric))
+    dep = float(sum(x["scheduled_doses"] for x in rows))
+    late = float(sum(x["late_doses"] for x in rows))
     if dep == 0:
-        return MetricResult("zero_denominator", f"No departures recorded for {label}: the share is undefined.", q.metric, label, rows=rows, sql=[r.sql], definition=definition(q.metric))
+        return MetricResult("zero_denominator", f"No scheduled doses recorded for {label}: the share is undefined.", q.metric, label, rows=rows, sql=[r.sql], definition=definition(q.metric))
     return MetricResult("ok", "", q.metric, label, ["Jan-May 2026", "Jun-Sep 2026"], late, dep, late / dep, round(late / dep * 100, 1),
                         [{**x, "late_pct": round(float(x["late_rate"]) * 100, 1)} for x in rows], [r.sql], None, definition(q.metric))
 
@@ -251,7 +261,7 @@ def sentence(res: MetricResult) -> str:
     if res.status != "ok" or not m:
         return res.message
     if res.metric == "late_rate":
-        return f"{res.entity}: {int(res.events)} of {int(res.exposure)} departures left late ({res.shown}% of departures) across Jan-Sep 2026."
+        return f"{res.entity}: {int(res.events)} of {int(res.exposure)} scheduled doses were given late ({res.shown}% of doses) across Jan-Sep 2026."
     period = months_label(res.months)
     s = (f"{res.entity} recorded {int(res.events)} {m.label.lower()} in {period}: {res.shown} {m.unit} "
          f"({int(res.exposure)} head-months).")

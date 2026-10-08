@@ -45,23 +45,25 @@ export default function Value() {
   if (costs.error) return <ErrorState error={costs.error} />
   if (!costs.data || !value.data) return <PageSkeleton />
   const v = value.data
+  // Sector rates come from the API's sourced inputs (turnover first, injury second), never typed here.
+  const turnoverRate = v.inputs[0]?.value ?? 0, injuryRate = v.inputs[1]?.value ?? 0
   const save = async (k: string, n: number) => { costs.setData(await api.putCosts({ [k]: n })); setTick((t) => t + 1) }
   const reset = async () => { costs.setData(await api.resetCosts()); setTick((t) => t + 1) }
-  // Pricing hypothesis derived from the value estimate, not a market price: 10% of the low case, per site per month.
+  // Pricing hypothesis derived from the value estimate, not a market price: 10% of the low case, per hospital per month.
   const price = Math.round((v.low * 0.1) / 12 / 10) * 10
   return (
     <div>
-      <PageHeader title="Business case" sub={<>For a {num(v.headcount)}-person distribution center, voluntary turnover and days-away injuries cost about <b className="text-fg">{money(v.baseline_turnover_cost + v.baseline_injury_cost, true)}</b> a year. A small improvement is worth <b className="text-fg">{money(v.low, true)}–{money(v.high, true)}</b> per site per year.</>}
+      <PageHeader title="Business case" sub={<>For a hospital with {num(v.headcount)} nursing and support staff, voluntary turnover and days-away staff injuries cost about <b className="text-fg">{money(v.baseline_turnover_cost + v.baseline_injury_cost, true)}</b> a year. A small improvement is worth <b className="text-fg">{money(v.low, true)}–{money(v.high, true)}</b> per hospital per year.</>}
         actions={<Button variant="secondary" icon={<RotateCcw size={15} />} onClick={reset}>Reset inputs</Button>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
-        <Stat label="Voluntary turnover, per year" value={money(v.baseline_turnover_cost, true)} tone="crit" sub={`${num(v.headcount * 0.26)} quits × replacement cost`} />
-        <Stat label="Days-away injuries, per year" value={money(v.baseline_injury_cost, true)} tone="crit" sub={`${num(v.headcount * 0.015, 1)} cases × cost per case`} />
-        <Stat label="Value if it helps a little" value={`${money(v.low, true)}–${money(v.high, true)}`} tone="brand" sub="per site, per year · assumption below" />
-        <Stat label="US warehousing sites" value={num(v.segment.establishments)} sub="starting segment · BLS NAICS 493" />
+        <Stat label="Voluntary turnover, per year" value={money(v.baseline_turnover_cost, true)} tone="crit" sub={`${num(v.headcount * turnoverRate)} quits × cost per RN turnover`} />
+        <Stat label="Days-away staff injuries, per year" value={money(v.baseline_injury_cost, true)} tone="crit" sub={`${num(v.headcount * injuryRate, 1)} cases × cost per case`} />
+        <Stat label="Value if it helps a little" value={`${money(v.low, true)}–${money(v.high, true)}`} tone="brand" sub="per hospital, per year · assumption below" />
+        <Stat label="US hospitals" value={num(v.segment.establishments)} sub="starting segment · BLS NAICS 622" />
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>
-          <CardHeader title="Unit costs" sub="Every input has a source or is marked as an assumption. Edit any value; the site board and this page recompute."
+          <CardHeader title="Unit costs" sub="Late dose, overtime shift, absence day, quit, injury. Every input has a source or is marked as an assumption or client-entered. Edit any value; the board and this page recompute."
             right={<CsvButton filename="unit_costs.csv" rows={() => Object.entries(costs.data!).map(([k, c]) => ({ key: k, label: c.label, value: c.value, unit: c.unit, kind: c.kind, source: c.source, note: c.note }))} />} />
           {Object.entries(costs.data).map(([k, c]) => <CostRow key={k + c.value} k={k} c={c} onSave={save} />)}
         </Card>
@@ -70,19 +72,19 @@ export default function Value() {
             <CardHeader title="The assumption, stated plainly" />
             <p className="text-[13.5px] leading-relaxed text-fg-soft">{v.scenario}</p>
             <label className="mt-5 block">
-              <div className="flex justify-between text-[12.5px]"><span className="label">Site headcount</span><b className="tnum">{num(head)}</b></div>
+              <div className="flex justify-between text-[12.5px]"><span className="label">Nursing and support headcount</span><b className="tnum">{num(head)}</b></div>
               <input type="range" min={100} max={1000} step={50} value={head} onChange={(e) => setHead(Number(e.target.value))} className="mt-2 w-full accent-[#0E8A7E]" />
             </label>
           </Card>
           <Card>
             <CardHeader title="Pricing hypothesis" sub="To be tested in a pilot — not a validated price" right={<Badge tone="warn">Hypothesis</Badge>} />
-            <div className="text-[28px] font-semibold tnum tracking-tight">{money(price)}<span className="text-[14px] font-normal text-fg-mute"> per site / month</span></div>
-            <p className="mt-2 text-[12.5px] text-fg-soft">Set at 10% of the low value case ({money(v.low, true)} a year), so a site keeps about 90% of the value it gets even in the conservative scenario.</p>
+            <div className="text-[28px] font-semibold tnum tracking-tight">{money(price)}<span className="text-[14px] font-normal text-fg-mute"> per hospital / month</span></div>
+            <p className="mt-2 text-[12.5px] text-fg-soft">Set at 10% of the low value case ({money(v.low, true)} a year), so a hospital keeps about 90% of the value it gets even in the conservative scenario.</p>
             <dl className="mt-4 grid grid-cols-[100px_1fr] gap-y-2 border-t border-border pt-3 text-[12.5px]">
-              <dt className="text-fg-mute">User</dt><dd>Site or shift manager</dd>
-              <dt className="text-fg-mute">Buyer</dt><dd>Operations or HR leader who owns the site budget</dd>
-              <dt className="text-fg-mute">Data owners</dt><dd>HR (survey export) · Operations (timekeeping, WMS)</dd>
-              <dt className="text-fg-mute">Pilot test</dt><dd>Can one site fill the monthly template in under a day? If not, stop.</dd>
+              <dt className="text-fg-mute">User</dt><dd>Unit nurse manager or charge nurse</dd>
+              <dt className="text-fg-mute">Buyer</dt><dd>Chief Nursing Officer; HR / people analytics</dd>
+              <dt className="text-fg-mute">Data owners</dt><dd>HR (survey export) · Pharmacy and nursing informatics (eMAR) · Timekeeping · HRIS · Employee health</dd>
+              <dt className="text-fg-mute">Pilot test</dt><dd>Can one hospital fill the monthly template in under a day? If not, stop.</dd>
             </dl>
           </Card>
           <Card>

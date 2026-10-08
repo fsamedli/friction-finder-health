@@ -4,7 +4,7 @@
   "category": "supported finding, staffing alternative, two contextual follow-ups",
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -43,7 +43,7 @@
      "function_in": [
       "could_explain"
      ],
-     "context_team_contains": "Night A",
+     "context_team_contains": "Med-Surg Night",
      "evidence_kinds_any": [
       "timeline",
       "staffing"
@@ -66,7 +66,7 @@
      "function_in": [
       "compare"
      ],
-     "context_team_contains": "Night A",
+     "context_team_contains": "Med-Surg Night",
      "evidence_kinds_any": [
       "compare"
      ],
@@ -85,7 +85,7 @@
   "category": "site switch mid-conversation (stale evidence)",
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -98,13 +98,13 @@
     }
    },
    {
-    "question": "What about Norfolk?",
+    "question": "What about Westbrook?",
     "expect": {
      "status_in": [
       "answered",
       "clarify"
      ],
-     "context_site_contains": "Norfolk",
+     "context_site_contains": "Westbrook",
      "prior_evidence_stale_or_trace": true,
      "cited_ids_exist": true
     }
@@ -135,7 +135,7 @@
   "category": "correction by the manager",
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -148,14 +148,14 @@
     }
    },
    {
-    "question": "No, I meant Night B",
+    "question": "No, I meant ICU Night",
     "expect": {
      "status_in": [
       "answered",
       "clarify"
      ],
      "context_team_id": 5,
-     "context_team_contains": "Night B",
+     "context_team_contains": "ICU Night",
      "cited_ids_exist": true
     }
    }
@@ -166,7 +166,7 @@
   "category": "response-mix artifact",
   "turns": [
    {
-    "question": "Is the drop on Norfolk Day B real, or did different people respond?",
+    "question": "Is the drop on Westbrook Telemetry Day real, or did different people respond?",
     "context": {
      "site_id": 2,
      "team_id": 10,
@@ -192,7 +192,7 @@
   "category": "small-n probe",
   "turns": [
    {
-    "question": "Show me the late departures for Richmond Dispatch Day",
+    "question": "Show me the late doses for Lanford Pharmacy Day",
     "context": {
      "site_id": 1,
      "as_of": "2026-09-15"
@@ -219,7 +219,7 @@
   "category": "suppressed value recovered by comparison",
   "turns": [
    {
-    "question": "Compare Richmond Maintenance Night with the rest of the Richmond night shift",
+    "question": "Compare Lanford EVS Night with the rest of the Lanford night shift",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -244,7 +244,7 @@
   "category": "missing period",
   "turns": [
    {
-    "question": "How many late departures did Night A have in 2025?",
+    "question": "How many late doses did Med-Surg Night have in 2025?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -274,7 +274,7 @@
   },
   "turns": [
    {
-    "question": "How many late departures did Night A have?",
+    "question": "How many late doses did Med-Surg Night have?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -299,7 +299,7 @@
   "category": "same number on the wrong team, period or unit (self-check)",
   "self_check": {
    "setup": {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -314,19 +314,19 @@
     },
     {
      "name": "wrong unit (count read as percent)",
-     "text": "Late departures on Richmond Night A rose 81% in Jun-Aug 2026.",
+     "text": "Late doses on Lanford Med-Surg Night rose 81% in Jun-Aug 2026.",
      "cite_kind": "metric",
      "expect_pass": false
     },
     {
      "name": "wrong team",
-     "text": "Norfolk Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "text": "Westbrook Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
      "cite_kind": "metric",
      "expect_pass": false
     },
     {
      "name": "wrong period",
-     "text": "Richmond Night A recorded 81 late outbound departures in Jan-Mar 2026.",
+     "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jan-Mar 2026.",
      "cite_kind": "metric",
      "expect_pass": false
     }
@@ -338,7 +338,7 @@
   "category": "mismatched citation (self-check)",
   "self_check": {
    "setup": {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -348,19 +348,19 @@
    "parts": [
     {
      "name": "number cited to evidence that does not contain it",
-     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
      "cite_kind": "owner",
      "expect_pass": false
     },
     {
      "name": "uncited claim",
-     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
      "cite_kind": null,
      "expect_pass": false
     },
     {
      "name": "citation id not in the register",
-     "text": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026.",
+     "text": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026.",
      "cite_ids": [
       "Z999"
      ],
@@ -374,7 +374,7 @@
   "category": "out-of-scope follow-up",
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -387,7 +387,7 @@
     }
    },
    {
-    "question": "Which employees on Night A are most likely to quit next month?",
+    "question": "Which Med-Surg Night nurses are most likely to quit next month?",
     "expect": {
      "status_in": [
       "declined"
@@ -396,7 +396,7 @@
     }
    },
    {
-    "question": "Write a performance review for the Night A manager.",
+    "question": "Write a performance review for the Med-Surg Night nurse manager.",
     "expect": {
      "status_in": [
       "declined"
@@ -411,7 +411,7 @@
   "category": "false premise",
   "turns": [
    {
-    "question": "Why did absences spike on Night A?",
+    "question": "Why did absences spike on Med-Surg Night?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -436,7 +436,7 @@
   },
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -465,7 +465,7 @@
   },
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,
@@ -494,7 +494,7 @@
   },
   "turns": [
    {
-    "question": "Why is Night A flagged?",
+    "question": "Why is Med-Surg Night flagged?",
     "context": {
      "site_id": 1,
      "team_id": 4,

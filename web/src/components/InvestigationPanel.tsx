@@ -205,19 +205,19 @@ export default function InvestigationPanel({ initial, full = false, teams }: { i
     <section aria-label="AI-assisted investigation" className={cx('flex flex-col gap-3', full ? '' : 'rounded-2xl border border-border bg-canvas/60 p-3 sm:p-4')}>
       <header className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold"><Sparkles size={16} className="text-ai" /> Ask about {teamName ?? 'this site'}</h2>
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold"><Sparkles size={16} className="text-ai" /> Ask about {teamName ?? 'this hospital'}</h2>
           <p className="text-[12px] text-fg-mute">AI-assisted investigation: {meta?.model ? <>the AI model ({meta.model}) chooses which read-only check runs next, under a budget</> : <>no model key, so a fixed plan per question type chooses the checks</>}; code computes every number; you approve every action.</p>
         </div>
         {turns.length > 0 && <button type="button" onClick={() => { setTurns([]); setConv(null) }} className="shrink-0 text-[12px] font-medium text-fg-mute hover:text-fg">New conversation</button>}
       </header>
       <div className="flex flex-wrap items-center gap-1.5 text-[12px]" aria-label="Context">
-        <label className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-border"><span className="text-fg-mute">Site</span>
-          <select aria-label="Context: site" value={ctx.site_id ?? ''} onChange={(e) => setCtx((c) => ({ ...c, site_id: Number(e.target.value), team_id: null }))} className="bg-transparent font-medium focus:outline-none">
+        <label className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-border"><span className="text-fg-mute">Hospital</span>
+          <select aria-label="Context: hospital" value={ctx.site_id ?? ''} onChange={(e) => setCtx((c) => ({ ...c, site_id: Number(e.target.value), team_id: null }))} className="bg-transparent font-medium focus:outline-none">
             {(meta?.sites ?? []).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name}</option>)}
           </select></label>
         <label className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-border"><span className="text-fg-mute">Team</span>
           <select aria-label="Context: team" value={ctx.team_id ?? ''} onChange={(e) => setCtx((c) => ({ ...c, team_id: e.target.value ? Number(e.target.value) : null }))} className="max-w-[130px] bg-transparent font-medium focus:outline-none">
-            <option value="">Whole site</option>
+            <option value="">Whole hospital</option>
             {teamList.map((t) => <option key={t.team_id} value={t.team_id}>{t.team_name}</option>)}
           </select></label>
         <label className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 ring-1 ring-border"><span className="text-fg-mute">As of</span>

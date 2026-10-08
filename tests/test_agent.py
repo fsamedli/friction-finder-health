@@ -13,7 +13,7 @@ from app.db import DB
 from app.retrieval import Retriever
 
 GEN = Path(__file__).resolve().parents[1] / "data" / "generated"
-MAIN_Q = "Why did the Richmond night shift's scores drop and why are deliveries late?"
+MAIN_Q = "Why did the Lanford night shift's scores drop and why are doses late?"
 
 
 @pytest.fixture(scope="module")
@@ -39,35 +39,44 @@ def main_result(db, retriever):
 # ---- scope
 
 def test_scope_resolves_site_shift_team(db):
-    sc = _scope_rules("Why did the Richmond night shift's scores drop?", db.sites(), db.teams())
-    assert sc.site == "Richmond" and sc.shift == "Night" and sc.team == "Night A" and sc.team_id is not None
+    sc = _scope_rules("Why did the Lanford night shift's scores drop?", db.sites(), db.teams())
+    assert sc.site == "Lanford" and sc.shift == "Night" and sc.team == "Med-Surg Night" and sc.team_id is not None
     assert sc.unknown_entities == []
 
 
 def test_scope_small_team_is_not_unknown(db):
-    sc = _scope_rules("Why did the Richmond Dispatch Day team's scores drop?", db.sites(), db.teams())
-    assert sc.team == "Dispatch Day" and sc.unknown_entities == []
+    sc = _scope_rules("Why did the Lanford Pharmacy Day team's scores drop?", db.sites(), db.teams())
+    assert sc.team == "Pharmacy Day" and sc.unknown_entities == []
+    sc2 = _scope_rules("Why did the Pine Hollow ED Day team's scores drop?", db.sites(), db.teams())
+    assert sc2.site == "Pine Hollow" and sc2.team == "ED Day" and sc2.unknown_entities == []
+    sc3 = _scope_rules("Why did Lanford Med Surg Night drop?", db.sites(), db.teams())   # hyphen omitted
+    assert sc3.team == "Med-Surg Night" and sc3.unknown_entities == []
 
 
 def test_scope_site_overview(db):
-    sc = _scope_rules("Where did scores drop across Richmond?", db.sites(), db.teams())
-    assert sc.intent == "site_overview" and sc.site == "Richmond" and sc.team_id is None
+    sc = _scope_rules("Where did scores drop across Lanford?", db.sites(), db.teams())
+    assert sc.intent == "site_overview" and sc.site == "Lanford" and sc.team_id is None
 
 
 def test_scope_unknown_site_refused(db, retriever):
-    res = run("Why did the Denver site drop?", db, retriever)
-    assert res.status == "refused" and "Denver" in res.message
+    res = run("Why did the Riverside site drop?", db, retriever)
+    assert res.status == "refused" and "Riverside" in res.message
 
 
 def test_scope_unsupported_metric_refused(db, retriever):
-    res = run("What caused turnover on the Norfolk night shift?", db, retriever)
+    res = run("What caused RN turnover on the Westbrook night shift?", db, retriever)
     assert res.status == "refused" and "turnover" in res.message.lower()
+
+
+def test_patient_level_questions_are_declined(db, retriever):
+    res = run("What were the HCAHPS scores for Lanford Med-Surg Night?", db, retriever)
+    assert res.status == "refused" and "patient experience" in res.message.lower()
 
 
 # ---- numbers and suppression
 
 def test_analyze_numbers_match_truth(db, truth):
-    sc = _scope_rules("Why did the Richmond Night A scores drop on materials and equipment?", db.sites(), db.teams())
+    sc = _scope_rules("Why did the Lanford Med-Surg Night scores drop on materials and equipment?", db.sites(), db.teams())
     ev = analyze(sc, db)
     deltas = [e for e in ev if e.kind == "survey_delta" and e.value.get("item") == "q02"]
     assert deltas, "q02 evidence missing"
@@ -81,7 +90,7 @@ def test_analyze_numbers_match_truth(db, truth):
 
 
 def test_small_team_is_suppressed_not_shown(db, retriever):
-    res = run("Why did the Richmond Dispatch Day team's scores drop?", db, retriever)
+    res = run("Why did the Lanford Pharmacy Day team's scores drop?", db, retriever)
     assert res.status == "suppressed"
     kinds = {e.kind for e in res.evidence}
     assert "suppressed" in kinds and "survey_delta" not in kinds
@@ -105,21 +114,21 @@ def test_main_question_is_supported_and_owned(main_result):
     kinds = {e.kind for e in res.evidence}
     assert {"survey_delta", "ops_hour", "staffing", "comment_themes", "comment", "doc", "owner"} <= kinds
     a = res.assessment
-    assert a.verdict == "supported" and a.theme == "handoff" and a.ops_signal and a.comment_signal
-    assert "handoff" in res.brief.obstacle.lower()
+    assert a.verdict == "supported" and a.theme == "restock" and a.ops_signal and a.comment_signal
+    assert "restock" in res.brief.obstacle.lower()
     assert check_brief(res.brief, res.evidence, a) == []
-    assert "Site Operations Manager" in res.brief.owner
+    assert "Pharmacy Operations Manager" in res.brief.owner
 
 
 def test_comment_breadth_is_counted(main_result):
     th = [e for e in main_result.evidence if e.kind == "comment_themes"][0]
-    assert th.value["top_theme"] == "handoff" and th.value["top_count"] >= 3 and th.value["breadth_ok"] is True
+    assert th.value["top_theme"] == "restock" and th.value["top_count"] >= 3 and th.value["breadth_ok"] is True
     assert th.rows and th.rows[0]["comments"] == th.value["top_count"]
 
 
 def test_blip_is_insufficient_no_owner(db, retriever, truth):
     """Judge Lederman's red-team case (P9): the survey moved, nothing else did."""
-    res = run("Why did the Roanoke Day C team's scores drop?", db, retriever)
+    res = run("Why did the Pine Hollow ED Day team's scores drop?", db, retriever)
     a = res.assessment
     assert res.status == "ok" and a.verdict == "insufficient"
     assert a.survey_signal and not a.ops_signal and not a.comment_signal
@@ -133,10 +142,10 @@ def test_blip_is_insufficient_no_owner(db, retriever, truth):
 
 def test_loud_comment_is_single_source(db, retriever, truth):
     """Judge Chang's red-team case (P10): one long comment must not become the obstacle."""
-    res = run("Why did the Norfolk night shift's scores drop?", db, retriever)
+    res = run("Why did the Westbrook night shift's scores drop?", db, retriever)
     a = res.assessment
     assert a.verdict in ("no_material_change", "insufficient")
-    assert "forklift" not in res.brief.obstacle.lower()
+    assert "pump" not in res.brief.obstacle.lower()
     assert res.brief.owner.lower().startswith("not assigned")
     th = [e for e in res.evidence if e.kind == "comment_themes"][0]
     assert th.value["top_count"] < 3 and th.value["breadth_ok"] is False
@@ -147,8 +156,8 @@ def test_loud_comment_is_single_source(db, retriever, truth):
 def test_verdict_rule_enforced_on_model_style_brief(main_result):
     """A brief that names an owner when the verdict is not supported must fail the check."""
     a = Assessment(verdict="insufficient", label="x")
-    b = Brief(obstacle="The handoff is the most likely obstacle.", evidence_for=[], evidence_against=[], missing=[],
-              owner="Site Operations Manager, Priya Singh", proposed_test="", limits="")
+    b = Brief(obstacle="The cabinet restock is the most likely obstacle.", evidence_for=[], evidence_against=[], missing=[],
+              owner="Pharmacy Operations Manager, Priya Singh", proposed_test="", limits="")
     problems = check_brief(b, main_result.evidence, a)
     assert any("insufficient" in p for p in problems) and any("owner" in p for p in problems)
 
@@ -156,7 +165,7 @@ def test_verdict_rule_enforced_on_model_style_brief(main_result):
 # ---- signal check and site overview
 
 def test_reviewer_flags_mix_shift_and_explains_it(db, retriever, truth):
-    res = run("Is the Norfolk Day B decline real or did different people respond?", db, retriever)
+    res = run("Is the Westbrook Telemetry Day decline real or did different people respond?", db, retriever)
     mix = [e for e in res.evidence if e.kind == "tenure_mix"][0]
     assert mix.value["mix_shift"] is True
     sig = [e for e in res.evidence if e.kind == "signal_check"][0]
@@ -166,11 +175,11 @@ def test_reviewer_flags_mix_shift_and_explains_it(db, retriever, truth):
 
 
 def test_site_overview_lists_watch_items_and_suppressed_teams(db, retriever):
-    res = run("Where did scores drop across Richmond?", db, retriever)
+    res = run("Where did scores drop across Lanford?", db, retriever)
     hm = [e for e in res.evidence if e.kind == "site_heatmap"][0]
-    assert any(w["team"] == "Night A" and w["item"] == "q02" for w in hm.value["watch"])
-    assert {s["team_name"] for s in hm.value["suppressed"]} >= {"Dispatch Day", "Maintenance Night"}
-    assert all(c["team_name"] not in {"Dispatch Day", "Maintenance Night"} for c in hm.rows)
+    assert any(w["team"] == "Med-Surg Night" and w["item"] == "q02" for w in hm.value["watch"])
+    assert {s["team_name"] for s in hm.value["suppressed"]} >= {"Pharmacy Day", "EVS Night"}
+    assert all(c["team_name"] not in {"Pharmacy Day", "EVS Night"} for c in hm.rows)
     items = [e for e in res.evidence if e.kind == "site_items"][0]
     assert items.value["strength"] and len(items.value["opportunities"]) == 2
 
@@ -189,7 +198,9 @@ def test_plan_only_when_supported(db, main_result):
 def test_report_exports(db, main_result):
     p = plan(main_result, db)
     html = report_html(main_result, p)
-    assert "<svg" in html and "Verdict (computed by code)" in html and "Evidence register" in html and "Priya Singh" in html
+    owner_name = db.run_sql("SELECT owner_name FROM ownership_directory WHERE process_name = 'Medication cabinet restocking schedule' AND site_name = 'Lanford'").rows.owner_name.iloc[0]
+    assert "<svg" in html and "Verdict (computed by code)" in html and "Evidence register" in html and owner_name in html
+    assert "Late doses by hour band" in html
     assert "<script" not in html  # self-contained, no external code
     md = report_markdown(main_result, p)
     assert "## Action plan" in md and "| 1 |" in md
@@ -208,10 +219,10 @@ def test_flag_and_review_log(tmp_path, monkeypatch, main_result):
 
 def test_check_brief_rejects_fabricated_number_and_bad_citation():
     ev = [Evidence(id="S1", kind="survey_delta", statement="Score fell from 3.73 to 2.92 (n=11 to 13).", value={"wave1": 3.73, "wave2": 2.92})]
-    good = Brief(obstacle="Handoff is the supported hypothesis.", evidence_for=[{"claim": "Fell from 3.73 to 2.92.", "evidence_ids": ["S1"]}],
+    good = Brief(obstacle="The cabinet restock is the supported hypothesis.", evidence_for=[{"claim": "Fell from 3.73 to 2.92.", "evidence_ids": ["S1"]}],
                  evidence_against=[], missing=[], owner="x", proposed_test="30 days", limits="synthetic")
     assert check_brief(good, ev) == []
-    bad = Brief(obstacle="The root cause is the handoff; scores fell 40%.", evidence_for=[{"claim": "x", "evidence_ids": ["S9"]}],
+    bad = Brief(obstacle="The root cause is the restock; scores fell 40%.", evidence_for=[{"claim": "x", "evidence_ids": ["S9"]}],
                 evidence_against=[], missing=[], owner="x", proposed_test="", limits="")
     problems = check_brief(bad, ev)
     assert any("S9" in p for p in problems)
@@ -238,14 +249,14 @@ def test_repair_citations_fixes_prefix_only_near_miss(main_result):
 def test_chat_fallback_is_grounded(main_result):
     """Without a model the follow-up chat returns evidence lines; it never invents numbers."""
     from app.agent import chat_answer, chat_context, _numbers_in
-    out = chat_answer("Why is the handoff the likely obstacle?", main_result)
+    out = chat_answer("Why is the cabinet restock the likely obstacle?", main_result)
     assert out["mode"] == "fallback" and "evidence" in out["answer"].lower()
     allowed = _numbers_in(chat_context(main_result))
     from app.agent import NUM_RE
     for m in NUM_RE.finditer(out["answer"]):
         num = m.group(1)
         assert num in allowed or num.rstrip("0").rstrip(".") in allowed
-    off = chat_answer("What is the weather in Denver?", None)
+    off = chat_answer("What is the weather in Riverside?", None)
     assert "not on screen" in off["answer"].lower() or "closest evidence" in off["answer"].lower()
 
 
@@ -298,11 +309,11 @@ def _rules_run(q, db, retriever, monkeypatch):
 
 
 @pytest.mark.parametrize("q,kpi", [
-    ("How many unplanned absence days did Richmond Night A have?", "absence_days"),
-    ("How many quits did Richmond Night A have?", "quits"),
-    ("How many injuries did Richmond Night A have?", "injuries"),
-    ("What was the rework count on Richmond Night A?", "rework"),
-    ("How many late departures did Richmond Night A have?", "late_departures"),
+    ("How many unplanned absence days did Lanford Med-Surg Night have?", "absence_days"),
+    ("How many quits did Lanford Med-Surg Night have?", "quits"),
+    ("How many injuries did Lanford Med-Surg Night have?", "injuries"),
+    ("What was the overtime count on Lanford Med-Surg Night?", "overtime_shifts"),
+    ("How many late doses did Lanford Med-Surg Night have?", "late_doses"),
 ])
 def test_operating_metric_questions_match_the_board(q, kpi, db, retriever, monkeypatch):
     from app import impact as I
@@ -314,18 +325,18 @@ def test_operating_metric_questions_match_the_board(q, kpi, db, retriever, monke
 
 
 def test_causes_and_periods_the_data_cannot_answer_are_declined(db, retriever, monkeypatch):
-    r1 = _rules_run("What caused turnover on the Norfolk night shift?", db, retriever, monkeypatch)
+    r1 = _rules_run("What caused RN turnover on the Westbrook night shift?", db, retriever, monkeypatch)
     assert r1.status == "refused" and "no exit reasons" in r1.message and "turnover" in r1.message
-    r2 = _rules_run("Why are injuries happening on Richmond Night A?", db, retriever, monkeypatch)
+    r2 = _rules_run("Why are injuries happening on Lanford Med-Surg Night?", db, retriever, monkeypatch)
     assert r2.status == "refused" and "no incident causes" in r2.message
-    r3 = _rules_run("How many absence days did Norfolk have in 2025?", db, retriever, monkeypatch)
+    r3 = _rules_run("How many absence days did Westbrook have in 2025?", db, retriever, monkeypatch)
     assert r3.status == "refused" and "2025" in r3.message
 
 
 def test_small_team_metric_is_suppressed_and_months_parse(db, retriever, monkeypatch):
-    r = _rules_run("How many injuries did Richmond Maintenance Night have?", db, retriever, monkeypatch)
+    r = _rules_run("How many injuries did Lanford EVS Night have?", db, retriever, monkeypatch)
     assert r.status == "suppressed" and not r.evidence
-    j = _rules_run("How many late departures did Richmond Night A have in July?", db, retriever, monkeypatch)
+    j = _rules_run("How many late doses did Lanford Med-Surg Night have in July?", db, retriever, monkeypatch)
     assert j.status == "ok" and j.evidence[0].value["months"] == ["2026-07"]
-    s = _rules_run("How many quits did the Norfolk night shift have from June to August?", db, retriever, monkeypatch)
+    s = _rules_run("How many quits did the Westbrook night shift have from June to August?", db, retriever, monkeypatch)
     assert s.status == "ok" and s.evidence[0].value["months"] == ["2026-06", "2026-07", "2026-08"] and "teams of 4 or more" in s.message

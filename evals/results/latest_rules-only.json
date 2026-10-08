@@ -1,7 +1,7 @@
 {
   "model": "rules-only",
   "retrieval": "keyword",
-  "ts": "2026-10-08T08:28:26+00:00",
+  "ts": "2026-10-08T09:52:56+00:00",
   "passed": 13,
   "total": 13,
   "matrix": {
@@ -25,7 +25,7 @@
         "P3",
         "P8"
       ],
-      "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+      "question": "Why did the Lanford night shift's scores drop and why are doses late?",
       "status": "ok",
       "verdict": "supported",
       "brief_mode": "fallback",
@@ -49,7 +49,7 @@
       "planted": [
         "P7"
       ],
-      "question": "Why did the Richmond Dispatch Day team's scores drop?",
+      "question": "Why did the Lanford Pharmacy Day team's scores drop?",
       "status": "suppressed",
       "verdict": "suppressed_insufficient",
       "brief_mode": "fallback",
@@ -69,7 +69,7 @@
       "id": "E3",
       "class": "negative",
       "planted": [],
-      "question": "Why did the Denver site drop?",
+      "question": "Why did the Riverside site drop?",
       "status": "refused",
       "verdict": "",
       "brief_mode": "",
@@ -86,7 +86,7 @@
       "id": "E4",
       "class": "negative",
       "planted": [],
-      "question": "What caused turnover on the Norfolk night shift?",
+      "question": "What caused RN turnover on the Westbrook night shift?",
       "status": "refused",
       "verdict": "",
       "brief_mode": "",
@@ -125,7 +125,7 @@
       "planted": [
         "P6"
       ],
-      "question": "Is the Norfolk Day B decline real or did different people respond?",
+      "question": "Is the Westbrook Telemetry Day decline real or did different people respond?",
       "status": "ok",
       "verdict": "",
       "brief_mode": "",
@@ -144,7 +144,7 @@
       "id": "E7",
       "class": "lookup",
       "planted": [],
-      "question": "Who owns the shift handoff process at Richmond?",
+      "question": "Who owns the medication cabinet restock schedule at Lanford?",
       "status": "ok",
       "verdict": "",
       "brief_mode": "",
@@ -163,7 +163,7 @@
       "planted": [
         "P1"
       ],
-      "question": "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?",
+      "question": "What was the Lanford Med-Surg Night score on materials and equipment in wave 2, and how many people responded?",
       "status": "ok",
       "verdict": "",
       "brief_mode": "",
@@ -182,7 +182,7 @@
       "planted": [
         "P9"
       ],
-      "question": "Why did the Roanoke Day C team's scores drop?",
+      "question": "Why did the Pine Hollow ED Day team's scores drop?",
       "status": "ok",
       "verdict": "insufficient",
       "brief_mode": "fallback",
@@ -206,7 +206,7 @@
       "planted": [
         "P10"
       ],
-      "question": "Why did the Norfolk night shift's scores drop?",
+      "question": "Why did the Westbrook night shift's scores drop?",
       "status": "ok",
       "verdict": "no_material_change",
       "brief_mode": "fallback",
@@ -231,7 +231,7 @@
         "P1",
         "P7"
       ],
-      "question": "Where did scores drop across Richmond?",
+      "question": "Where did scores drop across Lanford?",
       "status": "ok",
       "verdict": "",
       "brief_mode": "",
@@ -253,7 +253,7 @@
         "P1",
         "P3"
       ],
-      "question": "Why did the Richmond Night A team's scores drop?",
+      "question": "Why did the Lanford Med-Surg Night team's scores drop?",
       "status": "ok",
       "verdict": "supported",
       "brief_mode": "fallback",
@@ -275,7 +275,7 @@
       "planted": [
         "P11"
       ],
-      "question": "How many unplanned absence days did Richmond Night A have, and how does that compare with comparable teams?",
+      "question": "How many unplanned absence days did Lanford Med-Surg Night have, and how does that compare with comparable teams?",
       "status": "ok",
       "verdict": "",
       "brief_mode": "",

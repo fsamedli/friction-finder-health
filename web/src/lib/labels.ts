@@ -1,10 +1,10 @@
 import type { Kpi } from './api'
 
 export const KPI_SHORT: Record<Kpi, string> = {
-  late_departures: 'Late departures', absence_days: 'Absence days', quits: 'Quits', injuries: 'Injuries', rework: 'Rework',
+  late_doses: 'Late doses', absence_days: 'Absence days', quits: 'Quits', injuries: 'Injuries', overtime_shifts: 'Overtime shifts',
 }
 export const KPI_UNIT: Record<Kpi, string> = {
-  late_departures: 'late trucks', absence_days: 'absence days', quits: 'quits', injuries: 'injuries', rework: 'rework events',
+  late_doses: 'late doses', absence_days: 'absence days', quits: 'quits', injuries: 'injuries', overtime_shifts: 'overtime shifts',
 }
 
 /** Review verdicts in plain words (v0.8). app/impact.py returns worked / no effect / inconclusive; 'no effect'

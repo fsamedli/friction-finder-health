@@ -1,46 +1,46 @@
 {
-  "why did the richmond night shift's scores drop and why are deliveries late": {
-    "generated_at": "2026-09-24T04:00:03+00:00",
+  "why did the lanford night shift's scores drop and why are doses late": {
+    "generated_at": "2026-10-08T09:35:20+00:00",
     "model": "gpt-5-mini",
     "response": {
       "status": "ok",
-      "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+      "question": "Why did the Lanford night shift's scores drop and why are doses late?",
       "message": "",
       "mode": "model",
-      "seconds": 19.2,
+      "seconds": 77.5,
       "notes": [
-        "scope mode: llm (2.1s)",
+        "scope mode: llm (1.6s)",
         "retrieval mode: embeddings",
-        "analyze + retrieve: 0.3s",
-        "brief mode: llm (16.8s)"
+        "analyze + retrieve: 0.9s",
+        "brief mode: llm (67.8s)"
       ],
       "grounding": {
-        "checked": 14,
-        "total": 14,
+        "checked": 26,
+        "total": 26,
         "unmatched": []
       },
       "trace": [
         {
           "step": "Understand the question",
-          "detail": "diagnose drop \u00b7 Richmond Night A",
+          "detail": "diagnose drop \u00b7 Lanford Med-Surg Night",
           "mode": "model",
-          "seconds": 2.1
+          "seconds": 1.6
         },
         {
           "step": "Query the database views",
           "detail": "11 SQL queries \u00b7 73 rows \u00b7 teams under 4 suppressed in SQL",
           "mode": "code",
-          "seconds": 0.3
+          "seconds": 0.9
         },
         {
           "step": "Retrieve comments and documents",
-          "detail": "5 passages \u00b7 embeddings search",
+          "detail": "7 passages \u00b7 embeddings search",
           "mode": "code",
           "seconds": null
         },
         {
           "step": "Compute the verdict",
-          "detail": "Supported hypothesis (team level): shift handoff. Corroborated by operational records and 4 separate comments.",
+          "detail": "Supported hypothesis (team level): medication cabinet restock. Corroborated by operational records and 4 separate comments.",
           "mode": "code",
           "seconds": null
         },
@@ -48,18 +48,18 @@
           "step": "Write the brief",
           "detail": "from the evidence above only",
           "mode": "model",
-          "seconds": 16.8
+          "seconds": 67.8
         },
         {
           "step": "Check the brief",
-          "detail": "14 of 14 numbers found in the evidence; 2 repairs",
+          "detail": "26 of 26 numbers found in the evidence; 2 repairs",
           "mode": "code",
           "seconds": null
         }
       ],
       "assessment": {
         "verdict": "supported",
-        "label": "Supported hypothesis (team level): shift handoff. Corroborated by operational records and 4 separate comments.",
+        "label": "Supported hypothesis (team level): medication cabinet restock. Corroborated by operational records and 4 separate comments.",
         "level": "team",
         "n": {
           "w1": 11,
@@ -69,34 +69,20 @@
         "ops_signal": true,
         "staffing_signal": true,
         "comment_signal": true,
-        "theme": "handoff",
-        "process": "Shift handoff procedure",
+        "theme": "restock",
+        "process": "Medication cabinet restocking schedule",
         "reasons": [
           "Survey: material fall on q07 -0.82, q02 -0.81, q06 -0.33 (team level, n=11 to 13).",
-          "Operations: late departures rose in the 06-07 band (signal).",
-          "Comments: top theme 'shift handoff' with 4 of 6 comments (corroborating).",
+          "Operations: late doses rose in the 06-07 band (signal).",
+          "Comments: top theme 'medication cabinet restock' with 4 of 6 comments (corroborating).",
           "Staffing: a shortage month exists and is listed as a competing explanation."
         ]
       },
       "brief": {
-        "obstacle": "Supported hypothesis (team level): inconsistent shift handoff completeness and logging causing unclear starts and late departures.",
+        "obstacle": "Medication cabinet restock delayed to 07:00 causing the 06:00 medication pass to run late \u2014 supported hypothesis.",
         "evidence_for": [
           {
-            "claim": "Survey shows material and voice-related items fell substantially between waves.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Operational signal: late departures in the 06-07 band rose sharply in Jun\u2013Sep versus Jan\u2013May.",
-            "evidence_ids": [
-              "O7"
-            ]
-          },
-          {
-            "claim": "Four separate employee comments explicitly describe incomplete handoffs, empty logs, and resulting late departures.",
+            "claim": "Staff report cabinets not filled until 07:00 and passes run late.",
             "evidence_ids": [
               "C1",
               "C2",
@@ -106,59 +92,66 @@
             ]
           },
           {
-            "claim": "SOP requires completing a load checklist and recording open issues in a handoff log before shift end.",
+            "claim": "Late-dose rate in the 06\u201307 hour rose from 8.1% to 17.7%, signalling a problem at that hour band.",
             "evidence_ids": [
-              "D1"
+              "O7"
             ]
           },
           {
-            "claim": "Respondent mix was similar across waves, so respondent changes do not explain the survey drop.",
+            "claim": "Per SOP, cabinets should be restocked by 05:00 so stock is available for the 06:00 pass.",
             "evidence_ids": [
-              "S6"
+              "D1",
+              "D2"
+            ]
+          },
+          {
+            "claim": "Staff report reduced availability of materials, matching a significant drop in the 'materials' survey item.",
+            "evidence_ids": [
+              "S2"
+            ]
+          },
+          {
+            "claim": "Team climate worsened on 'my opinions seem to count' and 'someone encourages my development' concurrent with materials decline.",
+            "evidence_ids": [
+              "S1",
+              "S3"
             ]
           }
         ],
         "evidence_against": [
           {
-            "claim": "A staffing shortfall occurred in March when coverage dropped below 90% of scheduled.",
+            "claim": "A staffing shortage month (March) could alternatively explain delays on some shifts.",
             "evidence_ids": [
-              "O9",
               "O9"
             ]
           },
           {
-            "claim": "Rework counts do not show an increasing trend that would explain later departures.",
+            "claim": "Missed-dose counts show no clear upward trend across the year.",
             "evidence_ids": [
               "O8"
-            ]
-          },
-          {
-            "claim": "Most survey items (8 of 12) were stable across waves, limiting a broad morale collapse explanation.",
-            "evidence_ids": [
-              "S4"
             ]
           }
         ],
         "missing": [
-          "Rate of completed load checklists and handoff-log entries by night over time.",
-          "Nightly timestamps showing when load checklists are completed relative to shift end.",
-          "Monthly staffing levels for Jun\u2013Sep to compare with March shortage.",
-          "Dispatch-to-trailer confirmation records showing which departures lacked clearance."
+          "Pharmacy restock timestamps or signed restock reports to confirm actual restock times.",
+          "Pharmacy technician staffing levels and overnight workload data.",
+          "Unit-level inventory/par-level reports showing which items were below par.",
+          "Linkage between individual late doses and cabinet stockouts for 06:00 passes."
         ],
-        "owner": "Site Operations Manager, Priya Singh (Shift handoff procedure)",
-        "proposed_test": "For 30 days, require outgoing lead to complete and sign the load checklist and handoff log with supervisor spot checks; success = 06\u201307 late-departure rate returns toward Jan\u2013May level (7.4%); review on 2026-10-31.",
-        "limits": "Small survey sample (n=11\u201313) and six comments; evidence shows correlation and corroboration but does not prove causation; one-month staffing dip is a competing factor.",
+        "owner": "Pharmacy Operations Manager, Priya Singh (Medication cabinet restocking schedule)",
+        "proposed_test": "30-day test: require pharmacy to restore ADCs by 05:00 daily and record signed restock reports; success = 06:00\u201307:00 late-dose rate reduced to at or below 8.1%; review on day 30.",
+        "limits": "Small team survey sample and six wave-2 comments limit generalizability; ops signal is an hourly band observation, not a causal proof (S6, T1, O7).",
         "mode": "llm",
         "check_notes": [
           "passed: every citation exists, every number appears in the evidence, verdict respected",
-          "citation N9 corrected to O9"
+          "citation S9 corrected to O9"
         ]
       },
       "evidence": [
         {
           "id": "S1",
           "kind": "survey_delta",
-          "statement": "Richmond Night A, My opinions seem to count (q07): 3.82 in Wave 1 to 3.00 in Wave 2 (n=11 to 13), change -0.82 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Lanford Med-Surg Night, My opinions seem to count (q07): 3.82 in Wave 1 to 3.00 in Wave 2 (n=11 to 13), change -0.82 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 4 ORDER BY item, wave_id",
           "rows": [
             {
@@ -187,7 +180,7 @@
         {
           "id": "S2",
           "kind": "survey_delta",
-          "statement": "Richmond Night A, Materials and equipment to do my work right (q02): 3.73 in Wave 1 to 2.92 in Wave 2 (n=11 to 13), change -0.81 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Lanford Med-Surg Night, Materials and equipment to do my work right (q02): 3.73 in Wave 1 to 2.92 in Wave 2 (n=11 to 13), change -0.81 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 4 ORDER BY item, wave_id",
           "rows": [
             {
@@ -216,7 +209,7 @@
         {
           "id": "S3",
           "kind": "survey_delta",
-          "statement": "Richmond Night A, Someone encourages my development (q06): 4.18 in Wave 1 to 3.85 in Wave 2 (n=11 to 13), change -0.33 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Lanford Med-Surg Night, Someone encourages my development (q06): 4.18 in Wave 1 to 3.85 in Wave 2 (n=11 to 13), change -0.33 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 4 ORDER BY item, wave_id",
           "rows": [
             {
@@ -517,7 +510,7 @@
         {
           "id": "S6",
           "kind": "tenure_mix",
-          "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+          "statement": "Who responded on Lanford Med-Surg Night: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
           "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
           "rows": [
             {
@@ -580,135 +573,135 @@
         {
           "id": "O7",
           "kind": "ops_hour",
-          "statement": "Richmond Night shift, departures in the 06-07 hour band: late-departure rate 7.4% in Jan-May 2026 to 17.8% in Jun-Sep 2026. Other hour bands stayed between 6.5% and 8.8% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x).",
-          "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Richmond' AND shift = 'Night' ORDER BY shift, hour_band, period",
+          "statement": "Lanford Night shift, scheduled doses in the 06-07 hour band: late-dose rate 8.1% in Jan-May 2026 to 17.7% in Jun-Sep 2026. Other hour bands stayed between 7.7% and 8.0% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x).",
+          "sql": "SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = 'Lanford' AND shift = 'Night' ORDER BY shift, hour_band, period",
           "rows": [
             {
               "shift": "Night",
               "hour_band": "02-06",
               "period": "Jan-May 2026",
-              "departures": 2710.0,
-              "late_departures": 192.0,
-              "late_rate": 0.071
+              "scheduled_doses": 21526.0,
+              "late_doses": 1707.0,
+              "late_rate": 0.079
             },
             {
               "shift": "Night",
               "hour_band": "02-06",
               "period": "Jun-Sep 2026",
-              "departures": 1850.0,
-              "late_departures": 160.0,
-              "late_rate": 0.086
+              "scheduled_doses": 14678.0,
+              "late_doses": 1148.0,
+              "late_rate": 0.078
             },
             {
               "shift": "Night",
               "hour_band": "06-07",
               "period": "Jan-May 2026",
-              "departures": 3593.0,
-              "late_departures": 265.0,
-              "late_rate": 0.074
+              "scheduled_doses": 29290.0,
+              "late_doses": 2367.0,
+              "late_rate": 0.081
             },
             {
               "shift": "Night",
               "hour_band": "06-07",
               "period": "Jun-Sep 2026",
-              "departures": 2457.0,
-              "late_departures": 438.0,
-              "late_rate": 0.178
+              "scheduled_doses": 19618.0,
+              "late_doses": 3475.0,
+              "late_rate": 0.177
             },
             {
               "shift": "Night",
               "hour_band": "18-22",
               "period": "Jan-May 2026",
-              "departures": 2719.0,
-              "late_departures": 205.0,
-              "late_rate": 0.075
+              "scheduled_doses": 21719.0,
+              "late_doses": 1730.0,
+              "late_rate": 0.08
             },
             {
               "shift": "Night",
               "hour_band": "18-22",
               "period": "Jun-Sep 2026",
-              "departures": 1870.0,
-              "late_departures": 164.0,
-              "late_rate": 0.088
+              "scheduled_doses": 14510.0,
+              "late_doses": 1162.0,
+              "late_rate": 0.08
             },
             {
               "shift": "Night",
               "hour_band": "22-02",
               "period": "Jan-May 2026",
-              "departures": 2611.0,
-              "late_departures": 235.0,
-              "late_rate": 0.09
+              "scheduled_doses": 21585.0,
+              "late_doses": 1757.0,
+              "late_rate": 0.081
             },
             {
               "shift": "Night",
               "hour_band": "22-02",
               "period": "Jun-Sep 2026",
-              "departures": 1781.0,
-              "late_departures": 115.0,
-              "late_rate": 0.065
+              "scheduled_doses": 14648.0,
+              "late_doses": 1131.0,
+              "late_rate": 0.077
             }
           ],
           "source": "v_ops_hour",
           "value": {
             "hour_band": "06-07",
-            "before": 0.074,
-            "after": 0.178,
+            "before": 0.081,
+            "after": 0.177,
             "signal": true,
             "shift": "Night",
-            "handoff_band": true
+            "restock_band": true
           },
           "origin": "computed"
         },
         {
           "id": "O8",
-          "kind": "ops_rework",
-          "statement": "Rework counts on Richmond Night show no trend: 191 in 2026-01 and 67 in 2026-09.",
-          "sql": "SELECT shift, month, SUM(rework) AS rework FROM v_ops_month WHERE site_name = 'Richmond' AND shift = 'Night' GROUP BY 1, 2 ORDER BY 1, 2",
+          "kind": "ops_missed",
+          "statement": "Missed-dose counts on Lanford Night show no trend: 170 in 2026-01 and 54 in 2026-09.",
+          "sql": "SELECT shift, month, SUM(missed_doses) AS missed_doses FROM v_ops_month WHERE site_name = 'Lanford' AND shift = 'Night' GROUP BY 1, 2 ORDER BY 1, 2",
           "rows": [
             {
               "shift": "Night",
               "month": "2026-01",
-              "rework": 191.0
+              "missed_doses": 170.0
             },
             {
               "shift": "Night",
               "month": "2026-02",
-              "rework": 166.0
+              "missed_doses": 174.0
             },
             {
               "shift": "Night",
               "month": "2026-03",
-              "rework": 193.0
+              "missed_doses": 179.0
             },
             {
               "shift": "Night",
               "month": "2026-04",
-              "rework": 191.0
+              "missed_doses": 202.0
             },
             {
               "shift": "Night",
               "month": "2026-05",
-              "rework": 171.0
+              "missed_doses": 179.0
             },
             {
               "shift": "Night",
               "month": "2026-06",
-              "rework": 178.0
+              "missed_doses": 186.0
             },
             {
               "shift": "Night",
               "month": "2026-07",
-              "rework": 194.0
+              "missed_doses": 185.0
             },
             {
               "shift": "Night",
               "month": "2026-08",
-              "rework": 164.0
+              "missed_doses": 168.0
             },
             {
               "shift": "Night",
               "month": "2026-09",
-              "rework": 67.0
+              "missed_doses": 54.0
             }
           ],
           "source": "v_ops_month",
@@ -718,8 +711,8 @@
         {
           "id": "O9",
           "kind": "staffing",
-          "statement": "Staffing on Richmond Night fell below 90% of scheduled in: 2026-03: 18 of 23 scheduled (78.0%). Other months were at or above 90%.",
-          "sql": "SELECT month, shift, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = (SELECT site_id FROM sites WHERE site_name = 'Richmond') AND shift = 'Night' ORDER BY month",
+          "statement": "Staffing on Lanford Night fell below 90% of scheduled in: 2026-03: 18 of 23 scheduled (78.0%). Other months were at or above 90%.",
+          "sql": "SELECT month, shift, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = (SELECT site_id FROM sites WHERE site_name = 'Lanford') AND shift = 'Night' ORDER BY month",
           "rows": [
             {
               "month": "2026-01",
@@ -796,11 +789,11 @@
         {
           "id": "T1",
           "kind": "comment_themes",
-          "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+          "statement": "Wave 2 comments from Lanford Med-Surg Night: 6 in total. By theme: medication cabinet restock 4; equipment and maintenance 1; recognition 1. 'medication cabinet restock' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
           "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
           "rows": [
             {
-              "theme": "shift handoff",
+              "theme": "medication cabinet restock",
               "comments": 4,
               "share": 0.67,
               "corroborating": true
@@ -821,13 +814,13 @@
           "source": "v_comments_reportable",
           "value": {
             "total": 6,
-            "top_theme": "handoff",
+            "top_theme": "restock",
             "top_count": 4,
             "breadth_ok": true,
             "counts": {
               "equipment": 1,
               "recognition": 1,
-              "handoff": 4
+              "restock": 4
             }
           },
           "origin": "computed"
@@ -835,17 +828,17 @@
         {
           "id": "C1",
           "kind": "comment",
-          "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+          "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 27 words; theme: medication cabinet restock): \"Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.\"",
           "sql": null,
           "rows": [],
-          "source": "comment:52",
+          "source": "comment:54",
           "value": {
-            "score": 0.426,
-            "words": 21,
-            "theme": "handoff",
+            "score": 0.382,
+            "words": 27,
+            "theme": "restock",
             "team_id": 4,
-            "team_name": "Night A",
-            "site_name": "Richmond",
+            "team_name": "Med-Surg Night",
+            "site_name": "Lanford",
             "shift": "Night",
             "wave_id": 2
           },
@@ -854,17 +847,17 @@
         {
           "id": "C2",
           "kind": "comment",
-          "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+          "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.\"",
           "sql": null,
           "rows": [],
-          "source": "comment:54",
+          "source": "comment:52",
           "value": {
-            "score": 0.406,
-            "words": 22,
-            "theme": "handoff",
+            "score": 0.353,
+            "words": 25,
+            "theme": "restock",
             "team_id": 4,
-            "team_name": "Night A",
-            "site_name": "Richmond",
+            "team_name": "Med-Surg Night",
+            "site_name": "Lanford",
             "shift": "Night",
             "wave_id": 2
           },
@@ -873,17 +866,17 @@
         {
           "id": "C3",
           "kind": "comment",
-          "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+          "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.\"",
           "sql": null,
           "rows": [],
           "source": "comment:51",
           "value": {
-            "score": 0.373,
-            "words": 18,
-            "theme": "handoff",
+            "score": 0.349,
+            "words": 25,
+            "theme": "restock",
             "team_id": 4,
-            "team_name": "Night A",
-            "site_name": "Richmond",
+            "team_name": "Med-Surg Night",
+            "site_name": "Lanford",
             "shift": "Night",
             "wave_id": 2
           },
@@ -892,17 +885,17 @@
         {
           "id": "C4",
           "kind": "comment",
-          "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+          "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 26 words; theme: medication cabinet restock): \"We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.\"",
           "sql": null,
           "rows": [],
           "source": "comment:53",
           "value": {
-            "score": 0.334,
-            "words": 16,
-            "theme": "handoff",
+            "score": 0.333,
+            "words": 26,
+            "theme": "restock",
             "team_id": 4,
-            "team_name": "Night A",
-            "site_name": "Richmond",
+            "team_name": "Med-Surg Night",
+            "site_name": "Lanford",
             "shift": "Night",
             "wave_id": 2
           },
@@ -911,34 +904,62 @@
         {
           "id": "D1",
           "kind": "doc",
-          "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Steps): ## Steps\n1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**\n   for every trailer worked during the shift: trailer number, load status (empty, partial,\n   complete), seal status, and scheduled departure time.\n2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing\n   paperwork, staffing gaps for the next shift.\n3. The inco",
+          "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Purpose): ## Purpose\nEnsure each unit's automated dispensing cabinet (ADC) is restocked so that stock is on hand for\nevery scheduled medication pass, including the 06:00 pass that runs before the 07:00 shift change.",
           "sql": null,
           "rows": [],
-          "source": "doc:shift_handoff_procedure:2",
+          "source": "doc:medication_cabinet_restock_procedure:1",
           "value": {
-            "score": 0.33,
-            "doc": "shift_handoff_procedure.md",
+            "score": 0.325,
+            "doc": "medication_cabinet_restock_procedure.md",
+            "section": "Purpose"
+          },
+          "origin": "retrieved"
+        },
+        {
+          "id": "D2",
+          "kind": "doc",
+          "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Steps): ## Steps\n1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight\n   restock report.\n2. The **restock report** lists every item below its par level. The technician signs the report\n   when the cabinet is filled; the signed report is kept at the pharmacy desk.\n3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that\n   t",
+          "sql": null,
+          "rows": [],
+          "source": "doc:medication_cabinet_restock_procedure:2",
+          "value": {
+            "score": 0.4,
+            "doc": "medication_cabinet_restock_procedure.md",
             "section": "Steps"
+          },
+          "origin": "retrieved"
+        },
+        {
+          "id": "D3",
+          "kind": "doc",
+          "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Medication Cabinet Restock Procedure (SOP-PHARM-021)): # Medication Cabinet Restock Procedure (SOP-PHARM-021)\n\nIllustrative document written for a fictional hospital system. Not a real Lanford Health document.",
+          "sql": null,
+          "rows": [],
+          "source": "doc:medication_cabinet_restock_procedure:0",
+          "value": {
+            "score": 0.443,
+            "doc": "medication_cabinet_restock_procedure.md",
+            "section": "Medication Cabinet Restock Procedure (SOP-PHARM-021)"
           },
           "origin": "retrieved"
         },
         {
           "id": "W1",
           "kind": "owner",
-          "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
-          "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure' AND (site_name = 'Richmond' OR site_name = 'ALL') ORDER BY site_name = 'ALL'",
+          "statement": "Process owner for 'Medication cabinet restocking schedule' at Lanford: Pharmacy Operations Manager, Priya Singh (ownership directory).",
+          "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Medication cabinet restocking schedule' AND (site_name = 'Lanford' OR site_name = 'ALL') ORDER BY site_name = 'ALL'",
           "rows": [
             {
-              "process_name": "Shift handoff procedure",
-              "site_name": "Richmond",
-              "owner_role": "Site Operations Manager",
+              "process_name": "Medication cabinet restocking schedule",
+              "site_name": "Lanford",
+              "owner_role": "Pharmacy Operations Manager",
               "owner_name": "Priya Singh"
             }
           ],
           "source": "ownership_directory",
           "value": {
-            "process": "Shift handoff procedure",
-            "role": "Site Operations Manager",
+            "process": "Medication cabinet restocking schedule",
+            "role": "Pharmacy Operations Manager",
             "name": "Priya Singh"
           },
           "origin": "computed"
@@ -946,28 +967,14 @@
       ]
     },
     "approval": {
-      "question": "Why did the Richmond night shift's scores drop and why are deliveries late?",
+      "question": "Why did the Lanford night shift's scores drop and why are doses late?",
       "verdict": "supported",
       "brief_mode": "llm",
       "brief": {
-        "obstacle": "Supported hypothesis (team level): inconsistent shift handoff completeness and logging causing unclear starts and late departures.",
+        "obstacle": "Medication cabinet restock delayed to 07:00 causing the 06:00 medication pass to run late \u2014 supported hypothesis.",
         "evidence_for": [
           {
-            "claim": "Survey shows material and voice-related items fell substantially between waves.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Operational signal: late departures in the 06-07 band rose sharply in Jun\u2013Sep versus Jan\u2013May.",
-            "evidence_ids": [
-              "O7"
-            ]
-          },
-          {
-            "claim": "Four separate employee comments explicitly describe incomplete handoffs, empty logs, and resulting late departures.",
+            "claim": "Staff report cabinets not filled until 07:00 and passes run late.",
             "evidence_ids": [
               "C1",
               "C2",
@@ -977,52 +984,59 @@
             ]
           },
           {
-            "claim": "SOP requires completing a load checklist and recording open issues in a handoff log before shift end.",
+            "claim": "Late-dose rate in the 06\u201307 hour rose from 8.1% to 17.7%, signalling a problem at that hour band.",
             "evidence_ids": [
-              "D1"
+              "O7"
             ]
           },
           {
-            "claim": "Respondent mix was similar across waves, so respondent changes do not explain the survey drop.",
+            "claim": "Per SOP, cabinets should be restocked by 05:00 so stock is available for the 06:00 pass.",
             "evidence_ids": [
-              "S6"
+              "D1",
+              "D2"
+            ]
+          },
+          {
+            "claim": "Staff report reduced availability of materials, matching a significant drop in the 'materials' survey item.",
+            "evidence_ids": [
+              "S2"
+            ]
+          },
+          {
+            "claim": "Team climate worsened on 'my opinions seem to count' and 'someone encourages my development' concurrent with materials decline.",
+            "evidence_ids": [
+              "S1",
+              "S3"
             ]
           }
         ],
         "evidence_against": [
           {
-            "claim": "A staffing shortfall occurred in March when coverage dropped below 90% of scheduled.",
+            "claim": "A staffing shortage month (March) could alternatively explain delays on some shifts.",
             "evidence_ids": [
-              "O9",
               "O9"
             ]
           },
           {
-            "claim": "Rework counts do not show an increasing trend that would explain later departures.",
+            "claim": "Missed-dose counts show no clear upward trend across the year.",
             "evidence_ids": [
               "O8"
-            ]
-          },
-          {
-            "claim": "Most survey items (8 of 12) were stable across waves, limiting a broad morale collapse explanation.",
-            "evidence_ids": [
-              "S4"
             ]
           }
         ],
         "missing": [
-          "Rate of completed load checklists and handoff-log entries by night over time.",
-          "Nightly timestamps showing when load checklists are completed relative to shift end.",
-          "Monthly staffing levels for Jun\u2013Sep to compare with March shortage.",
-          "Dispatch-to-trailer confirmation records showing which departures lacked clearance."
+          "Pharmacy restock timestamps or signed restock reports to confirm actual restock times.",
+          "Pharmacy technician staffing levels and overnight workload data.",
+          "Unit-level inventory/par-level reports showing which items were below par.",
+          "Linkage between individual late doses and cabinet stockouts for 06:00 passes."
         ],
-        "owner": "Site Operations Manager, Priya Singh (Shift handoff procedure)",
-        "proposed_test": "For 30 days, require outgoing lead to complete and sign the load checklist and handoff log with supervisor spot checks; success = 06\u201307 late-departure rate returns toward Jan\u2013May level (7.4%); review on 2026-10-31.",
-        "limits": "Small survey sample (n=11\u201313) and six comments; evidence shows correlation and corroboration but does not prove causation; one-month staffing dip is a competing factor.",
+        "owner": "Pharmacy Operations Manager, Priya Singh (Medication cabinet restocking schedule)",
+        "proposed_test": "30-day test: require pharmacy to restore ADCs by 05:00 daily and record signed restock reports; success = 06:00\u201307:00 late-dose rate reduced to at or below 8.1%; review on day 30.",
+        "limits": "Small team survey sample and six wave-2 comments limit generalizability; ops signal is an hourly band observation, not a causal proof (S6, T1, O7).",
         "mode": "llm",
         "check_notes": [
           "passed: every citation exists, every number appears in the evidence, verdict respected",
-          "citation N9 corrected to O9"
+          "citation S9 corrected to O9"
         ]
       },
       "evidence_ids": [
@@ -1041,174 +1055,58 @@
         "C3",
         "C4",
         "D1",
+        "D2",
+        "D3",
         "W1"
       ]
     }
   },
-  "did the norfolk day b team really decline": {
-    "generated_at": "2026-09-24T04:00:13+00:00",
+  "did the westbrook telemetry day team really decline": {
+    "generated_at": "2026-10-08T09:35:21+00:00",
     "model": "gpt-5-mini",
     "response": {
       "status": "ok",
-      "question": "Did the Norfolk Day B team really decline?",
-      "message": "",
+      "question": "Did the Westbrook Telemetry Day team really decline?",
+      "message": "Who responded on Westbrook Telemetry Day: under-one-year employees were 54.5% of respondents in Wave 1 and 0.0% in Wave 2 (respondents 11 and 6). That is a large change in who answered, so part of any movement in the team mean can be a response-mix effect rather than a real change. The team grand mean moved -0.45 (4.26 to 3.81). Holding each tenure band at its company-wide mean, the change in who responded alone would move it -0.20; the remaining -0.25 is within normal variation for 6 respondents. Verdict: mostly a change in who responded, not a real decline. Watch item, not a finding.",
       "mode": "model",
-      "seconds": 10.4,
+      "seconds": 1.6,
       "notes": [
-        "scope mode: llm (1.4s)",
+        "scope mode: llm (1.6s)",
         "retrieval mode: embeddings",
-        "analyze + retrieve: 0.3s",
-        "brief mode: llm (8.7s)"
+        "analyze + retrieve: 0.0s"
       ],
       "grounding": {
-        "checked": 5,
-        "total": 5,
+        "checked": 0,
+        "total": 0,
         "unmatched": []
       },
       "trace": [
         {
           "step": "Understand the question",
-          "detail": "diagnose drop \u00b7 Norfolk Day B",
+          "detail": "review decline real \u00b7 Westbrook Telemetry Day",
           "mode": "model",
-          "seconds": 1.4
+          "seconds": 1.6
         },
         {
           "step": "Query the database views",
-          "detail": "10 SQL queries \u00b7 63 rows \u00b7 teams under 4 suppressed in SQL",
+          "detail": "7 SQL queries \u00b7 41 rows \u00b7 teams under 4 suppressed in SQL",
           "mode": "code",
-          "seconds": 0.3
+          "seconds": 0.0
         },
         {
           "step": "Retrieve comments and documents",
-          "detail": "4 passages \u00b7 embeddings search",
-          "mode": "code",
-          "seconds": null
-        },
-        {
-          "step": "Compute the verdict",
-          "detail": "Insufficient evidence: the survey moved but nothing else did. Watch item, no action proposed.",
-          "mode": "code",
-          "seconds": null
-        },
-        {
-          "step": "Write the brief",
-          "detail": "from the evidence above only",
-          "mode": "model",
-          "seconds": 8.7
-        },
-        {
-          "step": "Check the brief",
-          "detail": "5 of 5 numbers found in the evidence; 1 repairs",
+          "detail": "0 passages \u00b7 embeddings search",
           "mode": "code",
           "seconds": null
         }
       ],
-      "assessment": {
-        "verdict": "insufficient",
-        "label": "Insufficient evidence: the survey moved but nothing else did. Watch item, no action proposed.",
-        "level": "team",
-        "n": {
-          "w1": 11,
-          "w2": 6
-        },
-        "survey_signal": true,
-        "ops_signal": false,
-        "staffing_signal": false,
-        "comment_signal": false,
-        "theme": null,
-        "process": null,
-        "reasons": [
-          "Survey: material fall on q06 -1.10, q12 -0.95, q03 -0.78 (team level, n=11 to 6).",
-          "Operations: no hour band changed materially (no signal).",
-          "Comments: top theme 'equipment and maintenance' with 1 of 2 comments (below the breadth rule of 3; single source)."
-        ]
-      },
-      "brief": {
-        "obstacle": "Insufficient evidence: survey means moved but other data do not show a team-level decline.",
-        "evidence_for": [
-          {
-            "claim": "Three survey items showed material drops between waves.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Four survey items were essentially stable between waves.",
-            "evidence_ids": [
-              "S4"
-            ]
-          },
-          {
-            "claim": "Respondent mix changed markedly; under-one-year respondents fell to zero in Wave 2.",
-            "evidence_ids": [
-              "S6"
-            ]
-          },
-          {
-            "claim": "Operational metrics show no material change in hours, rework, or staffing.",
-            "evidence_ids": [
-              "O7",
-              "O8",
-              "O9"
-            ]
-          },
-          {
-            "claim": "Employee comments are few and themes do not meet the breadth rule for corroboration.",
-            "evidence_ids": [
-              "T1",
-              "C1",
-              "C4"
-            ]
-          }
-        ],
-        "evidence_against": [
-          {
-            "claim": "The observed survey drops may reflect respondent-mix changes rather than real team decline.",
-            "evidence_ids": [
-              "S6",
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Small respondent counts (11 then 6) limit confidence in mean changes.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Comments are too few and duplicated to corroborate a theme-driven decline.",
-            "evidence_ids": [
-              "T1",
-              "C3",
-              "C4"
-            ]
-          }
-        ],
-        "missing": [
-          "More survey responses from the team in a new wave to reduce response-mix uncertainty.",
-          "Additional qualitative input from leaders or more employees to confirm themes.",
-          "Longer-duration operational signals aligned to the survey period for corroboration.",
-          "Item-level wave data with respondent identifiers to assess within-person change."
-        ],
-        "owner": "Not assigned: the evidence does not support naming a process owner.",
-        "proposed_test": "No test is proposed; run a 30-day focused collection to increase survey responses and qualitative feedback, track the same items and operations metrics; success = comparable item means and corroborating comments; review in 30 days.",
-        "limits": "Small sample sizes, large respondent-mix change, and single-source comment themes limit inference to a supported hypothesis rather than a verdict.",
-        "mode": "llm",
-        "check_notes": [
-          "passed: every citation exists, every number appears in the evidence, verdict respected"
-        ]
-      },
+      "assessment": null,
+      "brief": null,
       "evidence": [
         {
           "id": "S1",
           "kind": "survey_delta",
-          "statement": "Norfolk Day B, Someone encourages my development (q06): 4.27 in Wave 1 to 3.17 in Wave 2 (n=11 to 6), change -1.10 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Westbrook Telemetry Day, Someone encourages my development (q06): 4.27 in Wave 1 to 3.17 in Wave 2 (n=11 to 6), change -1.10 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 10 ORDER BY item, wave_id",
           "rows": [
             {
@@ -1237,7 +1135,7 @@
         {
           "id": "S2",
           "kind": "survey_delta",
-          "statement": "Norfolk Day B, Opportunities to learn and grow (q12): 4.45 in Wave 1 to 3.50 in Wave 2 (n=11 to 6), change -0.95 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Westbrook Telemetry Day, Opportunities to learn and grow (q12): 4.45 in Wave 1 to 3.50 in Wave 2 (n=11 to 6), change -0.95 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 10 ORDER BY item, wave_id",
           "rows": [
             {
@@ -1266,7 +1164,7 @@
         {
           "id": "S3",
           "kind": "survey_delta",
-          "statement": "Norfolk Day B, Opportunity to do what I do best (q03): 4.45 in Wave 1 to 3.67 in Wave 2 (n=11 to 6), change -0.78 (material: 0.30 or more on a 5-point scale).",
+          "statement": "Westbrook Telemetry Day, Opportunity to do what I do best (q03): 4.45 in Wave 1 to 3.67 in Wave 2 (n=11 to 6), change -0.78 (material: 0.30 or more on a 5-point scale).",
           "sql": "SELECT wave_id, wave_name, item, item_label, mean_score, n, reportable FROM v_team_wave_item WHERE team_id = 10 ORDER BY item, wave_id",
           "rows": [
             {
@@ -1551,7 +1449,7 @@
         {
           "id": "S6",
           "kind": "tenure_mix",
-          "statement": "Who responded on Norfolk Day B: under-one-year employees were 54.5% of respondents in Wave 1 and 0.0% in Wave 2 (respondents 11 and 6). That is a large change in who answered, so part of any movement in the team mean can be a response-mix effect rather than a real change.",
+          "statement": "Who responded on Westbrook Telemetry Day: under-one-year employees were 54.5% of respondents in Wave 1 and 0.0% in Wave 2 (respondents 11 and 6). That is a large change in who answered, so part of any movement in the team mean can be a response-mix effect rather than a real change.",
           "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 10 ORDER BY wave_id, tenure_band",
           "rows": [
             {
@@ -1600,398 +1498,64 @@
           "origin": "computed"
         },
         {
-          "id": "O7",
-          "kind": "ops_hour",
-          "statement": "No hour band on Norfolk Day changed materially: late-departure rates stayed between 7.2% and 9.6% in Jun-Sep 2026 (largest change +2.0 points, in the 14-18 band). No operational signal.",
-          "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Norfolk' AND shift = 'Day' ORDER BY shift, hour_band, period",
+          "id": "S7",
+          "kind": "signal_check",
+          "statement": "The team grand mean moved -0.45 (4.26 to 3.81). Holding each tenure band at its company-wide mean, the change in who responded alone would move it -0.20; the remaining -0.25 is within normal variation for 6 respondents. Verdict: mostly a change in who responded, not a real decline. Watch item, not a finding.",
+          "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 10 AND reportable GROUP BY 1 ORDER BY 1",
           "rows": [
             {
-              "shift": "Day",
-              "hour_band": "07-10",
-              "period": "Jan-May 2026",
-              "departures": 2675.0,
-              "late_departures": 231.0,
-              "late_rate": 0.086
+              "tenure_band": "under_1",
+              "share_w1": 0.55,
+              "share_w2": 0,
+              "company_band_mean": 4.18,
+              "n_w1": 6,
+              "n_w2": 0
             },
             {
-              "shift": "Day",
-              "hour_band": "07-10",
-              "period": "Jun-Sep 2026",
-              "departures": 1831.0,
-              "late_departures": 131.0,
-              "late_rate": 0.072
+              "tenure_band": "1_to_3",
+              "share_w1": 0.36,
+              "share_w2": 0.67,
+              "company_band_mean": 3.81,
+              "n_w1": 4,
+              "n_w2": 4
             },
             {
-              "shift": "Day",
-              "hour_band": "10-14",
-              "period": "Jan-May 2026",
-              "departures": 2716.0,
-              "late_departures": 220.0,
-              "late_rate": 0.081
+              "tenure_band": "3_to_10",
+              "share_w1": 0.09,
+              "share_w2": 0.17,
+              "company_band_mean": 3.83,
+              "n_w1": 1,
+              "n_w2": 1
             },
             {
-              "shift": "Day",
-              "hour_band": "10-14",
-              "period": "Jun-Sep 2026",
-              "departures": 1809.0,
-              "late_departures": 156.0,
-              "late_rate": 0.086
-            },
-            {
-              "shift": "Day",
-              "hour_band": "14-18",
-              "period": "Jan-May 2026",
-              "departures": 2703.0,
-              "late_departures": 205.0,
-              "late_rate": 0.076
-            },
-            {
-              "shift": "Day",
-              "hour_band": "14-18",
-              "period": "Jun-Sep 2026",
-              "departures": 1774.0,
-              "late_departures": 171.0,
-              "late_rate": 0.096
+              "tenure_band": "over_10",
+              "share_w1": 0,
+              "share_w2": 0.17,
+              "company_band_mean": 3.82,
+              "n_w1": 0,
+              "n_w2": 1
             }
           ],
-          "source": "v_ops_hour",
+          "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
           "value": {
-            "hour_band": "14-18",
-            "before": 0.076,
-            "after": 0.096,
-            "signal": false,
-            "shift": "Day",
-            "handoff_band": false
+            "observed": -0.45,
+            "expected_from_mix": -0.2,
+            "residual": -0.25,
+            "verdict": "mix",
+            "gm_w1": 4.26,
+            "gm_w2": 3.81,
+            "n_w1": 11,
+            "n_w2": 6
           },
           "origin": "computed"
-        },
-        {
-          "id": "O8",
-          "kind": "ops_rework",
-          "statement": "Rework counts on Norfolk Day show no trend: 149 in 2026-01 and 41 in 2026-09.",
-          "sql": "SELECT shift, month, SUM(rework) AS rework FROM v_ops_month WHERE site_name = 'Norfolk' AND shift = 'Day' GROUP BY 1, 2 ORDER BY 1, 2",
-          "rows": [
-            {
-              "shift": "Day",
-              "month": "2026-01",
-              "rework": 149.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-02",
-              "rework": 133.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-03",
-              "rework": 148.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-04",
-              "rework": 147.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-05",
-              "rework": 123.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-06",
-              "rework": 150.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-07",
-              "rework": 152.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-08",
-              "rework": 150.0
-            },
-            {
-              "shift": "Day",
-              "month": "2026-09",
-              "rework": 41.0
-            }
-          ],
-          "source": "v_ops_month",
-          "value": {},
-          "origin": "computed"
-        },
-        {
-          "id": "O9",
-          "kind": "staffing",
-          "statement": "Staffing on Norfolk Day stayed at or above 90% of scheduled in every month.",
-          "sql": "SELECT month, shift, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = (SELECT site_id FROM sites WHERE site_name = 'Norfolk') AND shift = 'Day' ORDER BY month",
-          "rows": [
-            {
-              "month": "2026-01",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-02",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-03",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-04",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-05",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-06",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 38,
-              "ratio": 0.95
-            },
-            {
-              "month": "2026-07",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 38,
-              "ratio": 0.95
-            },
-            {
-              "month": "2026-08",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            },
-            {
-              "month": "2026-09",
-              "shift": "Day",
-              "scheduled_headcount": 40,
-              "actual_headcount": 39,
-              "ratio": 0.98
-            }
-          ],
-          "source": "staffing",
-          "value": {
-            "low_months": []
-          },
-          "origin": "computed"
-        },
-        {
-          "id": "T1",
-          "kind": "comment_themes",
-          "statement": "Wave 2 comments from Norfolk Day B: 2 in total. By theme: equipment and maintenance 1; development 1. No theme reaches 3 separate comments; the most frequent, 'equipment and maintenance', is a single source (1 of 2) and does not corroborate on its own.",
-          "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 10 AND wave_id = 2 ORDER BY comment_id",
-          "rows": [
-            {
-              "theme": "equipment and maintenance",
-              "comments": 1,
-              "share": 0.5,
-              "corroborating": false
-            },
-            {
-              "theme": "development",
-              "comments": 1,
-              "share": 0.5,
-              "corroborating": false
-            }
-          ],
-          "source": "v_comments_reportable",
-          "value": {
-            "total": 2,
-            "top_theme": "equipment",
-            "top_count": 1,
-            "breadth_ok": false,
-            "counts": {
-              "equipment": 1,
-              "development": 1
-            }
-          },
-          "origin": "computed"
-        },
-        {
-          "id": "C1",
-          "kind": "comment",
-          "statement": "Employee comment (Comment, Norfolk Day B, wave 2; 10 words; theme: development): \"I would like a clearer path to a lead role.\"",
-          "sql": null,
-          "rows": [],
-          "source": "comment:35",
-          "value": {
-            "score": 0.34,
-            "words": 10,
-            "theme": "development",
-            "team_id": 10,
-            "team_name": "Day B",
-            "site_name": "Norfolk",
-            "shift": "Day",
-            "wave_id": 2
-          },
-          "origin": "retrieved"
-        },
-        {
-          "id": "C2",
-          "kind": "comment",
-          "statement": "Employee comment (Comment, Norfolk Day B, wave 1; 7 words; theme: communication): \"Weekly huddles are useful. Keep them short.\"",
-          "sql": null,
-          "rows": [],
-          "source": "comment:11",
-          "value": {
-            "score": 0.245,
-            "words": 7,
-            "theme": "communication",
-            "team_id": 10,
-            "team_name": "Day B",
-            "site_name": "Norfolk",
-            "shift": "Day",
-            "wave_id": 1
-          },
-          "origin": "retrieved"
-        },
-        {
-          "id": "C3",
-          "kind": "comment",
-          "statement": "Employee comment (Comment, Norfolk Day B, wave 1; 8 words; theme: equipment and maintenance): \"Forklift maintenance requests take too long to close.\"",
-          "sql": null,
-          "rows": [],
-          "source": "comment:10",
-          "value": {
-            "score": 0.127,
-            "words": 8,
-            "theme": "equipment",
-            "team_id": 10,
-            "team_name": "Day B",
-            "site_name": "Norfolk",
-            "shift": "Day",
-            "wave_id": 1
-          },
-          "origin": "retrieved"
-        },
-        {
-          "id": "C4",
-          "kind": "comment",
-          "statement": "Employee comment (Comment, Norfolk Day B, wave 2; 8 words; theme: equipment and maintenance): \"Forklift maintenance requests take too long to close.\"",
-          "sql": null,
-          "rows": [],
-          "source": "comment:34",
-          "value": {
-            "score": 0.127,
-            "words": 8,
-            "theme": "equipment",
-            "team_id": 10,
-            "team_name": "Day B",
-            "site_name": "Norfolk",
-            "shift": "Day",
-            "wave_id": 2
-          },
-          "origin": "retrieved"
         }
       ]
     },
     "approval": {
-      "question": "Did the Norfolk Day B team really decline?",
-      "verdict": "insufficient",
-      "brief_mode": "llm",
-      "brief": {
-        "obstacle": "Insufficient evidence: survey means moved but other data do not show a team-level decline.",
-        "evidence_for": [
-          {
-            "claim": "Three survey items showed material drops between waves.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Four survey items were essentially stable between waves.",
-            "evidence_ids": [
-              "S4"
-            ]
-          },
-          {
-            "claim": "Respondent mix changed markedly; under-one-year respondents fell to zero in Wave 2.",
-            "evidence_ids": [
-              "S6"
-            ]
-          },
-          {
-            "claim": "Operational metrics show no material change in hours, rework, or staffing.",
-            "evidence_ids": [
-              "O7",
-              "O8",
-              "O9"
-            ]
-          },
-          {
-            "claim": "Employee comments are few and themes do not meet the breadth rule for corroboration.",
-            "evidence_ids": [
-              "T1",
-              "C1",
-              "C4"
-            ]
-          }
-        ],
-        "evidence_against": [
-          {
-            "claim": "The observed survey drops may reflect respondent-mix changes rather than real team decline.",
-            "evidence_ids": [
-              "S6",
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Small respondent counts (11 then 6) limit confidence in mean changes.",
-            "evidence_ids": [
-              "S1",
-              "S2",
-              "S3"
-            ]
-          },
-          {
-            "claim": "Comments are too few and duplicated to corroborate a theme-driven decline.",
-            "evidence_ids": [
-              "T1",
-              "C3",
-              "C4"
-            ]
-          }
-        ],
-        "missing": [
-          "More survey responses from the team in a new wave to reduce response-mix uncertainty.",
-          "Additional qualitative input from leaders or more employees to confirm themes.",
-          "Longer-duration operational signals aligned to the survey period for corroboration.",
-          "Item-level wave data with respondent identifiers to assess within-person change."
-        ],
-        "owner": "Not assigned: the evidence does not support naming a process owner.",
-        "proposed_test": "No test is proposed; run a 30-day focused collection to increase survey responses and qualitative feedback, track the same items and operations metrics; success = comparable item means and corroborating comments; review in 30 days.",
-        "limits": "Small sample sizes, large respondent-mix change, and single-source comment themes limit inference to a supported hypothesis rather than a verdict.",
-        "mode": "llm",
-        "check_notes": [
-          "passed: every citation exists, every number appears in the evidence, verdict respected"
-        ]
-      },
+      "question": "Did the Westbrook Telemetry Day team really decline?",
+      "verdict": null,
+      "brief_mode": null,
+      "brief": null,
       "evidence_ids": [
         "S1",
         "S2",
@@ -1999,28 +1563,21 @@
         "S4",
         "S5",
         "S6",
-        "O7",
-        "O8",
-        "O9",
-        "T1",
-        "C1",
-        "C2",
-        "C3",
-        "C4"
+        "S7"
       ]
     }
   },
-  "who owns the shift handoff procedure at richmond": {
-    "generated_at": "2026-09-24T04:00:15+00:00",
+  "who owns the medication cabinet restock schedule at lanford": {
+    "generated_at": "2026-10-08T09:35:23+00:00",
     "model": "gpt-5-mini",
     "response": {
       "status": "ok",
-      "question": "Who owns the shift handoff procedure at Richmond?",
-      "message": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
+      "question": "Who owns the medication cabinet restock schedule at Lanford?",
+      "message": "Process owner for 'Medication cabinet restocking schedule' at Lanford: Pharmacy Operations Manager, Priya Singh (ownership directory).",
       "mode": "model",
-      "seconds": 1.7,
+      "seconds": 1.3,
       "notes": [
-        "scope mode: llm (1.7s)",
+        "scope mode: llm (1.3s)",
         "retrieval mode: embeddings"
       ],
       "grounding": {
@@ -2031,9 +1588,9 @@
       "trace": [
         {
           "step": "Understand the question",
-          "detail": "owner lookup \u00b7 Richmond",
+          "detail": "owner lookup \u00b7 Lanford",
           "mode": "model",
-          "seconds": 1.7
+          "seconds": 1.3
         },
         {
           "step": "Query the database views",
@@ -2054,20 +1611,20 @@
         {
           "id": "W1",
           "kind": "owner",
-          "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
-          "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure' AND (site_name = 'Richmond' OR site_name = 'ALL') ORDER BY site_name = 'ALL'",
+          "statement": "Process owner for 'Medication cabinet restocking schedule' at Lanford: Pharmacy Operations Manager, Priya Singh (ownership directory).",
+          "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Medication cabinet restocking schedule' AND (site_name = 'Lanford' OR site_name = 'ALL') ORDER BY site_name = 'ALL'",
           "rows": [
             {
-              "process_name": "Shift handoff procedure",
-              "site_name": "Richmond",
-              "owner_role": "Site Operations Manager",
+              "process_name": "Medication cabinet restocking schedule",
+              "site_name": "Lanford",
+              "owner_role": "Pharmacy Operations Manager",
               "owner_name": "Priya Singh"
             }
           ],
           "source": "ownership_directory",
           "value": {
-            "process": "Shift handoff procedure",
-            "role": "Site Operations Manager",
+            "process": "Medication cabinet restocking schedule",
+            "role": "Pharmacy Operations Manager",
             "name": "Priya Singh"
           },
           "origin": "computed"
@@ -2075,7 +1632,7 @@
       ]
     },
     "approval": {
-      "question": "Who owns the shift handoff procedure at Richmond?",
+      "question": "Who owns the medication cabinet restock schedule at Lanford?",
       "verdict": null,
       "brief_mode": null,
       "brief": null,

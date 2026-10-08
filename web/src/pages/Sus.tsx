@@ -14,7 +14,7 @@ const SUS = [
   'I felt very confident using the system.',
   'I needed to learn a lot of things before I could get going with this system.',
 ]
-const OPEN = ['What would stop you from using this at your site?', 'What was the most useful thing you saw, and why?']
+const OPEN = ['What would stop you from using this on your unit?', 'What was the most useful thing you saw, and why?']
 
 export default function Sus() {
   const pid = (() => { try { return sessionStorage.getItem('ff.pid') ?? '' } catch { return '' } })()

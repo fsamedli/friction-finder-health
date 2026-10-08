@@ -6,7 +6,7 @@ import { cx } from './ui'
 // Usability study mode (docs/usability/PROTOCOL.md). Active only with ?study=1 in the URL; logs task
 // start and finish times to study.jsonl via /api/study. Nothing is logged in normal use.
 export const TASKS = [
-  'Find the team that is costing the site the most right now.',
+  'Find the team that is costing the hospital the most right now.',
   'Explain why: what moved, and what is behind it?',
   'Approve a plan for that team, then check whether it worked.',
 ]

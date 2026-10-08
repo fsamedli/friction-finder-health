@@ -16,7 +16,7 @@ from api import main as M  # noqa: E402
 from app import config  # noqa: E402
 from app import investigate as V  # noqa: E402
 
-SCRIPTS = [("Why is Night A flagged?", "Could staffing explain this?"),
+SCRIPTS = [("Why is Med-Surg Night flagged?", "Could staffing explain this?"),
            ("Compare it with the other night shifts", "When did it start?"),
            ("Is this normal for teams like ours?", "What is missing?")]
 CTX = {"team_id": 4, "site_id": 1, "as_of": "2026-09-15"}

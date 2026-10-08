@@ -1,10 +1,10 @@
-// Accessibility audit: axe-core (WCAG 2.1 A/AA rules) on every route. usage: node scripts/a11y.mjs http://127.0.0.1:8000
+// Accessibility audit: axe-core (WCAG 2.1 A/AA rules) on every route. usage: node scripts/a11y.mjs http://127.0.0.1:8001
 import { chromium } from 'playwright-core'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 const axeSrc = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8')
-const base = process.argv[2] ?? 'http://127.0.0.1:8000'
-const routes = ['/', '/investigate', '/investigate/4', '/investigate/4?tab=drivers', '/investigate/4?tab=evidence', '/investigate/4?tab=plan', '/plans', '/review/plan-richmond-night-a', '/insights', '/ask', '/ask?view=brief', '/data', '/value', '/trust']
+const base = process.argv[2] ?? 'http://127.0.0.1:8001'
+const routes = ['/', '/investigate', '/investigate/4', '/investigate/4?tab=drivers', '/investigate/4?tab=evidence', '/investigate/4?tab=plan', '/plans', '/review/plan-lanford-med-surg-night', '/insights', '/ask', '/ask?view=brief', '/data', '/value', '/trust']
 const b = await chromium.launch({ channel: 'chrome', headless: true })
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
 const byRule = {}

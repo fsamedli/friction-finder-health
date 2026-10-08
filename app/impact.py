@@ -33,11 +33,11 @@ from .config import CACHE_DIR, DATA_DIR, MIN_N
 
 AS_OF_DETECT = "2026-09-15"   # wave 2 results are in
 AS_OF_REVIEW = "2026-11-30"   # the seeded plan's review date
-KPIS = ["absence_days", "late_departures", "quits", "injuries", "rework"]
-KPI_LABELS = {"absence_days": "Unplanned absence days", "late_departures": "Late outbound departures",
-              "quits": "Voluntary quits", "injuries": "Days-away injuries", "rework": "Rework events"}
-KPI_COST_KEY = {"absence_days": "absence_day", "late_departures": "late_departure", "quits": "quit",
-                "injuries": "injury", "rework": None}
+KPIS = ["absence_days", "late_doses", "quits", "injuries", "overtime_shifts"]
+KPI_LABELS = {"absence_days": "Unplanned absence days (sick calls)", "late_doses": "Late medication doses",
+              "quits": "Voluntary separations", "injuries": "Staff injuries (days-away)", "overtime_shifts": "Unplanned overtime shifts"}
+KPI_COST_KEY = {"absence_days": "absence_day", "late_doses": "late_dose", "quits": "quit",
+                "injuries": "injury", "overtime_shifts": "overtime_shift"}
 ITEM_CODES = [f"q{i:02d}" for i in range(1, 13)]
 WAVE_QUARTER = {1: ["2026-01", "2026-02", "2026-03"], 2: ["2026-07", "2026-08", "2026-09"]}
 
@@ -48,11 +48,15 @@ OPS_P = 0.01            # a KPI counts as elevated only if P(count >= observed |
                         # ~16 teams x 5 KPIs per site = 80 tests; at 1% that is under one false flag per site.
 Z = 1.96
 
-# value case: sourced sector inputs (see My Notes/2026-09-23_Product_Edge_Research.md)
-TURNOVER_RATE = {"value": 0.26, "source": "BLS JOLTS 2025, transportation & warehousing: quits 2.2%/month x 12 (sector proxy, not NAICS 493 alone)"}
-INJURY_RATE = {"value": 0.015, "source": "BLS SOII 2024, warehousing (NAICS 493): 1.5 days-away cases per 100 FTE"}
-SEGMENT = {"establishments": 23848, "employees": 1_840_000,
-           "source": "BLS, NAICS 493 warehousing & storage: 23,848 private establishments (Q1 2026), ~1.84M employees (Jul 2026)"}
+# value case: sourced sector inputs, each verified by web search on Oct 8, 2026 (healthcare variant spec, docs/specs/)
+TURNOVER_RATE = {"value": 0.176, "source": "NSI Nursing Solutions, 2026 National Health Care Retention & RN Staffing Report "
+                                            "(survey January 2026, calendar-year 2025 data): staff RN turnover 17.6% "
+                                            "(cross-check: BLS JOLTS Aug 2026 health care & social assistance quits 2.0%/month x 12 = 24%, all occupations)"}
+INJURY_RATE = {"value": 0.013, "source": "BLS SOII 2024, hospitals (NAICS 622): 1.3 cases involving days away from work per 100 full-time workers "
+                                          "(bls.gov/iag/tgs/iag622.htm)"}
+SEGMENT = {"establishments": 21037, "employees": 5_797_800,
+           "source": "BLS, hospitals (NAICS 622): 21,037 establishments = QCEW 1Q 2026 preliminary, private 17,997 + local government 1,432 "
+                     "+ state 1,134 + federal 474 (our sum of the four ownership rows); ~5.80M employees = CES Sep 2026 preliminary, all employees"}
 
 
 # ---------------------------------------------------------------- data
@@ -76,7 +80,7 @@ def _data():
     return ops, teams, sites, dict(zip(items["item"], items["label"])), tw
 
 
-UPLOAD_COLUMNS = ["month", "team_id", "absence_days", "late_departures", "quits", "injuries", "rework"]
+UPLOAD_COLUMNS = ["month", "team_id", "absence_days", "late_doses", "quits", "injuries", "overtime_shifts"]
 
 
 def upload_path():
@@ -409,7 +413,7 @@ def _did_once(treated: list[int], comparison: list[int], pre: list[str], post: l
 
 
 def did(plan: dict, as_of: str, costs: dict, kpi: str | None = None) -> dict:
-    kpi = kpi or plan.get("kpi", "late_departures")
+    kpi = kpi or plan.get("kpi", "late_doses")
     team = _team(int(plan["team_id"]))
     review, start = date.fromisoformat(plan["review"]), date.fromisoformat(plan["start"])
     today = date.fromisoformat(as_of)
@@ -445,7 +449,7 @@ def did(plan: dict, as_of: str, costs: dict, kpi: str | None = None) -> dict:
 
 def did_all(plan: dict, as_of: str, costs: dict) -> list[dict]:
     """The plan's KPI first, then the other KPIs the obstacle plausibly touches."""
-    main = plan.get("kpi", "late_departures")
+    main = plan.get("kpi", "late_doses")
     return [did(plan, as_of, costs, k) for k in [main] + [k for k in ("absence_days", "quits") if k != main]]
 
 
@@ -459,7 +463,7 @@ def value_case(costs: dict, headcount: int = 300) -> dict:
     high = 0.03 * headcount * quit_cost + injury_cost
     return {"headcount": headcount, "baseline_turnover_cost": round(quits * quit_cost), "baseline_injury_cost": round(injuries * injury_cost),
             "low": round(low), "high": round(high), "segment": SEGMENT,
-            "scenario": "Assumption: voluntary turnover falls 1 point (low) or 3 points (high) and one days-away injury is avoided per year. "
+            "scenario": "Assumption: for a 300-person nursing workforce, voluntary turnover falls 1 point (low) or 3 points (high) and one days-away staff injury is avoided per year. "
                         "Gallup's top-vs-bottom quartile gap (21-51% turnover, 63% safety incidents) is correlational; the pilot tests whether the tool causes any of it.",
             "inputs": [
                 {"label": "Voluntary turnover rate", "value": TURNOVER_RATE["value"], "source": TURNOVER_RATE["source"]},

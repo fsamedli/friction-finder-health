@@ -44,7 +44,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Logo />
         <div className="leading-tight">
           <div className="text-[15px] font-semibold text-white tracking-tight">Friction Finder</div>
-          <div className="text-[11px] text-side-mute">Engagement × operations</div>
+          <div className="text-[11px] text-side-mute">for nursing units</div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
@@ -64,7 +64,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
       <div className="m-3 rounded-xl border border-side-line bg-side-hover/60 p-3 text-[12px] text-side-mute">
         <div className="flex items-center gap-1.5 text-side-fg font-medium"><BookOpenCheck size={14} /> Demo workspace</div>
-        <p className="mt-1 leading-snug">Northline Logistics is fictional. All data is synthetic.</p>
+        <p className="mt-1 leading-snug">Lanford Health is fictional. All data is synthetic; no patient data.</p>
         <ul className="mt-2.5 space-y-1.5">
           <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-500" />Teal: computed by code</li>
           <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-act" />Rust: needs your decision</li>
@@ -154,7 +154,7 @@ function Notifications() {
 
 function DemoClock() {
   const { asOf, setAsOf } = useStore()
-  const opts = [{ v: DETECT, t: 'Sept 15, 2026', s: 'Wave 2 survey results arrive' }, { v: REVIEW, t: 'Nov 30, 2026', s: 'Night A plan review date' }]
+  const opts = [{ v: DETECT, t: 'Sept 15, 2026', s: 'Wave 2 survey results arrive' }, { v: REVIEW, t: 'Nov 30, 2026', s: 'Med-Surg Night plan review date' }]
   return (
     <Dropdown width={300} label={`Demo clock: as of ${longDate(asOf)}`} trigger={(open) => (
       <span className={cx('flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] font-medium', open ? 'border-brand ring-4 ring-brand/10' : 'border-border-strong hover:bg-canvas')}>
@@ -188,7 +188,7 @@ function UserMenu() {
     <Dropdown width={280} label={`User menu: ${p.name}`} trigger={() => (
       <span className="flex items-center gap-2 rounded-lg p-1 sm:pr-2 hover:bg-canvas">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-[12px] font-semibold text-brand-900">{p.initials}</span>
-        <span className="hidden md:block text-left leading-tight"><span className="block text-[13px] font-medium">{p.name}</span><span className="block text-[11.5px] text-fg-mute">{role === 'manager' ? 'Site manager' : 'People analytics'}</span></span>
+        <span className="hidden md:block text-left leading-tight"><span className="block text-[13px] font-medium">{p.name}</span><span className="block text-[11.5px] text-fg-mute">{role === 'manager' ? 'Nurse manager' : 'People analytics'}</span></span>
         <ChevronDown size={14} className="hidden sm:block text-fg-faint" />
       </span>
     )}>
@@ -201,7 +201,7 @@ function UserMenu() {
               <span><span className="block text-[13px] font-medium">{PERSONA[r].name}</span><span className="block text-[11.5px] text-fg-mute">{PERSONA[r].title}</span></span>
             </button>
           ))}
-          <p className="px-2.5 py-2 text-[11.5px] text-fg-mute border-t border-border mt-1">The user is the site manager; the buyer is the people-analytics or operations leader.</p>
+          <p className="px-2.5 py-2 text-[11.5px] text-fg-mute border-t border-border mt-1">The user is the unit nurse manager or charge nurse; the buyer is the Chief Nursing Officer or the HR / people-analytics leader.</p>
           <button onClick={async () => { await api.resetDemo(); close(); window.location.assign('/') }}
             className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[12.5px] text-fg-mute hover:bg-canvas hover:text-fg">
             <RotateCcw size={14} /> Reset demo (remove plans approved in the app, restore unit costs)
@@ -218,13 +218,13 @@ function Topbar({ onMenu, onDemo }: { onMenu: () => void; onDemo: () => void }) 
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-3 border-b border-border bg-surface px-4 lg:px-6">
       <button onClick={onMenu} className="lg:hidden rounded-lg p-1.5 sm:p-2 text-fg-mute hover:bg-canvas" aria-label="Open menu"><Menu size={20} /></button>
       <div className="hidden sm:flex items-center gap-2 text-[13px]">
-        <span className="flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 font-medium ring-1 ring-border"><Building2 size={14} className="text-fg-mute" />Northline Logistics</span>
+        <span className="flex items-center gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 font-medium ring-1 ring-border"><Building2 size={14} className="text-fg-mute" />{(meta?.company ?? 'Lanford Health').replace(' (fictional)', '')}</span>
         <span className="text-fg-faint">/</span>
       </div>
       <select value={siteId} onChange={(e) => setSiteId(Number(e.target.value))} disabled={role === 'manager'}
-        title={role === 'manager' ? 'A site manager sees their own site' : 'Choose a site'}
-        aria-label="Site" className="h-9 min-w-0 max-w-[132px] sm:max-w-none rounded-lg border border-border-strong bg-surface px-2 sm:px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
-        {(meta?.sites ?? [{ site_id: 1, site_name: 'Richmond' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name} DC</option>)}
+        title={role === 'manager' ? 'A nurse manager sees their own hospital' : 'Choose a hospital'}
+        aria-label="Hospital" className="h-9 min-w-0 max-w-[132px] sm:max-w-none rounded-lg border border-border-strong bg-surface px-2 sm:px-2.5 text-[13px] font-medium disabled:bg-canvas disabled:text-fg-soft focus:outline-none focus:ring-4 focus:ring-brand/10">
+        {(meta?.sites ?? [{ site_id: 1, site_name: 'Lanford' }]).map((s) => <option key={s.site_id} value={s.site_id}>{s.site_name}</option>)}
       </select>
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
         <NavLink to="/ask" aria-label="Ask a question (AI-assisted investigation)"
@@ -260,7 +260,7 @@ function ContextStrip() {
         <span aria-hidden className="text-fg-faint">·</span>
         {upload
           ? <span>Data: <b className="font-medium">your uploaded operating records</b> ({s?.rows} team-months) plus demo data · <NavLink to="/data" className="font-medium underline">Manage</NavLink></span>
-          : <span>Data: <span className="font-medium text-fg-soft">demo CSV, synthetic</span> · {meta?.company ?? 'Northline Logistics (fictional)'}</span>}
+          : <span>Data: <span className="font-medium text-fg-soft">demo CSV, synthetic</span> · {meta?.company ?? 'Lanford Health (fictional)'}</span>}
       </div>
     </div>
   )

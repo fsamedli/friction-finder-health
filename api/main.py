@@ -94,7 +94,7 @@ def _check_as_of(as_of: str) -> str:
 @app.get("/api/meta")
 def meta():
     sites = pd.read_csv(config.DATA_DIR / "sites.csv")
-    return {"company": "Northline Logistics (fictional)",
+    return {"company": "Lanford Health (fictional)",
             "sites": sites.to_dict("records"),
             "as_of_presets": [{"value": I.AS_OF_DETECT, "label": "Sept 15, 2026", "hint": "Wave 2 results are in"},
                               {"value": I.AS_OF_REVIEW, "label": "Nov 30, 2026", "hint": "Plan review date"}],
@@ -117,7 +117,7 @@ def why(team_id: int, as_of: str = I.AS_OF_DETECT):
 
 
 @app.get("/api/link")
-def link(kpi: str = "late_departures", item: str = "q02"):
+def link(kpi: str = "late_doses", item: str = "q02"):
     if kpi not in I.KPIS or item not in I.item_labels():
         raise HTTPException(422, "unknown kpi or item")
     return _jsonable({"quartile": I.quartile_link(kpi, item), "association": I.association(kpi, item)})
@@ -138,7 +138,7 @@ class Action(BaseModel):
 class PlanIn(BaseModel):
     team_id: int
     item: str
-    kpi: str = "late_departures"
+    kpi: str = "late_doses"
     obstacle: str = ""
     focus: str = ""
     actions: list[Action] = Field(min_length=1)
@@ -175,7 +175,7 @@ def plans():
     return [{**p, "team_label": label.get(int(p["team_id"]), "")} for p in I.load_plans()]
 
 
-SEED_PLAN_ID = "plan-richmond-night-a"
+SEED_PLAN_ID = "plan-lanford-med-surg-night"
 
 
 def _same_issue(team_id: int, kpi: str, start: str, review: str | None = None) -> list[dict]:
@@ -185,7 +185,7 @@ def _same_issue(team_id: int, kpi: str, start: str, review: str | None = None) -
     r0 = date.fromisoformat(review) if review else _default_review(s0)
     out = []
     for x in I.load_plans():
-        if x["id"] == SEED_PLAN_ID or x.get("status") != "approved" or int(x["team_id"]) != int(team_id) or x.get("kpi", "late_departures") != kpi:
+        if x["id"] == SEED_PLAN_ID or x.get("status") != "approved" or int(x["team_id"]) != int(team_id) or x.get("kpi", "late_doses") != kpi:
             continue
         if date.fromisoformat(x["start"]) <= r0 and date.fromisoformat(x["review"]) >= s0:
             out.append(x)
@@ -226,7 +226,7 @@ def create_plan(p: PlanIn):
 
 
 @app.get("/api/plans/check")
-def plan_check(team_id: int, kpi: str = "late_departures", start: str = "2026-09-21"):
+def plan_check(team_id: int, kpi: str = "late_doses", start: str = "2026-09-21"):
     """Before approval: is there already an approved plan on the same team, KPI and period? Explained in words."""
     if kpi not in I.KPIS:
         raise HTTPException(422, "unknown kpi")
@@ -288,7 +288,7 @@ def approve_plan(plan_id: str, a: ApprovePlanIn):
             raise HTTPException(404, "unknown plan")
         if plan.get("status") == "approved":
             return {**plan, "duplicate": True, "explanation": "This plan is already approved; nothing changed."}
-        same = _same_issue(int(plan["team_id"]), plan.get("kpi", "late_departures"), plan["start"], plan["review"])
+        same = _same_issue(int(plan["team_id"]), plan.get("kpi", "late_doses"), plan["start"], plan["review"])
         if same:
             x = same[-1]
             return {**x, "duplicate": True, "explanation": f"An approved plan already covers this team and KPI from {x['start']} to {x['review']} ({x['id']}); the draft was not approved."}
@@ -328,7 +328,7 @@ def ops_upload_status():
 
 @app.get("/api/ops-upload/template", response_class=PlainTextResponse)
 def ops_upload_template():
-    """Template = the real demo rows for Richmond Night A, so the columns and scale are clear."""
+    """Template = the real demo rows for Lanford Med-Surg Night, so the columns and scale are clear."""
     ops = pd.read_csv(config.DATA_DIR / "team_ops_monthly.csv")
     rows = ops[ops.team_id == 4][I.UPLOAD_COLUMNS]
     return PlainTextResponse(rows.to_csv(index=False), headers={"Content-Disposition": "attachment; filename=team_ops_template.csv"})
@@ -413,14 +413,16 @@ def sources():
          "last": "2026-09-10"},
         {"id": "comments", "name": "Survey comments", "vendor": "Would come from: the same Gallup Access export (open text)", "owner": "HR / People analytics",
          "status": demo, "method": "CSV per survey wave", "rows": int(len(com)), "detail": "Indexed for retrieval; teams under 4 respondents never indexed", "last": "2026-09-10"},
-        {"id": "timekeeping", "name": "Timekeeping & attendance", "vendor": "Would connect to, e.g., UKG / Kronos", "owner": "Operations",
-         "status": demo, "method": "Monthly CSV (team template)", "rows": int(len(tom)), "detail": "Absences, quits, injuries, late departures, rework by team-month", "last": "2026-11-30"},
-        {"id": "wms", "name": "Dispatch / WMS", "vendor": "Would connect to, e.g., Manhattan, Blue Yonder", "owner": "Operations",
-         "status": demo, "method": "Daily CSV by shift and hour", "rows": int(len(ops)) + int(up), "detail": f"Departures and late departures by hour band{f' · {up} rows uploaded this session' if up else ''}", "last": "2026-09-10"},
-        {"id": "docs", "name": "Procedures & ownership directory", "vendor": "Would connect to, e.g., a SharePoint policy library", "owner": "Site operations",
+        {"id": "timekeeping", "name": "Timekeeping & attendance", "vendor": "Would connect to, e.g., UKG / Kronos", "owner": "Nursing administration / timekeeping",
+         "status": demo, "method": "Monthly CSV (unit template)", "rows": int(len(tom)), "detail": "Sick calls, overtime shifts and late doses by unit-month (one template with separations and staff injuries)", "last": "2026-11-30"},
+        {"id": "safety", "name": "Employee health / safety log", "vendor": "Would connect to, e.g., the employee health or OSHA 300 log", "owner": "Employee health",
+         "status": demo, "method": "Monthly CSV (same unit template)", "rows": int(len(tom)), "detail": "Staff injury cases with days away (patient handling, sharps) by unit-month; no patient-level data", "last": "2026-11-30"},
+        {"id": "emar", "name": "eMAR / barcode medication administration", "vendor": "Would connect to, e.g., Epic, Oracle Health", "owner": "Pharmacy and nursing informatics",
+         "status": demo, "method": "Daily CSV by shift and hour band (counts only, no patient records)", "rows": int(len(ops)) + int(up), "detail": f"Scheduled, late and missed doses by hour band{f' · {up} rows uploaded this session' if up else ''}", "last": "2026-09-10"},
+        {"id": "docs", "name": "Procedures & ownership directory", "vendor": "Would connect to, e.g., a SharePoint policy library", "owner": "Nursing administration",
          "status": demo, "method": "Document folder", "rows": len(docs), "detail": ", ".join(docs[:4]), "last": "2026-09-01"},
-        {"id": "hris", "name": "HRIS (tenure bands)", "vendor": "Would connect to, e.g., Workday", "owner": "HR",
-         "status": "not_connected", "method": "Not used in the demo", "rows": 0, "detail": "Tenure bands come with the survey export in this demo", "last": None},
+        {"id": "hris", "name": "HRIS (separations, tenure bands)", "vendor": "Would connect to, e.g., Workday", "owner": "HR",
+         "status": "not_connected", "method": "Not used in the demo", "rows": 0, "detail": "Voluntary separations arrive on the unit template; tenure bands come with the survey export in this demo", "last": None},
     ]
 
 
@@ -433,17 +435,17 @@ def assumptions():
     ops = pd.read_csv(config.DATA_DIR / "team_ops_monthly.csv")
     rate = resp.groupby("wave_id").size() / len(emp)
     return {"rows": [
-        {"k": "Company", "v": "Northline Logistics, fictional: 3 distribution sites, 24 teams, 189 employees", "why": "Small enough to inspect by hand; big enough to show suppression and site-level inference."},
+        {"k": "Company", "v": "Lanford Health, fictional: 3 hospitals, 24 nursing and support units, 189 staff", "why": "Small enough to inspect by hand; big enough to show suppression and site-level inference."},
         {"k": "Survey", "v": f"12-item, 1-5 scale, 2 waves (Mar 15 and Sep 10, 2026); {len(resp)} responses", "why": "Shaped like Gallup's Q12; the items themselves are paraphrased."},
         {"k": "Response rate", "v": f"{rate.get(1, 0):.0%} wave 1, {rate.get(2, 0):.0%} wave 2", "why": "Typical of an engaged client; the real rate must come from Gallup."},
         {"k": "Minimum n", "v": f"{config.MIN_N} respondents per team-wave; teams under {config.MIN_N} people show no team numbers", "why": "Gallup's reporting threshold (Keegan, Sept 14). Applied in SQL and code, before any model call."},
-        {"k": "Operating data", "v": f"{len(ops)} team-months (Jan-Nov 2026): absences, late departures, quits, injuries, rework", "why": "Comes from the client (timekeeping, WMS, HRIS), never from Gallup (Keegan, Sept 18)."},
+        {"k": "Operating data", "v": f"{len(ops)} unit-months (Jan-Nov 2026): sick calls, late doses, separations, staff injuries, overtime shifts. Counts only; no patient-level data", "why": "Comes from the client (timekeeping, eMAR, HRIS), never from Gallup (Keegan, Sept 18)."},
         {"k": "First-year effect", "v": "New hires score about 0.35 points higher; the signal check adjusts for who responded", "why": "A drop can be a change in who answered, not in how people feel."},
         {"k": "Follow-up months", "v": "Oct-Nov 2026 are synthetic, planted so the plan's effect can be tested", "why": "Real follow-up needs a pilot; the method is what we are showing."},
         {"k": "Inference level", "v": "Team results are screening signals; associations use 34 team-waves; nothing here is causal", "why": "24 teams x 2 waves is small. We say so on screen."},
         {"k": "External benchmark", "v": "Assumed data source: Gallup's database norms for similar roles or industries. Unavailable in the demo; the app shows 'unavailable' and computes only an internal norm (comparable teams)", "why": "Class, Oct 8: stating benchmark access as an assumption is acceptable. With a client's Access export it would be read from the export, never estimated."},
         {"k": "Follow-up pulse", "v": "Assumed: a pilot adds a two-month follow-up pulse on the plan's focus item. Not in the demo data", "why": "Class, Oct 8: a two-month follow-up survey may be assumed if stated. The demo's review uses operating data only."},
-    ], "with_real_data": ["Response counts and rates from Gallup Access exports", "The client's own cost per late departure and per absence day",
+    ], "with_real_data": ["Response counts and rates from Gallup Access exports", "The client's own cost per late dose and per absence day",
                           "Team-to-cost-center mapping from the client's timekeeping system", "12+ months of history for rare events (quits, injuries)"]}
 
 
@@ -767,7 +769,7 @@ def report(plan_id: str, as_of: str = I.AS_OF_REVIEW, download: bool = False):
     results = I.did_all(plan, _check_as_of(as_of), costs)
     r = results[0]
     e = html.escape
-    kpi = plan.get("kpi", "late_departures")
+    kpi = plan.get("kpi", "late_doses")
     ex = (w.get("excess") or {}).get(kpi) or {}
     drops = [c for c in w.get("item_changes", []) if c["delta"] <= -0.30][:3]
     finding = (f"In {', '.join(w.get('window') or [])}, {e(I.KPI_LABELS[kpi].lower())} on this team were {ex.get('observed', 0):.0f} "
@@ -798,7 +800,7 @@ table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E
 @media print{{.print{{display:none}} body{{margin:0}} @page{{margin:14mm}}}}
 </style></head><body>
 <button class="print" onclick="window.print()">Print / Save as PDF</button>
-<span class="tag">Friction Finder · Northline Logistics (fictional) · synthetic data</span>
+<span class="tag">Friction Finder · Lanford Health (fictional) · synthetic data, no patient records</span>
 <h1>{e(team)}: plan and review</h1>
 <div class="muted">{w['team']['shift']} shift · {w['team']['headcount']} people · report as of {e(as_of)}</div>
 <h2>What we found</h2><div class="box">{finding or 'No operating KPI beyond normal variation.'}</div>
@@ -810,7 +812,7 @@ table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E
 <h2>Read this before acting on it</h2>
 <ul class="muted"><li>Directional, not causal: another change at the same time could explain the result. The plan owner should confirm what else changed.</li>
 <li>Survey–KPI links are associations across teams, not causes. Teams under 4 people are never shown on their own.</li>
-<li>Northline Logistics is fictional and all data is synthetic; the follow-up months (Oct–Nov 2026) are synthetic.</li>
+<li>Lanford Health is fictional and all data is synthetic (unit-level counts, no patient-level data); the follow-up months (Oct–Nov 2026) are synthetic.</li>
 <li>Every number is computed by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>
 </body></html>"""
     headers = {"Content-Disposition": f'attachment; filename="friction_finder_{plan_id}.html"'} if download else None

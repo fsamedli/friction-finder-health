@@ -81,7 +81,7 @@ function AnswerBody({ inv }: { inv: Investigation }) {
 
 // ------------------------------------------------------------------ Is it real?
 function RealBlock({ w, ev }: { w: Why; ev: AskResult | null }) {
-  const [k, setK] = useState<Kpi>(KPI_ORDER.find((x) => w.excess?.[x]?.flagged) ?? 'late_departures')
+  const [k, setK] = useState<Kpi>(KPI_ORDER.find((x) => w.excess?.[x]?.flagged) ?? 'late_doses')
   const e = w.excess?.[k]
   const flagged = KPI_ORDER.filter((x) => w.excess?.[x]?.flagged)
   const f = flagged[0] ? w.excess![flagged[0]] : undefined
@@ -95,7 +95,7 @@ function RealBlock({ w, ev }: { w: Why; ev: AskResult | null }) {
         <div className="space-y-2 text-[12.5px] text-fg-soft">
           {KPI_ORDER.map((x) => { const v = w.excess?.[x]; return v ? <p key={x}><b className="text-fg">{KPI_SHORT[x]}</b>: {num(v.observed)} observed vs {num(v.expected, 1)} expected · {v.judgeable ? `${pval(v.p)} (flagged below p = 0.01)` : 'too rare to judge (fewer than 3 expected)'}</p> : null })}
           {drop && <p>Largest survey change, adjusted for who responded: {signed(drop.delta)} pts ({pval(drop.p)}; must be below 0.0042 after choosing the worst of 12 items).</p>}
-          <p>Comparable teams: the same shift at every site, 4 or more people, excluding this team. Expected = their pooled rate × this team's head-months. Poisson upper tail.</p>
+          <p>Comparable teams: the same shift at every hospital, 4 or more people, excluding this team. Expected = their pooled rate × this team's head-months. Poisson upper tail.</p>
         </div>
       </Details>}>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
@@ -133,7 +133,7 @@ function NormalBlock({ w, asOf }: { w: Why; asOf: string }) {
     <Block id="normal" q="Is this normal for teams like ours?" state={a?.evidence_state ?? (inv.unavailable ? 'unavailable' : null)}
       sentence={a?.conclusion ?? (inv.data?.message ?? (inv.unavailable || inv.error ? 'The comparison with teams like this one could not be run here.' : 'Comparing with teams like this one…'))}
       details={<Details summary="What “teams like ours” means here">
-        <p className="text-[12.5px] text-fg-soft">The internal norm uses the teams on the same shift at the other sites and at this site, with 4 or more people. An external Gallup benchmark is an assumed data source: it is not in this prototype, and the answer says “unavailable” rather than guess.</p>
+        <p className="text-[12.5px] text-fg-soft">The internal norm uses the teams on the same shift at the other hospitals and at this one, with 4 or more people. An external Gallup benchmark is an assumed data source: it is not in this prototype, and the answer says “unavailable” rather than guess.</p>
       </Details>}>
       {inv.data ? <AnswerBody inv={inv.data} /> : inv.unavailable || inv.error ? <InvFailure inv={inv} what="The comparison with teams like ours" /> : <Loading label="Comparing with teams like this one" />}
     </Block>
@@ -158,14 +158,14 @@ function Drivers({ w }: { w: Why }) {
   const flagged = KPI_ORDER.filter((k) => w.excess?.[k]?.flagged)
   const best = [...w.links].filter((l) => l.verdict === 'association' && (!flagged.length || flagged.includes(l.kpi))).sort((a, b) => (a.p ?? 1) - (b.p ?? 1))[0]
   const firstDrop = w.item_changes.find((c) => c.delta <= -0.3)?.item ?? 'grand'
-  const [sel, setSel] = useState<{ kpi: Kpi; item: string }>(best ? { kpi: best.kpi, item: best.item } : { kpi: flagged[0] ?? 'late_departures', item: firstDrop })
+  const [sel, setSel] = useState<{ kpi: Kpi; item: string }>(best ? { kpi: best.kpi, item: best.item } : { kpi: flagged[0] ?? 'late_doses', item: firstDrop })
   const one = useLoad(() => api.link(sel.kpi, sel.item), [sel.kpi, sel.item])
   const a = one.data?.association, q = one.data?.quartile
   const itemLabel = sel.item === 'grand' ? 'Overall engagement' : `${sel.item.toUpperCase()} · ${meta?.items[sel.item] ?? ''}`
   return (
     <div className="space-y-5">
       <div>
-        <CardHeader title="Is this bigger than one team?" sub="The same comparison across every reportable team-wave at Northline: does this engagement item move with this KPI?"
+        <CardHeader title="Is this bigger than one team?" sub="The same comparison across every reportable team-wave at Lanford Health: does this engagement item move with this KPI?"
           right={<Badge tone="neutral">Association, not cause</Badge>} />
         <div className="flex flex-wrap gap-2">
           {w.links.map((l) => (
@@ -246,7 +246,7 @@ function ExplainBlock({ w, asOf, ev }: { w: Why; asOf: string; ev: { r: AskResul
               {owner && <div className="mt-4 flex items-center gap-3 rounded-lg bg-canvas px-3 py-2.5 text-[13px]"><UserRound size={16} className="text-fg-mute" /><span>{owner.statement}</span></div>}
             </div>
             <div className="min-w-0 rounded-xl border border-border p-4">
-              <CardHeader title="What employees wrote" sub={themes?.statement} icon={<MessageSquareQuote size={16} />} right={<Provenance kind="retrieved" />} />
+              <CardHeader title="What staff wrote" sub={themes?.statement} icon={<MessageSquareQuote size={16} />} right={<Provenance kind="retrieved" />} />
               <ul className="space-y-3">
                 {comments.map((c) => (
                   <li key={c.id} className="rounded-lg border border-border p-3">
@@ -295,7 +295,7 @@ function MissingBlock({ w, asOf }: { w: Why; asOf: string }) {
 
 // ------------------------------------------------------------------ What do I do?
 function deriveSeed(w: Why, ev: AskResult | null): DraftSeed {
-  const kpi: Kpi = KPI_ORDER.find((k) => w.excess?.[k]?.flagged) ?? 'late_departures'
+  const kpi: Kpi = KPI_ORDER.find((k) => w.excess?.[k]?.flagged) ?? 'late_doses'
   const dropped = w.item_changes.filter((c) => c.delta <= -0.3)
   const linked = w.links.filter((l) => l.kpi === kpi && l.verdict === 'association').sort((a, b) => (a.p ?? 1) - (b.p ?? 1))
   const drop = dropped.find((c) => linked.some((l) => l.item === c.item)) ?? dropped[0]
@@ -310,8 +310,8 @@ function deriveSeed(w: Why, ev: AskResult | null): DraftSeed {
     success: `${KPI_SHORT[kpi]} back inside the range of comparable teams by the review date`,
     actions: [
       { text: `Fix the ${theme} step the comments describe, and write the new routine down`, owner, due: add(7) },
-      { text: `Ask the team in the next huddle what gets in the way of “${drop?.label ?? 'doing the work right'}”`, owner: `${w.team.team_name} team manager`, due: add(14) },
-      { text: 'Ten-minute check-in every other Monday: did the actions happen, did they help?', owner: `${w.team.team_name} team manager`, due: add(21) },
+      { text: `Ask the unit in the next huddle what gets in the way of “${drop?.label ?? 'doing the work right'}”`, owner: `${w.team.team_name} nurse manager`, due: add(14) },
+      { text: 'Ten-minute check-in every other Monday: did the actions happen, did they help?', owner: `${w.team.team_name} nurse manager`, due: add(21) },
     ],
   }
 }
@@ -400,7 +400,7 @@ export default function Investigate() {
     return (
       <div>
         <PageHeader crumbs={crumbs} title={`${w.team.site} ${w.team.team_name}`} sub={`${w.team.shift} shift · ${w.team.headcount} people`} />
-        <Card><Empty icon={<Lock size={20} />} title="Too small to report on its own" sub={`Fewer than 4 people. Survey answers and operating counts are included in the ${w.team.site} site totals only, so no one on this team can be identified. Gallup's reporting threshold is 4.`}
+        <Card><Empty icon={<Lock size={20} />} title="Too small to report on its own" sub={`Fewer than 4 people. Survey answers and operating counts are included in the ${w.team.site} hospital totals only, so no one on this team can be identified. Gallup's reporting threshold is 4.`}
           action={<Button variant="secondary" onClick={() => nav('/investigate')}>Back to the team list</Button>} /></Card>
       </div>
     )

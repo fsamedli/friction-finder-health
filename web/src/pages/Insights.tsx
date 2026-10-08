@@ -11,7 +11,7 @@ const ITEMS = ['grand', 'q01', 'q02', 'q03', 'q04', 'q05', 'q06', 'q07', 'q08', 
 export default function Insights() {
   const { meta } = useStore()
   const grid = useLoad(() => api.links(), [])
-  const [sel, setSel] = useState<{ kpi: Kpi; item: string }>({ kpi: 'late_departures', item: 'q02' })
+  const [sel, setSel] = useState<{ kpi: Kpi; item: string }>({ kpi: 'late_doses', item: 'q02' })
   const one = useLoad(() => api.link(sel.kpi, sel.item), [sel.kpi, sel.item])
   if (grid.error) return <ErrorState error={grid.error} />
   if (!grid.data) return <PageSkeleton />
@@ -21,7 +21,7 @@ export default function Insights() {
   const lbl = (it: string) => (it === 'grand' ? 'Overall' : it.toUpperCase())
   return (
     <div>
-      <PageHeader title="Engagement × operations" sub={<>Which engagement items move with which operating KPIs, across every reportable team-wave at Northline. This is the comparison Gallup delivers today as a once-a-year Business Impact Analysis — here it runs on the client's own records, every month.</>}
+      <PageHeader title="Engagement × operations" sub={<>Which engagement items move with which operating KPIs, across every reportable team-wave at Lanford Health. This is the comparison Gallup delivers today as a once-a-year Business Impact Analysis — here it runs on the hospital's own records, every month.</>}
         actions={<Badge tone="neutral">Association, not cause</Badge>} />
       <Card>
         <CardHeader title="Link map" sub={`${linked} of ${tested} pairs linked at 95% confidence (dark cells: p < 0.001) · about ${Math.round(tested * 0.05)} would light up by chance, so treat a single cell as a lead, not a finding`}

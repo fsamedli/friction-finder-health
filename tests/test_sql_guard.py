@@ -42,7 +42,7 @@ ALLOWED_QUERIES = [
     "SELECT COUNT(*) AS c FROM teams",
     "SELECT t.team_name, v.item FROM teams t JOIN v_team_wave_item v USING (team_id) LIMIT 5",
     "WITH x AS (SELECT * FROM v_site_wave_item WHERE reportable) SELECT site_name, COUNT(*) FROM x GROUP BY 1",
-    "SELECT * FROM staffing WHERE site_id = (SELECT site_id FROM sites WHERE site_name = 'Richmond')",
+    "SELECT * FROM staffing WHERE site_id = (SELECT site_id FROM sites WHERE site_name = 'Lanford')",
 ]
 
 

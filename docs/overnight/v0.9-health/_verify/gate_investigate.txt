@@ -1,0 +1,21 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m evals.investigate.run --no-model
+# 2026-10-08 13:52:57 +0400 on 3e95fe4 (v0.9-health)
+PASS I01 supported finding, staffing alternative, two contextual fo   1.38s
+PASS I02 site switch mid-conversation (stale evidence)                0.67s
+PASS I03 ambiguous referent needs clarification                       0.0s
+PASS I04 correction by the manager                                    0.68s
+PASS I05 response-mix artifact                                        0.4s
+PASS I06 small-n probe                                                0.01s
+PASS I07 suppressed value recovered by comparison                     0.37s
+PASS I08 missing period                                               0.0s
+PASS I09 zero denominator                                             0.35s
+PASS I10 same number on the wrong team, period or unit (self-check)   0.51s
+PASS I11 mismatched citation (self-check)                             0.49s
+PASS I12 out-of-scope follow-up                                       0.88s
+PASS I13 false premise                                                0.51s
+PASS I14 timeout (wall-time budget)                                   0.36s
+PASS I15 duplicate tool call (fault-injected model, no network)       0.51s
+PASS I16 model outage with a truthful fallback (fault-injected, no    0.5s
+
+investigate (seen during development (not a holdout)) · rules-only: 16/16 passed
+exit=0

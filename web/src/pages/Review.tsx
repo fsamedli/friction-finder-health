@@ -36,7 +36,7 @@ function Limits() {
       <CardHeader title="Read this before acting on it" sub="What this review can and cannot say" />
       <ul className="space-y-2 text-[13.5px] text-fg-soft">
         <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Directional, not causal.</b> Something else that changed at the same time could explain the result; the plan owner should confirm what else changed.</span></li>
-        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Synthetic follow-up data.</b> Northline Logistics is fictional and the months after the plan started are synthetic, planted so the method can be shown.</span></li>
+        <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Synthetic follow-up data.</b> Lanford Health is fictional and the months after the plan started are synthetic, planted so the method can be shown.</span></li>
         <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span><b className="text-fg">Assumption for a pilot:</b> a two-month follow-up pulse survey on the plan's focus item would show whether engagement moved too. It is not in the demo data, so this review judges the operating number only.</span></li>
         <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span>One team that acted, compared with a handful of teams that did not. Rare events (quits, injuries) need a longer window than two months.</span></li>
       </ul>
@@ -114,7 +114,7 @@ export default function Review() {
           <CardHeader title={`${r.kpi_label}, per 10 people per month`} sub="This team vs the comparison teams' average, before and after the plan"
             right={<><Provenance kind="computed" /><Provenance kind="synthetic" /><CsvButton filename={`review_${planId}.csv`} rows={() => (r.series ?? []).map((x) => ({ month: x.month, this_team_per_10: +(x.treated * 10).toFixed(2), comparison_per_10: +(x.comparison * 10).toFixed(2), period: (r.pre_months ?? []).includes(x.month) ? 'before' : (r.post_months ?? []).includes(x.month) ? 'after' : '' }))} /></>} />
           <DidChart series={r.series ?? []} pre={r.pre_months ?? []} post={r.post_months ?? []} start={r.start} compLabel={`Comparable teams (${r.comparison?.teams.length})`} />
-          <p className="mt-1 text-[11.5px] text-fg-mute">Unit: events per 10 people per month · before: {(r.pre_months ?? []).map(month).join(', ')} · after: {(r.post_months ?? []).map(month).join(', ')} · baseline: the comparison teams (other sites, same shift)</p>
+          <p className="mt-1 text-[11.5px] text-fg-mute">Unit: events per 10 people per month · before: {(r.pre_months ?? []).map(month).join(', ')} · after: {(r.post_months ?? []).map(month).join(', ')} · baseline: the comparison teams (other hospitals, same shift)</p>
         </Card>
         <div className="space-y-6">
           <Card>
@@ -150,7 +150,7 @@ export default function Review() {
       {improved && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ok-100 bg-ok-50 px-5 py-4">
           <p className="flex items-center gap-2 text-[13.5px] text-ok-700"><CheckCircle2 size={17} /> Your decision: keep the new routine, tell the team what changed because of their survey answers, and check again at the next wave.</p>
-          <Button variant="secondary" onClick={() => nav('/value')}>What is this worth across sites?</Button>
+          <Button variant="secondary" onClick={() => nav('/value')}>What is this worth across hospitals?</Button>
         </div>
       )}
       <div className="mt-6"><Journey at="prove" teamId={p?.team_id} planId={planId} /></div>

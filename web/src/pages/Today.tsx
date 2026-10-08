@@ -59,7 +59,7 @@ function PlanRow({ p, r }: { p: Plan; r: Did | null }) {
   )
 }
 
-/** The first thing a site manager sees: one team, why it matters in plain words, one next step. */
+/** The first thing a nurse manager sees: one team, why it matters in plain words, one next step. */
 function Focus({ eyebrow, title, chip, lines, action }: { eyebrow: string; title: React.ReactNode; chip: React.ReactNode; lines: React.ReactNode[]; action: React.ReactNode }) {
   return (
     <Card className="!p-6 sm:!p-8 animate-in" >
@@ -147,7 +147,7 @@ function ManagerToday() {
   return (
     <div>
       <div className="mb-5 animate-in">
-        <div className="text-[12.5px] text-fg-mute">{b.site} DC · {role === 'manager' ? 'your site' : 'selected site'} · {dataThrough(b.window)}</div>
+        <div className="text-[12.5px] text-fg-mute">{b.site} · {role === 'manager' ? 'your hospital' : 'selected hospital'} · {dataThrough(b.window)}</div>
         <h1 className="mt-1 text-[22px] sm:text-[24px] font-semibold tracking-[-0.02em] text-fg">Good morning, {PERSONA[role].name.split(' ')[0]}</h1>
       </div>
       {focus}
@@ -224,7 +224,7 @@ function HrToday() {
   return (
     <div>
       <div className="mb-5 animate-in">
-        <div className="text-[12.5px] text-fg-mute">Northline Logistics · all sites</div>
+        <div className="text-[12.5px] text-fg-mute">{meta?.company ?? 'Lanford Health (fictional)'} · all hospitals</div>
         <h1 className="mt-1 text-[22px] sm:text-[24px] font-semibold tracking-[-0.02em] text-fg">Good morning, Jordan</h1>
         <p className="mt-1 text-[14px] text-fg-mute max-w-3xl">{reds.length ? <><b className="text-fg">{reds.length} team{reds.length > 1 ? 's' : ''}</b> across {meta?.sites.length ?? 3} sites need attention</> : 'No team is outside normal variation'}; {ambers.length} to watch. Excess operating cost {money(total)} in {monthRange(all[0].window)}.</p>
       </div>
@@ -234,7 +234,7 @@ function HrToday() {
           return (
             <Card key={b.site_id} className="hover:shadow-pop transition-shadow cursor-pointer">
               <button className="w-full text-left" onClick={() => { setSiteId(b.site_id); nav('/investigate') }}>
-                <div className="flex items-center justify-between"><span className="font-semibold">{b.site} DC</span>{r ? <Badge tone="crit" dot>{r} need attention</Badge> : a ? <Badge tone="warn" dot>{a} to watch</Badge> : <Badge tone="ok" dot>Normal</Badge>}</div>
+                <div className="flex items-center justify-between"><span className="font-semibold">{b.site}</span>{r ? <Badge tone="crit" dot>{r} need attention</Badge> : a ? <Badge tone="warn" dot>{a} to watch</Badge> : <Badge tone="ok" dot>Normal</Badge>}</div>
                 <div className="mt-4 text-[26px] font-semibold tnum tracking-tight">{money(b.total_excess)}</div>
                 <div className="text-[12.5px] text-fg-mute">excess operating cost · {monthRange(b.window)}</div>
                 <div className="mt-4 flex gap-4 text-[12.5px] text-fg-soft"><span className="flex items-center gap-1"><Users size={13} />{b.teams.length} teams</span><span>{b.teams.filter((t) => t.status === 'rolled_up').length} rolled up</span></div>
@@ -244,7 +244,7 @@ function HrToday() {
         })}
       </div>
       <Card className="mt-6">
-        <CardHeader title="Needs attention across sites" sub="Ranked by how far operations moved beyond normal variation" />
+        <CardHeader title="Needs attention across hospitals" sub="Ranked by how far operations moved beyond normal variation" />
         {reds.length + ambers.length === 0 ? <Empty icon={<CheckCircle2 size={20} />} title="Nothing outside normal variation" />
           : <div className="space-y-3">{[...reds, ...ambers].map(({ t, b }) => <AttentionRow key={`${b.site_id}-${t.team_id}`} t={t} site={b.site} onOpen={() => { setSiteId(b.site_id); nav(`/investigate/${t.team_id}`) }} />)}</div>}
       </Card>

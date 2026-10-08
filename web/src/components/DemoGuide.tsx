@@ -7,9 +7,9 @@ import { cx } from './ui'
 
 // Four clicks, one sentence each. No numbers here: every number the audience sees is on the screen itself.
 const STEPS = [
-  { title: 'Today', say: "The site's own operating records show which team needs attention, why it matters, and one next step. No statistics in the way." },
+  { title: 'Today', say: "The hospital's own operating records, unit-level counts only, show which unit team needs attention, why it matters, and one next step. No statistics in the way." },
   { title: 'Investigate', say: 'The manager can challenge the explanation in plain words. The AI-assisted investigation picks which read-only checks to run, code computes every number, and the answer says how strong the evidence is. Association, not cause.' },
-  { title: 'Decide', say: 'The tool drafts one plan from the evidence. The site manager edits it and approves it; nothing happens without a person.' },
+  { title: 'Decide', say: 'The tool drafts one plan from the evidence. The nurse manager edits it and approves it; nothing happens without a person.' },
   { title: 'Review', say: 'At the review date, the team is compared with similar teams that did not act. Directional, not causal; the follow-up months are synthetic.' },
 ]
 const KEY = 'ff.demo'

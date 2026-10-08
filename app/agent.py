@@ -26,7 +26,7 @@ from app.retrieval import Retriever
 SURVEY_MATERIAL = 0.30   # team-level item mean change treated as material (5-point scale)
 SITE_MATERIAL = 0.20     # site or company level: about two standard errors of a mean difference at n = 50 (SD 0.5)
 SITE_LEAD = 0.05         # auto-detect picks a site only when its largest fall leads the runner-up by this much
-OPS_SIGNAL_ABS = 0.05    # late-departure rate change of 5 points or more ...
+OPS_SIGNAL_ABS = 0.05    # late-dose rate change of 5 points or more ...
 OPS_SIGNAL_RATIO = 1.5   # ... and at least 1.5x the earlier rate
 STAFFING_LOW = 0.90      # actual headcount below 90% of scheduled
 COMMENT_BREADTH = 3      # a comment theme corroborates only with 3 or more separate comments
@@ -37,7 +37,7 @@ MIX_EXPLAINS = 0.30      # residual change after adjusting for who responded, be
 @dataclass
 class Evidence:
     id: str
-    kind: str                 # survey_delta, survey_delta_site, suppressed, ops_hour, ops_rework, staffing, tenure_mix,
+    kind: str                 # survey_delta, survey_delta_site, suppressed, ops_hour, ops_missed, staffing, tenure_mix,
                               # tenure_pattern, signal_check, site_heatmap, site_items, comment_themes, comment, doc, owner
     statement: str            # one sentence, with the numbers the brief may quote
     sql: str | None = None
@@ -121,10 +121,13 @@ class Result:
 
 # v0.8: absence, turnover (quits) and safety (injuries) are answered from the team-month operating records the
 # screens show (app/metrics.py). What stays declined is what the data cannot answer: compensation, finance,
-# customers; the cause of a quit or an injury (no exit reasons, no incident causes); periods before 2026.
+# patient experience and outcomes (no patient-level data of any kind); the cause of a quit or an injury (no exit
+# reasons, no incident causes); periods before 2026.
 UNSUPPORTED_TERMS = {
     "salary": "compensation data", "pay": "compensation data", "wages": "compensation data",
-    "revenue": "financial data", "profit": "financial data", "customer": "customer data",
+    "revenue": "financial data", "profit": "financial data",
+    "hcahps": "patient experience data", "patient satisfaction": "patient experience data", "patient experience": "patient experience data",
+    "readmission": "patient outcome data", "mortality": "patient outcome data", "infection rate": "patient outcome data",
 }
 SURVEY_WORDS = re.compile(r"\b(scores?|engagement|survey|items?|q\d{2}|respon\w*|wave|materials|opinions?|recognition)\b", re.I)
 CAUSAL_WORDS = re.compile(r"\b(why|cause[sd]?|causing|root cause|reasons?|because|explains?|behind)\b", re.I)
@@ -142,31 +145,54 @@ ITEM_KEYWORDS = {
 COMMON_CAPS = {"Why", "What", "How", "Which", "Who", "Where", "When", "Is", "Are", "Did", "Does", "Do", "Can",
                "Show", "Give", "Tell", "Compare", "The", "In", "At", "For", "On", "Q12", "Wave", "Day", "Night",
                "March", "September", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-               "I", "We", "A", "An", "And", "Or", "Of", "To", "Our", "Please", "AM", "PM", "Gallup", "Northline", "Across",
+               "I", "We", "A", "An", "And", "Or", "Of", "To", "Our", "Please", "AM", "PM", "Gallup", "Lanford", "Across",
+               "Med", "Surg", "Med-Surg", "ICU", "ED", "EVS", "RN", "Pharmacy", "Telemetry", "Resp", "Therapy",
                "January", "February", "April", "June", "July", "August", "October", "November", "December", "Sept", "From", "Between"}
 
 # Comment themes are counted by keyword in code so that breadth (how many separate comments) is a
 # number, not a model impression (judge Chang, Sept 15: "weight by breadth, not length").
 THEMES = {
-    "handoff": {"label": "shift handoff", "process": "Shift handoff procedure",
-                "keywords": ["handoff", "hand-off", "hand off", "checklist", "loaded", "last shift", "trailers we finished", "start blind"]},
-    "equipment": {"label": "equipment and maintenance", "process": "Forklift and equipment maintenance",
-                  "keywords": ["forklift", "maintenance", "scanner", "equipment", "hydraulic", "parts are on order"]},
-    "schedule": {"label": "scheduling and staffing", "process": "Shift scheduling policy",
-                 "keywords": ["schedule", "shift swap", "overtime", "more notice", "staffing"]},
+    "restock": {"label": "medication cabinet restock", "process": "Medication cabinet restocking schedule",
+                "keywords": ["restock", "re-stock", "cabinet", "dispensing", "empty bin", "bins are empty", "bins are not filled", "cabinet is empty",
+                             "call pharmacy", "wait for pharmacy", "waiting on pharmacy", "pass runs late", "pass is late", "06:00 pass", "six o'clock pass", "med pass"]},
+    "equipment": {"label": "equipment and maintenance", "process": "IV pump and equipment maintenance",
+                  "keywords": ["iv pump", "pumps", "pump", "biomed", "clinical engineering", "out for service", "computer on wheels", "computers on wheels",
+                               "equipment", "ticket", "parts are on order", "supplies"]},
+    "schedule": {"label": "scheduling and staffing", "process": "Nurse staffing and float policy",
+                 "keywords": ["schedule", "self-scheduling", "shift swap", "swaps", "overtime", "held over", "more notice", "staffing", "float", "holiday"]},
     "workload": {"label": "workload and priorities", "process": "Engagement survey and action planning",
-                 "keywords": ["workload", "priorities", "too many"]},
+                 "keywords": ["workload", "patient load", "ratio", "priorities", "too many"]},
     "recognition": {"label": "recognition", "process": "Engagement survey and action planning",
                     "keywords": ["recognition", "thank you", "notices good work", "praise"]},
     "communication": {"label": "communication", "process": "Engagement survey and action planning",
-                      "keywords": ["huddle", "announced late", "routes", "communicat"]},
+                      "keywords": ["huddle", "announced late", "policy change", "communicat", "told us after"]},
     "development": {"label": "development", "process": "Engagement survey and action planning",
-                    "keywords": ["lead role", "cross-training", "clearer path", "learn"]},
+                    "keywords": ["charge nurse path", "charge role", "certification", "preceptor", "clearer path", "learn"]},
 }
-HANDOFF_BANDS = {"06-07", "18-22"}   # departures released at the shift boundary (SOP-OPS-014, step 4)
+MED_PASS_BANDS = {"06-07"}   # the 06:00 medication pass before the 07:00 shift change; cabinets are due restocked by 05:00 (SOP-PHARM-021)
 # The survey item most relevant to each theme, used to pick the focus item for the action plan.
-THEME_ITEM = {"handoff": "q02", "equipment": "q02", "schedule": "q01", "workload": "q01", "recognition": "q04",
+THEME_ITEM = {"restock": "q02", "equipment": "q02", "schedule": "q01", "workload": "q01", "recognition": "q04",
               "communication": "q07", "development": "q06"}
+
+
+def metric_in_text(text: str) -> str | None:
+    """The operating metric a question names, using app/metrics.py's vocabulary matched on whole words
+    (the vocabulary has short tokens such as 'ot' and 'late'; a substring match would read 'other' as overtime)."""
+    from app import metrics as M
+    t = text.lower()
+    for key, words in M.METRIC_WORDS:
+        if any(re.search(rf"(?<![a-z]){re.escape(w)}(?![a-z])", t) for w in words):
+            return key
+    return None
+
+
+def _name_words(names) -> set[str]:
+    """Lower-case words of site and team names, split on spaces and hyphens ('Med-Surg Night' -> med, surg, night, med-surg)."""
+    out = set()
+    for n in names:
+        out.add(n.lower())
+        out |= {w.lower() for w in re.split(r"[\s\-/]+", n) if w}
+    return out
 
 
 # ----------------------------------------------------------------------------- step 1: scope
@@ -195,9 +221,10 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
         sc.shift = "Night"
     elif "day shift" in ql or " day " in f" {ql} ":
         sc.shift = "Day"
-    # team names like "Night A", "Day B", "Dispatch Day", "Maintenance Night", "Yard Day"
+    # unit names like "Med-Surg Night", "Telemetry Day", "ED Day", "ICU Night", "Pharmacy Day" (hyphen or space both accepted)
+    qn = re.sub(r"[\-/]", " ", ql)
     for name in sorted(teams.team_name.unique(), key=len, reverse=True):
-        if name.lower() in ql:
+        if re.search(rf"\b{re.escape(re.sub(r'[\-/]', ' ', name.lower()))}\b", qn):
             sc.team = name
             sc.shift = teams[teams.team_name == name].iloc[0]["shift"]
             break
@@ -215,9 +242,8 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
         sc.intent = "review_decline_real"
     elif any(w in ql for w in ["what was", "how many", "what is the", "mean", "score for", "how much"]):
         sc.intent = "metric_lookup"
-    # v0.8: operating metrics the screens show (late departures, absence days, quits, injuries, rework)
-    from app import metrics as _M
-    metric = _M.metric_in(ql)
+    # v0.8: operating metrics the screens show (late doses, absence days, quits, injuries, overtime shifts)
+    metric = metric_in_text(ql)
     if metric and not SURVEY_WORDS.search(ql) and not CAUSAL_WORDS.search(ql) and LOOKUP_WORDS.search(ql):
         sc.intent = "ops_metric"
     if metric in NO_CAUSE_DATA and CAUSAL_WORDS.search(ql):
@@ -231,10 +257,8 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
             sc.intent = "unsupported"
             sc.unsupported_reason = f"We do not have {reason}."
             break
-    # unknown proper nouns (a site we do not have, e.g., Denver)
-    known = {s.lower() for s in sites} | {w.lower() for w in COMMON_CAPS}
-    for t in teams.team_name.unique():
-        known |= {w.lower() for w in t.split()}
+    # unknown proper nouns (a site we do not have, e.g., Riverside)
+    known = _name_words(sites) | {w.lower() for w in COMMON_CAPS} | _name_words(teams.team_name.unique())
     for w in re.findall(r"\b[A-Z][a-z]{2,}\b", q):
         if w.lower() not in known and not q.startswith(w):
             sc.unknown_entities.append(w)
@@ -251,8 +275,10 @@ def _resolve_team(sc: Scope, teams: pd.DataFrame) -> None:
         if len(row):
             sc.team_id = int(row.iloc[0].team_id)
     elif sc.site and sc.shift and not sc.team:
-        # default to the largest team on that site and shift (the "A" team)
-        row = teams[(teams.site_name == sc.site) & (teams["shift"] == sc.shift) & (teams.team_name.str.endswith(" A"))]
+        # default to the largest unit on that site and shift (Med-Surg Day or Med-Surg Night)
+        row = teams[(teams.site_name == sc.site) & (teams["shift"] == sc.shift) & (teams.team_name.str.startswith("Med-Surg"))]
+        if not len(row):
+            row = teams[(teams.site_name == sc.site) & (teams["shift"] == sc.shift)]
         if len(row):
             sc.team = row.iloc[0].team_name
             sc.team_id = int(row.iloc[0].team_id)
@@ -261,28 +287,29 @@ def _resolve_team(sc: Scope, teams: pd.DataFrame) -> None:
 def _scope_llm(q: str, db: DB, sites: list[str], teams: pd.DataFrame) -> Scope:
     items = db.items()
     system = (
-        "You extract the scope of a question about a fictional logistics company. "
+        "You extract the scope of a question about a fictional regional hospital system (nursing units at three hospitals). "
         "Return ONLY a JSON object with keys: intent, site, team, shift, items, waves, unknown_entities, unsupported_reason.\n\n"
         "DATA THAT EXISTS (questions about these are supported):\n"
-        "- Engagement survey results by team, wave, and item, with respondent counts (12 items, 1 to 5 scale).\n"
-        "- Operational records by site, shift, hour band, and day: departures, late departures (delays), rework counts.\n"
-        "- Monthly staffing by site and shift: scheduled versus actual headcount.\n"
-        "- Documents: shift handoff procedure, scheduling policy, action-planning guide, process ownership directory, "
+        "- Engagement survey results by unit (team), wave, and item, with respondent counts (12 items, 1 to 5 scale).\n"
+        "- eMAR medication records by site, shift, hour band, and day: scheduled doses, late doses (given more than 60 minutes late), missed doses. "
+        "Counts only; no patient-level data.\n"
+        "- Monthly RN staffing by site and shift: scheduled versus actual headcount.\n"
+        "- Documents: medication cabinet restock procedure, nurse staffing policy, action-planning guide, process ownership directory, "
         "Gallup's item-specific team discussion questions.\n"
-        "- Employee open-text comments by team and wave.\n"
-        "- Monthly operating records by team, Jan to Nov 2026: late departures, unplanned absence days, voluntary quits (turnover), "
-        "days-away injuries (safety), rework events.\n"
-        "DATA THAT DOES NOT EXIST (questions that need these are unsupported): pay or compensation, revenue or profit, customers, "
-        "exit reasons for quits, causes of injuries, any period before 2026, individual employees' answers.\n\n"
-        f"Known sites: {sites}. Known team names: {sorted(teams.team_name.unique().tolist())}. Shifts: Day, Night. "
+        "- Staff open-text comments by unit and wave.\n"
+        "- Monthly operating records by unit, Jan to Nov 2026: late doses, unplanned absence days (sick calls), voluntary separations (RN turnover), "
+        "days-away staff injuries (safety), unplanned overtime shifts.\n"
+        "DATA THAT DOES NOT EXIST (questions that need these are unsupported): pay or compensation, revenue or profit, patient experience (HCAHPS), "
+        "patient outcomes, any patient-level record, exit reasons for separations, causes of injuries, any period before 2026, individual employees' answers.\n\n"
+        f"Known sites: {sites}. Known unit (team) names: {sorted(teams.team_name.unique().tolist())}. Shifts: Day, Night. "
         "Waves: 1 (closed March 2026), 2 (closed September 2026). "
         f"Survey items: {[(r.item, r.label) for r in items.itertuples()]}.\n\n"
-        "Intents: diagnose_drop (why did scores drop, what is going on, what obstacles, why are deliveries late: SUPPORTED), "
-        "site_overview (where did scores drop across a site, which teams moved, overview or heatmap of a site), "
+        "Intents: diagnose_drop (why did scores drop, what is going on, what obstacles, why are doses late: SUPPORTED), "
+        "site_overview (where did scores drop across a site, which units moved, overview or heatmap of a site), "
         "review_decline_real (is the decline real or a change in who responded), tenure_pattern (scores by tenure, honeymoon effect), "
         "owner_lookup (who owns a process), metric_lookup (a specific survey number), "
-        "ops_metric (a count or rate of late departures, absence days, quits, injuries or rework for a team, shift or site), unsupported (ONLY when the question needs a data type "
-        "from the does-not-exist list, or names a site or team not in the known lists).\n"
+        "ops_metric (a count or rate of late doses, absence days, separations, injuries or overtime shifts for a unit, shift or site), unsupported (ONLY when the question needs a data type "
+        "from the does-not-exist list, or names a site or unit not in the known lists).\n"
         "Rules: never guess a site or team that is not in the known lists; put such names in unknown_entities. "
         "If the question asks for company-wide, overall, or all sites, set site to 'ALL'. "
         "site, team, and shift may be null. items: ONLY item codes the question explicitly refers to (e.g., 'materials' -> ['q02']); "
@@ -299,7 +326,7 @@ def _scope_llm(q: str, db: DB, sites: list[str], teams: pd.DataFrame) -> Scope:
     if len(sc.items) >= 6:
         sc.items = rules.items  # the model listed everything; fall back to what the question names
     sc.waves = [w for w in (out.get("waves") or [1, 2]) if w in (1, 2)] or [1, 2]
-    known_words = {s.lower() for s in sites} | {w.lower() for t in teams.team_name.unique() for w in t.split()}
+    known_words = _name_words(sites) | _name_words(teams.team_name.unique())
     sc.unknown_entities = [str(u) for u in (out.get("unknown_entities") or []) if str(u).lower() not in known_words]
     for u in rules.unknown_entities:  # the deterministic check wins: a place we do not have is named in the decline
         if u.lower() not in {x.lower() for x in sc.unknown_entities}:
@@ -439,10 +466,10 @@ def analyze(sc: Scope, db: DB) -> list[Evidence]:
     if sc.intent in ("review_decline_real", "tenure_pattern", "metric_lookup", "owner_lookup"):
         return ev
 
-    # ---- operations: late departures by hour band and period
+    # ---- operations: late doses by hour band and period (eMAR export, kept per site and shift)
     if sc.site:
         shift_clause = f"AND shift = '{sc.shift}'" if sc.shift else ""
-        r = db.run_sql(f"SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = '{sc.site}' {shift_clause} ORDER BY shift, hour_band, period")
+        r = db.run_sql(f"SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = '{sc.site}' {shift_clause} ORDER BY shift, hour_band, period")
         df = r.rows
         if len(df):
             piv = df.pivot_table(index=["shift", "hour_band"], columns="period", values="late_rate", aggfunc="first").reset_index()
@@ -453,23 +480,23 @@ def analyze(sc: Scope, db: DB) -> list[Evidence]:
                 signal = (after - before) >= OPS_SIGNAL_ABS and after >= OPS_SIGNAL_RATIO * before
                 others = piv[piv.hour_band != worst.hour_band]
                 if signal:
-                    stmt = (f"{sc.site} {worst['shift']} shift, departures in the {worst.hour_band} hour band: late-departure rate "
+                    stmt = (f"{sc.site} {worst['shift']} shift, scheduled doses in the {worst.hour_band} hour band: late-dose rate "
                             f"{_pct(before)} in Jan-May 2026 to {_pct(after)} in Jun-Sep 2026. "
                             f"Other hour bands stayed between {_pct(others['Jun-Sep 2026'].min())} and {_pct(others['Jun-Sep 2026'].max())} in Jun-Sep. "
                             f"This is an operational signal (rise of {OPS_SIGNAL_ABS * 100:.0f} points or more and at least {OPS_SIGNAL_RATIO}x).")
                 else:
-                    stmt = (f"No hour band on {sc.site} {worst['shift']} changed materially: late-departure rates stayed between "
+                    stmt = (f"No hour band on {sc.site} {worst['shift']} changed materially: late-dose rates stayed between "
                             f"{_pct(piv['Jun-Sep 2026'].min())} and {_pct(piv['Jun-Sep 2026'].max())} in Jun-Sep 2026 "
                             f"(largest change {(after - before) * 100:+.1f} points, in the {worst.hour_band} band). No operational signal.")
                 ev.append(Evidence(id=nid("O"), kind="ops_hour", statement=stmt, sql=r.sql, rows=r.to_records(), source="v_ops_hour",
                                    value={"hour_band": worst.hour_band, "before": before, "after": after, "signal": bool(signal),
-                                          "shift": worst["shift"], "handoff_band": worst.hour_band in HANDOFF_BANDS}))
-        r2 = db.run_sql(f"SELECT shift, month, SUM(rework) AS rework FROM v_ops_month WHERE site_name = '{sc.site}' {shift_clause} GROUP BY 1, 2 ORDER BY 1, 2")
+                                          "shift": worst["shift"], "restock_band": worst.hour_band in MED_PASS_BANDS}))
+        r2 = db.run_sql(f"SELECT shift, month, SUM(missed_doses) AS missed_doses FROM v_ops_month WHERE site_name = '{sc.site}' {shift_clause} GROUP BY 1, 2 ORDER BY 1, 2")
         rw = r2.rows
         if len(rw):
             first, last = rw.iloc[0], rw.iloc[-1]
-            ev.append(Evidence(id=nid("O"), kind="ops_rework",
-                               statement=f"Rework counts on {sc.site} {sc.shift or ''} show no trend: {int(first.rework)} in {first.month} and {int(last.rework)} in {last.month}.",
+            ev.append(Evidence(id=nid("O"), kind="ops_missed",
+                               statement=f"Missed-dose counts on {sc.site} {sc.shift or ''} show no trend: {int(first.missed_doses)} in {first.month} and {int(last.missed_doses)} in {last.month}.",
                                sql=r2.sql, rows=r2.to_records(), source="v_ops_month"))
 
     # ---- staffing: competing explanation
@@ -750,7 +777,7 @@ def assess(sc: Scope, evidence: list[Evidence], db: DB) -> Assessment | None:
         a.reasons.append(f"Survey: material fall on {', '.join(fell)} ({a.level} level, n={a.n.get('w1')} to {a.n.get('w2')}).")
     else:
         a.reasons.append(f"Survey: no item fell {SURVEY_MATERIAL:.2f} or more at {a.level} level.")
-    a.reasons.append(("Operations: late departures rose in the " + ops.value["hour_band"] + " band (signal).") if a.ops_signal
+    a.reasons.append(("Operations: late doses rose in the " + ops.value["hour_band"] + " band (signal).") if a.ops_signal
                      else ("Operations: no hour band changed materially (no signal)." if ops else "Operations: no records for this scope."))
     if themes and themes.value.get("top_theme"):
         a.reasons.append(f"Comments: top theme '{THEMES[themes.value['top_theme']]['label']}' with {themes.value['top_count']} of {themes.value['total']} comments"
@@ -762,8 +789,8 @@ def assess(sc: Scope, evidence: list[Evidence], db: DB) -> Assessment | None:
     # theme and process
     if a.comment_signal:
         a.theme = themes.value["top_theme"]
-    elif a.ops_signal and ops.value.get("handoff_band"):
-        a.theme = "handoff"
+    elif a.ops_signal and ops.value.get("restock_band"):
+        a.theme = "restock"
     elif a.ops_signal:
         a.theme = "schedule"
     a.process = THEMES[a.theme]["process"] if a.theme else None
@@ -782,7 +809,7 @@ def assess(sc: Scope, evidence: list[Evidence], db: DB) -> Assessment | None:
         a.verdict = "suppressed_insufficient"
         a.label = (f"Team-level results suppressed (fewer than {config.MIN_N} respondents). Site-level evidence "
                    + ("shows no material change." if not a.survey_signal else "is insufficient to name an obstacle.")
-                   + " Review the site results with the Site Operations Manager.")
+                   + " Review the site results with the Nurse Manager.")
     # owner, only when supported
     if a.verdict == "supported" and a.process:
         site_clause = f"AND (site_name = '{sc.site}' OR site_name = 'ALL')" if sc.site else ""
@@ -801,7 +828,7 @@ NUM_RE = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)(%?)")
 
 
 def _allowed_numbers(evidence: list[Evidence]) -> set[str]:
-    allowed = set(str(i) for i in range(0, 32))  # small integers: item numbers, months, days, waves
+    allowed = set(str(i) for i in range(0, 32)) | {f"{i:02d}" for i in range(0, 10)}  # small integers: item numbers, months, days, waves, clock times (05:00)
     allowed |= {f"{SURVEY_MATERIAL:.2f}", f"{SURVEY_MATERIAL:.1f}", "0.3", "0.30", "90", "5", "4", "12", "2026", "30", "60"}
     for e in evidence:
         for m in NUM_RE.finditer(e.statement):
@@ -863,13 +890,13 @@ def fallback_brief(sc: Scope, evidence: list[Evidence], assessment: Assessment |
     # obstacle by verdict (computed)
     if a is None or a.verdict == "supported":
         band = by_kind["ops_hour"][0].value["hour_band"] if by_kind.get("ops_hour") and by_kind["ops_hour"][0].value.get("signal") else None
-        obstacle = (f"The {theme_label} process" + (f" (departures in the {band} hour band)" if band else "") +
+        obstacle = (f"The {theme_label} process" + (f" (doses in the {band} hour band)" if band else "") +
                     " is the most likely obstacle. This is a supported hypothesis, not a proven cause.")
     elif a.verdict == "no_material_change":
         obstacle = f"No material change: no survey item on this {a.level} fell {SURVEY_MATERIAL:.2f} or more between waves, so there is no decline to diagnose. Keep on the watch list."
     elif a.verdict == "suppressed_insufficient":
         obstacle = (f"Team-level results are suppressed (fewer than {config.MIN_N} respondents) and the site-level evidence is insufficient to name an obstacle. "
-                    "Review the site-level results with the Site Operations Manager instead.")
+                    "Review the site-level results with the Nurse Manager instead.")
     else:
         obstacle = ("Insufficient evidence: the survey fell but the operational records and comments show nothing that corroborates it. "
                     "Treat it as a watch item; do not act on the survey alone.")
@@ -895,19 +922,19 @@ def fallback_brief(sc: Scope, evidence: list[Evidence], assessment: Assessment |
     if by_kind.get("tenure_mix"):
         e = by_kind["tenure_mix"][0]
         (against if e.value.get("mix_shift") else for_).append({"claim": e.statement, "evidence_ids": [e.id]})
-    if by_kind.get("ops_rework"):
-        against.append({"claim": by_kind["ops_rework"][0].statement, "evidence_ids": [by_kind["ops_rework"][0].id]})
-    if a and a.verdict == "supported" and a.theme == "handoff":
-        missing = ["No record of whether the handoff checklist is actually completed each shift.",
-                   "No data on which trailers were late and why (dispatch notes)."]
-        test = (f"Enforce the handoff checklist and signed log for 30 days on this site and shift; measure the late-departure rate in the "
-                f"{by_kind['ops_hour'][0].value['hour_band'] if by_kind.get('ops_hour') else 'handoff'} hour band against Jun-Sep; review with the owner at day 30.")
+    if by_kind.get("ops_missed"):
+        against.append({"claim": by_kind["ops_missed"][0].statement, "evidence_ids": [by_kind["ops_missed"][0].id]})
+    if a and a.verdict == "supported" and a.theme == "restock":
+        missing = ["No record of the time the unit cabinet was actually restocked each day (pharmacy restock log).",
+                   "No stock-out log showing which bins were empty at the 06:00 pass and how long nurses waited."]
+        test = (f"Restore the 05:00 cabinet restock for this unit for 30 days; measure the late-dose rate in the "
+                f"{by_kind['ops_hour'][0].value['hour_band'] if by_kind.get('ops_hour') else '06-07'} hour band against Jun-Sep; review with the owner at day 30.")
     elif a and a.verdict == "supported":
         missing = ["No operational log tied to this theme; ask the process owner for the relevant records.",
                    "No follow-up wave yet to confirm whether the change persists."]
         test = f"Agree one change to the {theme_label} process with its owner, run it for 30 days, and re-measure the same items and the operational rate at day 30."
     else:
-        missing = ["Operational records that would show whether work broke where the survey fell (delay logs, tickets, dispatch notes).",
+        missing = ["Operational records that would show whether work broke where the survey fell (eMAR late-dose detail, stock-out log, biomed tickets).",
                    "More than one wave of decline, or more than one comment on the same theme, before acting."]
         test = "No test proposed. Re-check at the next wave; if the item falls again, or an operational signal appears, diagnose then."
     limits = ("Fictional, synthetic data. Associations, not causes. Team-level figures are watch items shown only where n is 4 or more; "
@@ -954,7 +981,7 @@ def explain(question: str, sc: Scope, evidence: list[Evidence], assessment: Asse
             "Because the verdict is NOT 'supported', the obstacle field MUST begin with 'Insufficient evidence' or 'No material change' or 'Team-level results are suppressed', "
             "owner MUST be exactly 'Not assigned: the evidence does not support naming a process owner.', and proposed_test must say no test is proposed and what to collect instead.")
     system = (
-        "You write a one-page evidence brief for a site or shift manager at a logistics company. "
+        "You write a one-page evidence brief for a nurse manager or charge nurse at a hospital system. "
         "Use ONLY the evidence provided. Every claim must cite one or more evidence ids in evidence_ids. "
         "Never introduce a number that does not appear in the evidence text. Never claim a cause; write "
         "'supported hypothesis'. Name competing explanations under evidence_against. List what evidence is missing. "
@@ -997,7 +1024,7 @@ def explain(question: str, sc: Scope, evidence: list[Evidence], assessment: Asse
 OUT_OF_SCOPE = [
     (re.compile(r"\b(individual|each|every|single|raw)\s+(survey\s+)?(responses?|answers?|respondents?)\b|\bresponses? (of|from|by) (each|every|individual)", re.I),
      "Individual survey answers are never shown; results are reported for teams of 4 or more."),
-    (re.compile(r"\b(employee|respondent|worker|person)\s*#?\s*\d+\b|\bwho (gave|answered|rated|scored)\b|\bwhich (employees?|people|workers|respondents?)\b", re.I),
+    (re.compile(r"\b(employee|respondent|worker|person|nurse|staff member)\s*#?\s*\d+\b|\bwho (gave|answered|rated|scored)\b|\bwhich (employees?|people|workers|respondents?|nurses?|staff)\b", re.I),
      "The tool does not identify or single out individual employees or respondents."),
     (re.compile(r"\b(performance review|performance evaluation|appraisal|disciplin\w*|fire|terminate|write up)\b", re.I),
      "The tool does not evaluate, review or discipline people; it looks at teams and processes."),
@@ -1031,8 +1058,8 @@ def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Resu
     if sc.intent == "unsupported":
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message=f"I cannot answer this from the data available. {sc.unsupported_reason or ''} "
-                              "Available: survey results by team and wave, operating records by team and month (late departures, absence days, quits, "
-                              "injuries, rework), dispatch by hour, staffing, and process documents.",
+                              "Available: survey results by unit and wave, operating records by unit and month (late doses, absence days, separations, "
+                              "injuries, overtime shifts), medication passes by hour band, RN staffing, and process documents.",
                       notes=notes)
     if sc.site == "ALL" and sc.intent in ("diagnose_drop", "site_overview", "metric_lookup"):
         sc.intent = "site_overview"   # company-wide questions get the overview; diagnosis needs a site or team
@@ -1091,7 +1118,7 @@ def write_brief(res: Result) -> Result:
 
 def _owner_lookup(question: str, sc: Scope, db: DB, evidence: list[Evidence], notes: list[str]) -> Result:
     ql = question.lower()
-    process = next((spec["process"] for name, spec in THEMES.items() if any(k in ql for k in spec["keywords"] + [name])), "Shift handoff procedure")
+    process = next((spec["process"] for name, spec in THEMES.items() if any(k in ql for k in spec["keywords"] + [name])), "Medication cabinet restocking schedule")
     site_clause = f"AND (site_name = '{sc.site}' OR site_name = 'ALL')" if sc.site else ""
     r = db.run_sql(f"SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = '{process}' {site_clause} ORDER BY site_name = 'ALL'")
     if len(r.rows):
@@ -1123,7 +1150,7 @@ def _ops_metric(question: str, sc: Scope, db: DB, notes: list[str]) -> Result:
     """v0.8: an operating-metric question: structured plan -> validated templated SQL (app/metrics.py) -> computed
     result -> one plain-English sentence with the unit and the period. The model writes no SQL here."""
     from app import metrics as M
-    key = M.metric_in(question) or "late_departures"
+    key = metric_in_text(question) or "late_doses"
     site_id = None
     if sc.site and sc.site != "ALL":
         site_id = int(db.run_sql(f"SELECT site_id FROM sites WHERE site_name = '{sc.site}'").rows.iloc[0].site_id)
@@ -1151,22 +1178,22 @@ def _ops_metric(question: str, sc: Scope, db: DB, notes: list[str]) -> Result:
 # ----------------------------------------------------------------------------- act: action plan and report
 
 ACTION_BANK = {
-    "handoff": [
-        ("Reinstate the signed handoff log and load checklist for every departure at the shift boundary; Dispatch releases no trailer without it.", "Dispatch Supervisor"),
-        ("Hold the ten-minute handoff meeting at the dispatch desk with both shift leads present, every shift, for 30 days.", "Site Operations Manager"),
-        ("Post the completed-checklist count and the handoff-hour late-departure rate on the shift board every week.", "Site Operations Manager"),
+    "restock": [
+        ("Restore the 05:00 restock of the unit's automated dispensing cabinet so every bin is at par before the 06:00 pass, for 30 days.", "Pharmacy Operations Manager"),
+        ("Have the charge nurse log every stock-out at the 02:00 check and send the list to pharmacy before the restock run.", "Nurse Manager"),
+        ("Post the restock-by-05:00 count and the 06-07 band late-dose rate on the unit huddle board every week.", "Nurse Manager"),
         ("Run the State of the Team conversation on the focus item and record which suggestions the team says have not been acted on.", "Team manager"),
     ],
     "equipment": [
-        ("Review every open maintenance ticket older than seven days with the Maintenance Lead and set a closure date for each.", "Maintenance Lead"),
-        ("Publish the equipment availability count per shift on the shift board every week.", "Site Operations Manager"),
-        ("Agree a borrowing rule between shifts so a down unit does not stall the loading line.", "Site Operations Manager"),
+        ("Review every open biomed ticket older than seven days with the Clinical Engineering Lead and set a closure date for each.", "Clinical Engineering Lead"),
+        ("Publish the working IV pump count per shift on the unit huddle board every week.", "Nurse Manager"),
+        ("Agree a pump-borrowing rule between units so a pump out for service does not delay a pass.", "Nurse Manager"),
         ("Run the State of the Team conversation on the focus item and list the essentials the team says are missing.", "Team manager"),
     ],
     "schedule": [
-        ("Review the staffing report with the Director of Operations and agree a recovery plan for any month under the policy floor.", "Director of Operations"),
-        ("Publish schedules 14 days ahead as the policy requires and track the exceptions weekly.", "Dispatch Supervisor"),
-        ("Set a shift-swap turnaround target and post it on the shift board.", "Site Operations Manager"),
+        ("Review the RN staffing report with the Chief Nursing Officer and agree a recovery plan for any month under the policy floor.", "Chief Nursing Officer"),
+        ("Publish schedules four weeks ahead as the policy requires and track the exceptions weekly.", "Nurse Manager"),
+        ("Set a shift-swap turnaround target and post it on the unit huddle board.", "Nurse Manager"),
         ("Run the State of the Team conversation on the focus item and record what notice the team says it needs.", "Team manager"),
     ],
     "generic": [
@@ -1208,9 +1235,9 @@ def plan(result: Result, db: DB) -> ActionPlan | None:
     close = pd.Timestamp(wave2).date() if wave2 is not None else date(2026, 9, 10)
     review_date = (close + timedelta(days=60)).isoformat()
     if ops and ops.value.get("signal"):
-        goal = (f"Bring the late-departure rate in the {ops.value['hour_band']} band on {result.scope.site} {ops.value['shift']} from "
+        goal = (f"Bring the late-dose rate in the {ops.value['hour_band']} band on {result.scope.site} {ops.value['shift']} from "
                 f"{_pct(ops.value['after'])} back to the Jan-May level of {_pct(ops.value['before'])} by {review_date}.")
-        measure = f"Late-departure rate in the {ops.value['hour_band']} band, weekly, from v_ops_hour; target at or below {_pct(ops.value['before'])}."
+        measure = f"Late-dose rate in the {ops.value['hour_band']} band, weekly, from v_ops_hour; target at or below {_pct(ops.value['before'])}."
     else:
         goal = f"Move {labels.get(focus, focus)} ({focus}) on {result.scope.site} {result.scope.team or ''} back to its Wave 1 level by the next survey wave."
         measure = f"{focus} team mean at the next wave, shown only if n is {config.MIN_N} or more."
@@ -1227,7 +1254,7 @@ def plan(result: Result, db: DB) -> ActionPlan | None:
     actions, mode, notes = _plan_actions_llm(result, a, focus, labels.get(focus, focus), owners) if config.has_key() else (None, "fallback", [])
     if not actions:
         bank = ACTION_BANK.get(a.theme or "generic", ACTION_BANK["generic"])
-        actions = [{"action": txt, "owner_role": role} for txt, role in bank if role in owners][:4]
+        actions = [{"action": txt, "owner_role": _match_role(role, owners)} for txt, role in bank if _match_role(role, owners)][:4]
         mode = "fallback"
     for i, act in enumerate(actions):
         act["owner_name"] = owners.get(act["owner_role"], "")
@@ -1236,9 +1263,17 @@ def plan(result: Result, db: DB) -> ActionPlan | None:
                       review_cadence=cadence, team_questions=qs, questions_source=src, mode=mode, check_notes=notes)
 
 
+def _match_role(role: str, owners: dict) -> str | None:
+    """The directory role a bank role maps to: exact, or the directory role that starts with it
+    ('Nurse Manager' matches 'Nurse Manager, Med-Surg'). None when the site has no such owner."""
+    if role in owners:
+        return role
+    return next((o for o in owners if o.lower().startswith(role.lower())), None)
+
+
 def _plan_actions_llm(result: Result, a: Assessment, focus: str, focus_label: str, owners: dict) -> tuple[list[dict] | None, str, list[str]]:
     ev_text = "\n".join(f"[{e.id}] {e.statement}" for e in result.evidence)
-    system = ("You draft three or four immediate actions for a site or shift manager, in the shape of a State of the Team plan. "
+    system = ("You draft three or four immediate actions for a nurse manager or charge nurse, in the shape of a State of the Team plan. "
               "Each action is one sentence of at most 25 words, concrete, and assignable. Use ONLY the evidence and the brief provided; "
               "never introduce a number that is not in the evidence. owner_role MUST be one of the allowed roles exactly. "
               "Return ONLY a JSON object: {\"actions\": [{\"action\": str, \"owner_role\": str}]}.")
@@ -1354,8 +1389,8 @@ def report_html(result: Result, plan_: ActionPlan | None) -> str:
         for r in rows:
             piv.setdefault(r["hour_band"], {"hour_band": r["hour_band"]})[r["period"]] = r.get("late_rate")
         order = ["18-22", "22-02", "02-06", "06-07", "07-10", "10-14", "14-18"]
-        parts.append("<h2>Late departures by hour band <span class='tag mid'>computed</span></h2>" +
-                     _svg_bars([piv[k] for k in order if k in piv], "hour_band", [("Jan-May 2026", "Jan-May 2026", "#CFE0E6"), ("Jun-Sep 2026", "Jun-Sep 2026", "#C8553D")], "Late-departure rate"))
+        parts.append("<h2>Late doses by hour band <span class='tag mid'>computed</span></h2>" +
+                     _svg_bars([piv[k] for k in order if k in piv], "hour_band", [("Jan-May 2026", "Jan-May 2026", "#CFE0E6"), ("Jun-Sep 2026", "Jun-Sep 2026", "#C8553D")], "Late-dose rate"))
     if plan_:
         parts += ["<h2>Action plan, State of the Team shape <span class='tag grey'>" + ("generated" if plan_.mode == "llm" else "templated") + "</span></h2>",
                   f"<p><b>Performance goal:</b> {_h.escape(plan_.goal)}<br><b>Focus item:</b> {plan_.focus_item}, {_h.escape(plan_.focus_label)}</p>",
@@ -1403,7 +1438,7 @@ HOW_IT_WORKS = (
     "1 Scope: the model reads the question into a fixed schema (site, team, items, intent); names are checked against the tables; unknown sites or data we do not have are declined. "
     f"2 Analyze: SQL over views that hide teams under n={config.MIN_N}; Python computes changes, rates, staffing ratios, and the who-responded adjustment. "
     "3 Retrieve: comments and procedures are found by similarity (embeddings) and quoted verbatim; comment themes are counted in code. "
-    f"4 Assess: the verdict comes from thresholds. A survey signal = an item fell {SURVEY_MATERIAL:.2f} or more on the 5-point scale. An operational signal = a late-departure band rose "
+    f"4 Assess: the verdict comes from thresholds. A survey signal = an item fell {SURVEY_MATERIAL:.2f} or more on the 5-point scale. An operational signal = a late-dose hour band rose "
     f"{OPS_SIGNAL_ABS * 100:.0f} points or more and to at least {OPS_SIGNAL_RATIO}x. A comment signal = one theme has {COMMENT_BREADTH} or more separate comments (one long comment is a single source). "
     f"Staffing under {STAFFING_LOW * 100:.0f}% of scheduled is listed as a competing explanation, never as support. "
     "The verdict is 'supported' ONLY when there is a survey signal AND at least one of the operational or comment signals; a survey signal alone is 'insufficient evidence' (watch item, no owner, no test); "
@@ -1411,7 +1446,7 @@ HOW_IT_WORKS = (
     "5 Explain: the model writes the brief from the evidence it is handed; a checker rejects unknown citations, numbers not in the evidence, causal words, and any owner when the verdict is not supported; two failures and a templated brief is shown. "
     "Decide: a person approves, rejects, or flags; the action plan is built only for supported verdicts; nothing happens otherwise. "
     "Team-level results are watch items (small n); comparisons and inference belong at site level. There is deliberately no autonomous action. "
-    "Numbers never come from the model. Everything is synthetic: Northline Logistics does not exist; patterns were planted so the assistant can be scored. "
+    "Numbers never come from the model. Everything is synthetic: Lanford Health does not exist and there is no patient-level data; patterns were planted so the assistant can be scored. "
     "The model is gpt-5-mini on the group's GW Azure OpenAI resource; a stronger model changes wording, not numbers or verdicts. "
     "Limits: no Gallup global benchmark or percentile rank (no licensed source); two survey waves only; response bias is stated, not modelled."
 )
@@ -1441,7 +1476,7 @@ def chat_context(result: Result | None, plan_: ActionPlan | None = None) -> str:
 
 
 def _numbers_in(text: str) -> set[str]:
-    allowed = set(str(i) for i in range(0, 32))
+    allowed = set(str(i) for i in range(0, 32)) | {f"{i:02d}" for i in range(0, 10)}   # clock times such as 05:00 are not figures
     for m in NUM_RE.finditer(text):
         num = m.group(1)
         allowed.add(num)

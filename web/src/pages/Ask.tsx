@@ -8,9 +8,9 @@ import { Badge, Button, Card, CardHeader, CsvButton, PageHeader, Provenance, Seg
 import Useful from '../components/Useful'
 
 const EXAMPLES = [
-  "Why did the Richmond night shift's scores drop and why are deliveries late?",
-  'Did the Norfolk Day B team really decline?',
-  'Who owns the shift handoff procedure at Richmond?',
+  "Why did the Lanford night shift's scores drop and why are doses late?",
+  'Did the Westbrook Telemetry Day team really decline?',
+  'Who owns the medication cabinet restock schedule at Lanford?',
   'Why did the Denver site drop?',
 ]
 // What the run does, in order. Shown while the model works so the page never looks frozen.
@@ -109,7 +109,7 @@ function Brief() {
       <p className="mb-4 max-w-3xl text-[13.5px] text-fg-mute">A one-page evidence brief for one question. The AI reads the question and writes the brief; every number comes from SQL on the database and is checked. {model ? <>Model: <b>{meta?.model}</b> (GW Azure OpenAI).</> : <>No model key: rules mode.</>}</p>
       <Card>
         <form onSubmit={(e) => { e.preventDefault(); if (q.trim() && !started) go(q) }} className="flex items-center gap-2 rounded-xl border border-border-strong p-1.5 pl-4 focus-within:ring-4 focus-within:ring-brand/10">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Why did the Richmond night shift's scores drop?" className="flex-1 bg-transparent text-[14.5px] focus:outline-none" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Why did the Lanford night shift's scores drop?" className="flex-1 bg-transparent text-[14.5px] focus:outline-none" />
           <Button type="submit" variant="primary" disabled={!q.trim() || !!started} icon={<ArrowUp size={16} />}>Ask</Button>
         </form>
         <div className="mt-3 flex flex-wrap gap-2">

@@ -1,5 +1,48 @@
 # Friction Finder prototype: design spec
 
+## v0.9-health (Oct 8, 2026): the hospital variant of the same design
+
+Branch `v0.9-health`, a copy of v0.8. Nothing structural changed; the industry story did. The full contract is
+`docs/specs/2026-10-08-healthcare-variant.md`; this section is the short form, in the vocabulary of the sections
+below. Earlier sections of this file record the original design (Sept 14 to 17) and have been edited only where a
+sentence describes the current data model or copy.
+
+- **Fictional company:** Lanford Health, a regional hospital system. Sites (same ids): Lanford (Lanford Medical
+  Center), Westbrook (Westbrook Community Hospital), Pine Hollow (Pine Hollow Hospital). Shifts Day (07:00 to
+  19:00) and Night (19:00 to 07:00). Teams per site, same order, shifts and headcounts as before: Med-Surg Day,
+  Telemetry Day, ED Day, Med-Surg Night, ICU Night, Resp Therapy Day, Pharmacy Day (n < 4, suppressed), EVS Night
+  (n < 4, suppressed). The planted team is still team 4, now Lanford Med-Surg Night.
+- **People:** user = unit nurse manager (and charge nurse); buyer = Chief Nursing Officer and HR / people
+  analytics; data owners = HR (survey export), pharmacy and nursing informatics (eMAR), timekeeping, HRIS.
+- **Operating metrics** (keys renamed): `late_doses` (scheduled doses given more than 60 minutes late, eMAR
+  export; was late departures), `absence_days` (timekeeping), `quits` (HRIS), `injuries` (employee health log),
+  `overtime_shifts` (timekeeping; was rework, and now carries a cost); `late_rate` = late doses / scheduled doses
+  by hour band. `ops_daily` columns: `date, site_id, shift, hour_band, scheduled_doses, late_doses, missed_doses`.
+  The 06-07 band is the 06:00 medication pass before the 07:00 shift change.
+- **Hard privacy rule:** no patient-level data of any kind. Every operating record is a count at unit, shift or
+  site level: no patient identifiers, no diagnoses, no HCAHPS responses. HIPAA is therefore out of scope; the
+  staff-side rules (minimum n of 4, no respondent rows to the model) are unchanged.
+- **Planted story (same ids):** P1/P2 Med-Surg Night Q02 and Q07 fall in wave 2; P3 the 06-07 late-dose rate at
+  Lanford Night rises from about 8% to about 18% from June 1; P4 Lanford Night RN staffing at 80% of scheduled in
+  March, 90% in April (the competing explanation); P8 four wave-2 comments about the automated dispensing cabinet
+  being restocked at 07:00, after the 06:00 pass (theme `restock`); P11 the team's late doses, absences and quits
+  rise Jun to Sep and recover after the plan (Sept 21, review Nov 30); P6 Westbrook Telemetry Day, a new-graduate
+  residency cohort answered wave 1 only (response-mix artifact); P9 Pine Hollow ED Day blip ("insufficient"); P10
+  Westbrook Med-Surg Night, one long comment about IV pumps ("single source"); P5, P7, P12, P13 unchanged.
+- **Documents:** `medication_cabinet_restock_procedure.md` (SOP-PHARM-021: restock by 05:00 daily; owner the
+  Pharmacy Operations Manager), `nurse_staffing_policy.md` (POL-NURS-006; owner the Chief Nursing Officer), the
+  action-planning guide with roles renamed, the ownership directory, Gallup's item discussion questions.
+- **Seeded plan:** `plan-lanford-med-surg-night`, team 4, item q02, KPI `late_doses`, obstacle "Medication
+  cabinet restocked after the 06:00 pass: night nurses start the pass with empty bins", owner the site 1 Pharmacy
+  Operations Manager, start 2026-09-21, review 2026-11-30.
+- **Unit costs and segment facts:** sourced (publisher, report, year, figure in the source string), or
+  `assumption` with the formula, or `client_entered` (late dose). No logistics figure stays in place.
+- **Ports:** demo 8001, demo_check 8020, gate a11y 8021; gate output `docs/overnight/v0.9-health/_verify`.
+- **Eval regex for the planted obstacle:** `restock|dispensing cabinet|cabinet|pharmacy`; owner regex
+  `Pharmacy Operations Manager`.
+
+---
+
 Version 0.1, Sept 14, 2026. Owner: Farid (Product and AI lead). Status: approved for a
 four-day build to show O'Neal Keegan (Gallup) on Friday, Sept 18, 2026, 2:30 PM.
 
@@ -18,13 +61,13 @@ cannot answer.
 
 Running on Farid's laptop in a browser, with the GW-provided OpenAI key in `.env`:
 
-1. Question: "Why did the Richmond night shift's scores drop and why are deliveries late?"
+1. Question (v0.9-health wording): "Why did the Lanford night shift's scores drop and why are doses late?"
    Output: a chart, an evidence table, and a brief with likely obstacle, evidence for, evidence
    against, what is missing, the named process owner, and a proposed test. Every number has a
    "show me" that reveals the SQL and the rows it came from.
 2. Question about a team with fewer than four respondents. Output: suppressed, rolled up to
    the site level, with a sentence saying why. (Keegan's first open question.)
-3. Upload a CSV of delay records. Output: the records appear in the operational evidence for
+3. Upload a CSV of eMAR dose records (counts by hour band). Output: the records appear in the operational evidence for
    the next question. (Keegan's second open question.)
 4. Question the data cannot answer ("Why did the Denver site drop?" or "What caused
    turnover?"). Output: a decline with a reason, no invented numbers.
@@ -49,9 +92,9 @@ document upload beyond CSV operational records.
 
 ## 4. Data design (all synthetic, all labeled)
 
-Fictional company: Northline Logistics. Three sites: Richmond, Norfolk, Roanoke. Each site has
-Day and Night shifts split into teams (about 24 teams total, sizes 2 to 15, so at least four
-teams fall under the reporting threshold). Two survey waves: Wave 1 closes 2026-03-15, Wave 2
+Fictional company (v0.9-health): Lanford Health, a hospital system. Three sites: Lanford, Westbrook,
+Pine Hollow. Each site has Day and Night shifts split into unit teams (24 teams total, sizes 2 to 14, so
+at least four teams fall under the reporting threshold). Two survey waves: Wave 1 closes 2026-03-15, Wave 2
 closes 2026-09-10.
 
 Tables (CSV in `data/generated/`, loaded into DuckDB in memory):
@@ -64,7 +107,7 @@ Tables (CSV in `data/generated/`, loaded into DuckDB in memory):
 | waves | wave | wave_id, wave_name, close_date |
 | responses | respondent × wave | emp_id, team_id, wave_id, q01..q12 (1 to 5) |
 | comments | comment | comment_id, team_id, wave_id, text, theme (hidden, truth only) |
-| ops_daily | site × shift × hour band × day | date, site_id, shift, hour_band, departures, late_departures, rework_count |
+| ops_daily | site × shift × hour band × day | date, site_id, shift, hour_band, scheduled_doses, late_doses, missed_doses (eMAR export; counts only, no patient data) |
 | staffing | site × shift × month | month, site_id, shift, scheduled_headcount, actual_headcount |
 | ownership_directory | process | process_name, site_id or ALL, owner_role, owner_name |
 | documents | document | doc_id, title, type (sop, policy, directory), path |
@@ -74,23 +117,23 @@ seem to count." Item wording is stored once in `data/q12_items.csv`.
 
 Planted patterns, each recorded in `data/generated/truth.json` with an id:
 
-- P1: Richmond Night team A, Q02 mean falls from about 3.9 to about 3.2 between waves.
+- P1: Lanford Med-Surg Night (team 4), Q02 mean falls from about 3.9 to about 3.2 between waves.
 - P2: Same team, Q07 falls from about 3.8 to about 3.3.
-- P3: Richmond Night late-departure rate in the 06:00 to 07:00 hour band rises from about 8% to
-  about 18% from June 2026 on; other hour bands and sites stay flat.
-- P4: Richmond Night staffing shortage in March 2026 (actual about 80% of scheduled), back to
+- P3: Lanford Night late-dose rate in the 06:00 to 07:00 hour band (the 06:00 medication pass)
+  rises from about 8% to about 18% from June 2026 on; other hour bands and sites stay flat.
+- P4: Lanford Night RN staffing shortage in March 2026 (actual about 80% of scheduled), back to
   normal by May. The competing explanation.
 - P5: Honeymoon effect: employees under one year score about 0.3 higher on the grand mean in
   every team and wave. (Keegan, Sept 14.)
-- P6: Norfolk Day team B: within each tenure band scores are stable across waves, but Wave 2
-  has far fewer under-one-year respondents, so the team mean appears to fall. The reviewer
-  case.
+- P6: Westbrook Telemetry Day: within each tenure band scores are stable across waves, but Wave 2
+  has far fewer under-one-year respondents (a new-graduate residency cohort answered wave 1 only),
+  so the team mean appears to fall. The reviewer case.
 - P7: The list of teams with fewer than four respondents in either wave.
-- P8: At least three Wave 2 comments from Richmond Night describing missing information at the
-  shift handoff.
+- P8: At least three Wave 2 comments from Lanford Med-Surg Night describing the automated dispensing
+  cabinet being restocked at 07:00, after the 06:00 medication pass.
 
-Documents (Markdown in `data/docs/`): shift handoff procedure (requires a load checklist
-completed by the outgoing shift), a scheduling policy, and the ownership directory rendered
+Documents (Markdown in `data/docs/`): medication cabinet restock procedure (restock by 05:00 daily;
+owner the Pharmacy Operations Manager), a nurse staffing policy, and the ownership directory rendered
 as text. All written by the team; all labeled illustrative.
 
 ## 5. Suppression rule
@@ -195,8 +238,8 @@ cannot change it (the checker rejects a brief that does). Thresholds, all in `ag
 
 - `SURVEY_MATERIAL = 0.30`: an item mean change of 0.30 or more on the 5-point scale is material.
   Screening rule, not a significance test; team-level findings are watch items.
-- `OPS_SIGNAL_ABS = 0.05` and `OPS_SIGNAL_RATIO = 1.5`: a late-departure band is a signal when its
-  rate rises 5 points or more and to at least 1.5x the earlier rate.
+- `OPS_SIGNAL_ABS = 0.05` and `OPS_SIGNAL_RATIO = 1.5`: an hour-band late-dose rate is a signal when it
+  rises 5 points or more and to at least 1.5x the earlier rate.
 - `COMMENT_BREADTH = 3`: a comment theme corroborates only with three or more separate comments.
 - `STAFFING_LOW = 0.90`: a month under 90% of scheduled headcount is a competing explanation.
 - `MIX_EXPLAINS = 0.30`: in the signal check, a residual below 0.30 after the who-responded
@@ -204,19 +247,20 @@ cannot change it (the checker rejects a brief that does). Thresholds, all in `ag
 
 Verdicts: `supported` (material fall + operational signal or comment breadth) → obstacle, owner,
 test, plan. `insufficient` (survey moved, nothing else) → watch item, no owner, no test.
-`no_material_change` → watch list. `suppressed_insufficient` → site view with the Site Operations
-Manager.
+`no_material_change` → watch list. `suppressed_insufficient` → site view with the Nurse Manager
+(v0.9-health roles).
 
 ## The signal check (feature 2, new)
 
 Shift-share: expected change = Σ over tenure bands of (share in Wave 2 − share in Wave 1) ×
-company-wide band mean. Residual = observed change in the team grand mean − expected. Norfolk Day
-B: observed −0.45, expected from mix −0.20, residual −0.25 → "mostly a change in who responded".
+company-wide band mean. Residual = observed change in the team grand mean − expected. The planted
+mix-artifact team (Westbrook Telemetry Day in v0.9-health; the v0.2 figures were observed −0.45, expected
+from mix −0.20, residual −0.25) → "mostly a change in who responded".
 
 ## The action plan and report (feature 3, new)
 
-Only for `supported`. Goal from the operational signal (bring the 06-07 late rate from 17.8% back
-to 7.4% by the review date); focus item = the fallen item most relevant to the theme (handoff →
+Only for `supported`. Goal from the operational signal (bring the 06-07 late-dose rate back to its
+pre-June level by the review date); focus item = the fallen item most relevant to the theme (restock →
 Q02); three or four actions written by the model from the brief, checked (owner roles must exist
 in the directory for that site, numbers must appear in the evidence) or templated from a bank per
 theme; owners and dates computed; Gallup's item-specific discussion questions quoted verbatim with

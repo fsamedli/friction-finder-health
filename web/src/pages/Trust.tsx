@@ -19,9 +19,9 @@ function Architecture() {
   }
   const arrow = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#98A2B3" strokeWidth={1.3} markerEnd="url(#ah)" />
   return (
-    <svg viewBox="0 0 1000 430" className="w-full h-auto min-w-[720px]" role="img" aria-label="Architecture: client data flows through suppressed views and a SQL guard into read-only tools. A question passes the out-of-scope guard; the AI model, or without a key a fixed plan, chooses which read-only tool runs next under a budget; code runs the tool and computes every number; a self-check verifies the answer; a person approves every action.">
+    <svg viewBox="0 0 1000 430" className="w-full h-auto min-w-[720px]" role="img" aria-label="Architecture: hospital data (unit-level counts, no patient data) flows through suppressed views and a SQL guard into read-only tools. A question passes the out-of-scope guard; the AI model, or without a key a fixed plan, chooses which read-only tool runs next under a budget; code runs the tool and computes every number; a self-check verifies the answer; a person approves every action.">
       <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#98A2B3" /></marker></defs>
-      {box(10, 20, 190, 'Client data (synthetic)', 'survey export · ops CSVs · docs')}
+      {box(10, 20, 190, 'Hospital data (synthetic)', 'survey · eMAR · timekeeping · docs')}
       {box(10, 110, 190, 'Suppressed views', 'n ≥ 4 enforced in SQL', 'guard')}
       {box(10, 200, 190, 'SQL guard (sqlglot)', 'allowlist · no table functions', 'guard')}
       {box(10, 330, 190, 'Question + context', 'team · site · date · finding')}
@@ -170,7 +170,7 @@ export default function Trust() {
                 <p className="mt-3 text-[12px] text-fg-mute">Refusals and suppressions count as true negatives.</p>
               </Card>
             ))}
-            <Card className="md:col-span-2 border-warn-100 bg-warn-50/50"><p className="text-[13px] text-warn-700"><b>Known limit.</b> The team wrote both the data and the gold questions. A held-out set written by someone who has not seen the planted answers, and a small user test with site managers, are next.</p></Card>
+            <Card className="md:col-span-2 border-warn-100 bg-warn-50/50"><p className="text-[13px] text-warn-700"><b>Known limit.</b> The team wrote both the data and the gold questions. A held-out set written by someone who has not seen the planted answers, and a small user test with nurse managers, are next.</p></Card>
           </div>
         ))}
         {t === 'feedback' && (!fb.data ? <PageSkeleton /> : (

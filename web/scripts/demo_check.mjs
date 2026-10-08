@@ -1,9 +1,12 @@
 // Demo safety net: walk the whole demo path in headless Chrome at 1440 px and 390 px and fail loudly on a
 // console error, a failed API call, or a missing key number or label.
-// usage: node scripts/demo_check.mjs http://127.0.0.1:8010   (scripts/demo_check.sh starts that server)
+// usage: node scripts/demo_check.mjs http://127.0.0.1:8020   (scripts/demo_check.sh starts that server)
+// v0.9-health: the planted team is team 4, "Lanford Med-Surg Night"; the headline KPI is late doses; the seeded plan is
+// plan-lanford-med-surg-night. The counts asserted below (81 vs 51, 10.6, 76 days) are the v0.8 planted values the spec
+// says the generator keeps under the new keys; the integrator confirms them after the first gate run.
 import { chromium } from 'playwright-core'
 
-const base = process.argv[2] ?? 'http://127.0.0.1:8010'
+const base = process.argv[2] ?? 'http://127.0.0.1:8020'
 const results = []
 let failed = 0
 const log = (ok, w, what) => { results.push(`${ok ? 'PASS' : 'FAIL'}  ${w}px  ${what}`); if (!ok) failed++ }
@@ -37,22 +40,22 @@ for (const width of [1440, 390]) {
   }
 
   await page.goto(base + '/', { waitUntil: 'networkidle' })
-  await see('Detect', ['Night A needs attention', 'Excess operating cost', 'Teams needing attention'])
-  await see('Detect numbers', ['81', 'late departures vs', '51'])
+  await see('Detect', ['Med-Surg Night needs attention', 'Excess operating cost', 'Teams needing attention'])
+  await see('Detect numbers', ['81', 'late doses vs', '51'])
   await noOverflow('Detect')
   await see('Context strip', ['(demo clock)', 'demo CSV, synthetic'])
-  for (const [from, to] of [['/teams', '/investigate'], ['/teams/4?tab=plan', '/investigate/4'], ['/impact/plan-richmond-night-a', '/review/plan-richmond-night-a'], ['/why/4', '/investigate/4'], ['/proof/plan-richmond-night-a', '/review/plan-richmond-night-a']]) {
+  for (const [from, to] of [['/teams', '/investigate'], ['/teams/4?tab=plan', '/investigate/4'], ['/impact/plan-lanford-med-surg-night', '/review/plan-lanford-med-surg-night'], ['/why/4', '/investigate/4'], ['/proof/plan-lanford-med-surg-night', '/review/plan-lanford-med-surg-night']]) {
     await page.goto(base + from, { waitUntil: 'networkidle' })
     log(new URL(page.url()).pathname === to, width, `Redirect ${from} -> ${to}${new URL(page.url()).pathname === to ? '' : ` (got ${new URL(page.url()).pathname})`}`)
   }
 
   await page.goto(base + '/investigate/4', { waitUntil: 'networkidle' })
-  await see('Explain', ['Richmond Night A', 'what comparable teams predict (81 vs 51)', 'Materials and equipment to do my work right', 'Survey change, wave 1'])
+  await see('Explain', ['Lanford Med-Surg Night', 'what comparable teams predict (81 vs 51)', 'Materials and equipment to do my work right', 'Survey change, wave 1'])
   await noOverflow('Explain')
   await page.goto(base + '/investigate/4?tab=drivers', { waitUntil: 'networkidle' })
   await see('Explain · drivers', ['Association, not cause', 'Top vs bottom quartile', 'Linked.'])
   await page.goto(base + '/investigate/4?tab=evidence', { waitUntil: 'networkidle' })
-  await see('Explain · evidence', ['Supported hypothesis', 'What employees wrote', 'rules mode'])
+  await see('Explain · evidence', ['Supported hypothesis', 'What staff wrote', 'rules mode'])
 
   await page.goto(base + '/investigate/4?tab=plan', { waitUntil: 'networkidle' })
   await see('Act', ['Draft action plan', 'Needs your decision', 'reviewed Nov 30'])
@@ -69,7 +72,8 @@ for (const width of [1440, 390]) {
   await noOverflow('Action plans')
 
   await page.goto(base + '/value', { waitUntil: 'networkidle' })
-  await see('Business case', ['$80.1K', 'Unit costs', 'Pricing hypothesis', 'Sourced'])
+  // the headline dollar figure depends on the hospital unit costs Agent A sources; labels are asserted, the figure is not
+  await see('Business case', ['Voluntary turnover, per year', 'US hospitals', 'Unit costs', 'Pricing hypothesis', 'Sourced'])
   await noOverflow('Business case')
 
   await page.goto(base + '/trust', { waitUntil: 'networkidle' })
@@ -81,35 +85,35 @@ for (const width of [1440, 390]) {
   await noOverflow('Under the hood')
 
   await page.goto(base + '/ask?view=brief', { waitUntil: 'networkidle' })
-  await page.getByPlaceholder("Why did the Richmond night shift's scores drop?").fill("Why did the Richmond Night A team's scores drop?")
+  await page.getByPlaceholder("Why did the Lanford night shift's scores drop?").fill("Why did the Lanford Med-Surg Night team's scores drop?")
   await click('Ask (rules mode)', 'Ask')
   await see('Ask (rules mode)', ['Supported hypothesis', 'numbers checked against the evidence', 'Evidence register', 'How this answer was produced', 'Useful?'], 30000)
   await noOverflow('Ask')
   // a scripted question is served as a labelled prepared answer when data/prepared/answers.json exists
-  const prepared = await (await fetch(base + '/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: "Why did the Richmond night shift's scores drop and why are deliveries late?" }) })).json()
+  const prepared = await (await fetch(base + '/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: "Why did the Lanford night shift's scores drop and why are doses late?" }) })).json()
   if (prepared.prepared) {
-    await page.getByRole('button', { name: "Why did the Richmond night shift's scores drop and why are deliveries late?" }).first().click()
+    await page.getByRole('button', { name: "Why did the Lanford night shift's scores drop and why are doses late?" }).first().click()
     await see('Ask (prepared)', ['Prepared answer', 'Run live'])
   } else log(true, width, 'Ask (prepared): no prepared answers on this machine; skipped')
 
   // one-page report and CSV export
-  const rep = await (await fetch(base + '/api/report/plan-richmond-night-a')).text()
+  const rep = await (await fetch(base + '/api/report/plan-lanford-med-surg-night')).text()
   log(rep.includes('What we found') && rep.includes('Did it work?') && rep.includes('Directional, not causal') && rep.includes('&lt; 0.001'), width, 'One-page report: finding, plan, result, caveats')
   await page.goto(base + '/investigate', { waitUntil: 'networkidle' })
   try {
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.getByRole('button', { name: 'CSV' }).locator('visible=true').first().click()])
-    log(/^teams_Richmond_.*\.csv$/.test(dl.suggestedFilename()), width, `CSV export: ${dl.suggestedFilename()}`)
+    log(/^teams_Lanford_.*\.csv$/.test(dl.suggestedFilename()), width, `CSV export: ${dl.suggestedFilename()}`)
   } catch { log(false, width, 'CSV export: no download') }
   // upload: a bad file shows problems; a good file updates the board; Back to demo data restores it
   await page.goto(base + '/data', { waitUntil: 'networkidle' })
   const input = page.getByLabel('Operating records CSV')
   await input.setInputFiles({ name: 'bad.csv', mimeType: 'text/csv', buffer: Buffer.from('month,team_id\n2026-06,4\n') })
   await see('Upload · bad file', ['The file was not loaded', 'Missing columns'])
-  const good = 'month,team_id,absence_days,late_departures,quits,injuries,rework\n' + [6, 7, 8].map((m) => `2026-0${m},4,8,14,0,0,4`).join('\n') + '\n'
+  const good = 'month,team_id,absence_days,late_doses,quits,injuries,overtime_shifts\n' + [6, 7, 8].map((m) => `2026-0${m},4,8,14,0,0,4`).join('\n') + '\n'
   await input.setInputFiles({ name: 'ops.csv', mimeType: 'text/csv', buffer: Buffer.from(good) })
   await see('Upload · good file', ['3 team-months loaded', 'your uploaded operating records'])
   const b2 = await (await fetch(base + '/api/board?site_id=1&as_of=2026-09-15')).json()
-  log(b2.teams.find((t) => t.team_name === 'Night A')?.status !== 'red', width, 'Upload · board updated (Night A no longer flagged with normal late departures)')
+  log(b2.teams.find((t) => t.team_name === 'Med-Surg Night')?.status !== 'red', width, 'Upload · board updated (Med-Surg Night no longer flagged with normal late doses)')
   await click('Upload', 'Back to demo data')
   await see('Upload · reset', ['Back to the demo data'])
 
@@ -119,7 +123,7 @@ for (const width of [1440, 390]) {
   await page.getByLabel('Participant id').fill('P9')
   await click('Study mode', 'Begin')
   await click('Study mode', 'Task 1')
-  await see('Study mode', ['Find the team that is costing the site the most'])
+  await see('Study mode', ['Find the team that is costing the hospital the most'])
   await click('Study mode', 'Done')
   await page.evaluate(() => { try { sessionStorage.clear() } catch {} })
 
@@ -156,15 +160,15 @@ for (const width of [1440, 390]) {
   }
   const followUp = (label, first, second) => {
     log(!!first && !!second && second.conversation_id === first.conversation_id, width, `${label}: follow-up kept the conversation`)
-    log(!!second && second.context?.team_id === 4 && /Night A/.test(second.context?.team ?? ''), width, `${label}: follow-up kept the team context (${second?.context?.team ?? 'none'})`)
+    log(!!second && second.context?.team_id === 4 && /Med-Surg Night/.test(second.context?.team ?? ''), width, `${label}: follow-up kept the team context (${second?.context?.team ?? 'none'})`)
   }
 
   // the journey: Today -> Investigate -> a panel follow-up -> Draft a plan -> Approve -> reload -> Review
   await page.goto(base + '/', { waitUntil: 'networkidle' })
-  await click('Journey · Today', 'Review Night A and decide')
-  await page.waitForURL(/\/investigate\/4/, { timeout: 10000 }).then(() => log(true, width, 'Journey · Today -> Investigate Night A')).catch(() => log(false, width, 'Journey · did not reach /investigate/4'))
+  await click('Journey · Today', 'Review Med-Surg Night and decide')
+  await page.waitForURL(/\/investigate\/4/, { timeout: 10000 }).then(() => log(true, width, 'Journey · Today -> Investigate Med-Surg Night')).catch(() => log(false, width, 'Journey · did not reach /investigate/4'))
   await page.waitForLoadState('networkidle')
-  const j1 = await askIn('Journey · panel', 'Why is Night A flagged?')
+  const j1 = await askIn('Journey · panel', 'Why is Med-Surg Night flagged?')
   const j2 = await askIn('Journey · follow-up', 'Could staffing explain this?')
   followUp('Journey', j1, j2)
   const j3 = await askIn('Journey · draft', 'Draft a plan I can review')
@@ -184,7 +188,7 @@ for (const width of [1440, 390]) {
   await see('Journey · Review', ['Not ready', 'days', 'Fast-forward to the review date'])
   await noOverflow('Journey · Review')
 
-  // scripted investigations with one follow-up each, on /ask (team context Night A)
+  // scripted investigations with one follow-up each, on /ask (team context Med-Surg Night)
   await page.goto(base + '/ask', { waitUntil: 'networkidle' })
   const sb1 = await askIn('Scripted B', 'Compare it with the other night shifts')
   const sb2 = await askIn('Scripted B · follow-up', 'When did it start?')

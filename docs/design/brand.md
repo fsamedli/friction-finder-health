@@ -63,7 +63,7 @@ or a range strip from the rows in the response; nothing is drawn from numbers th
 
 - Radius: question blocks 16 px (`rounded-2xl`), cards 12 px, controls 8 px, badges 6 px, pills full.
 - More breathing room than v0.7: the Today focus card has 24–32 px padding, sections are 40 px apart below it.
-- Page gutter 16 px mobile, 32 px desktop. Max content width 1360 px. The Investigate panel docks in a 400 px
+- Page gutter 16 px mobile, 32 px desktop. Max content width 1360 px. The Investigate panel sits in a 400 px
   right column from 1280 px; below that it is a full-width section reached from the "Ask" question chip.
 - Motion: a 0.28 s fade-up on first paint, nothing else. `prefers-reduced-motion` turns all animation off.
 - Every call has a loading, empty, error (with Try again), suppressed, insufficient, unavailable and fallback state.
@@ -82,4 +82,7 @@ Files: `web/public/favicon.svg`; the React component is `Logo` in `web/src/compo
   first-viewport action on Today is rust because it is the manager's decision.
 - The first viewport of Today has no p-values, methods or journey strip; those are one scroll or one click down.
 - Numbers come only from the API. The narration in the guided demo contains no numbers.
-- Every screen shows the demo-clock date and the dataset (demo CSV, synthetic; or the client's upload).
+- Every screen shows the demo-clock date and the dataset (demo CSV, synthetic; or the hospital's upload).
+- v0.9-health: say "nurse manager" and "charge nurse", "unit team", "hospital"; name the operating metrics as
+  late doses, absence days, quits, injuries, overtime shifts; say "unit-level counts, no patient data" wherever the
+  old copy said the data was synthetic. The sidebar subtitle is "for nursing units". Lanford Health is fictional.

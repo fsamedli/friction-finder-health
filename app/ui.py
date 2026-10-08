@@ -159,7 +159,7 @@ with st.sidebar:
     key = config.has_key()
     st.markdown(f"""
 <div style='margin-top:12px'>
-<div class='stat'><span>Company</span><b>Northline Logistics</b></div>
+<div class='stat'><span>Company</span><b>Lanford Health</b></div>
 <div class='stat'><span>Sites · teams · waves</span><b>3 · 24 · 2</b></div>
 <div class='stat'><span>Survey responses</span><b>311</b></div>
 <div class='stat'><span>Operations rows</span><b>{n_ops:,}{' ↑' if db.uploaded_ops_rows else ''}</b></div>
@@ -169,9 +169,9 @@ with st.sidebar:
 </div>""", unsafe_allow_html=True)
     st.markdown("<p class='small' style='margin-top:10px'>Numbers never come from the model. It reads the question and writes text from evidence it is handed; every draft is checked.</p>", unsafe_allow_html=True)
     with st.expander("Bring your own operational records"):
-        st.caption("How a client's delay records enter in a pilot: an export from dispatch or the warehouse system, approved by its owner. Columns: date, site_id, shift, hour_band, departures, late_departures, rework_count.")
+        st.caption("How a client's medication records enter in a pilot: an eMAR export from pharmacy or nursing informatics, approved by its owner (counts only, no patient records). Columns: date, site_id, shift, hour_band, scheduled_doses, late_doses, missed_doses.")
         template = pd.DataFrame([{"date": "2026-09-11", "site_id": 1, "shift": "Night", "hour_band": "06-07",
-                                  "departures": 24, "late_departures": 6, "rework_count": 1}])
+                                  "scheduled_doses": 192, "late_doses": 15, "missed_doses": 1}])
         st.download_button("Download the CSV template", template.to_csv(index=False).encode(), "ops_template.csv", "text/csv", width="stretch")
         up = st.file_uploader("Choose a CSV", type=["csv"], label_visibility="collapsed")
         if up is not None and st.session_state.get("last_upload") != up.name + str(up.size):
@@ -183,7 +183,7 @@ with st.sidebar:
                 st.error(f"Upload rejected: {e}")
     with st.expander("About this prototype"):
         st.caption("Built with the tools we were given: the group's GW Azure OpenAI resource, gpt-5-mini, reasoning effort minimal (scope) and low (writing). "
-                   "A stronger model changes the wording of briefs, not the numbers or the verdicts. Northline Logistics does not exist; patterns were planted so the assistant can be scored.")
+                   "A stronger model changes the wording of briefs, not the numbers or the verdicts. Lanford Health does not exist; patterns were planted so the assistant can be scored.")
 
 # ------------------------------------------------------------------ masthead
 st.markdown(f"""
@@ -191,7 +191,7 @@ st.markdown(f"""
   <div>
     <div class='eyebrow'>Evidence briefs for operations leaders</div>
     <h1>Friction Finder</h1>
-    <div class='promise'>When a team's engagement score falls, the <b>site or shift manager</b> gets a one-page brief that says what is behind it,
+    <div class='promise'>When a team's engagement score falls, the <b>nurse manager or charge nurse</b> gets a one-page brief that says what is behind it,
     how sure we are, <b>who owns the fix</b>, and what to test first. Built from survey results, the operation's own records, its procedures, and what employees wrote.</div>
   </div>
   <div class='meta'><b>Starting segment</b><br>operations-heavy workplaces<br>where daily work is logged<br><b>No autonomous action</b> · a person approves</div>
@@ -202,23 +202,23 @@ st.markdown(f"""
 PLAYBOOK = [
     ("01", "Diagnose", "Where did we drop, and what is behind it?", [
         ("Where did we drop? (all sites)", "Where did scores drop across all sites?"),
-        ("Where did we drop? (Richmond)", "Where did scores drop across Richmond?"),
-        ("Why did the night shift drop?", "Why did the Richmond night shift's scores drop and why are deliveries late?"),
-        ("A team under 4 respondents", "Why did the Richmond Dispatch Day team's scores drop?"),
+        ("Where did we drop? (Lanford)", "Where did scores drop across Lanford?"),
+        ("Why did the night shift drop?", "Why did the Lanford night shift's scores drop and why are doses late?"),
+        ("A team under 4 respondents", "Why did the Lanford Pharmacy Day team's scores drop?"),
     ]),
     ("02", "Check the signal", "Is the change real, or did different people answer?", [
-        ("Is the decline real?", "Is the Norfolk Day B decline real or did different people respond?"),
+        ("Is the decline real?", "Is the Westbrook Telemetry Day decline real or did different people respond?"),
         ("Scores by tenure", "How do scores vary by tenure?"),
     ]),
     ("03", "Act and review", "Who owns it, and what do we do first?", [
-        ("Who owns the handoff?", "Who owns the shift handoff process at Richmond?"),
-        ("One team's score and respondents", "What was the Richmond Night A score on materials and equipment in wave 2, and how many people responded?"),
+        ("Who owns the restock?", "Who owns the medication cabinet restock schedule at Lanford?"),
+        ("One team's score and respondents", "What was the Lanford Med-Surg Night score on materials and equipment in wave 2, and how many people responded?"),
     ]),
 ]
 REDTEAM = [
-    ("A blip with no operations signal", "Why did the Roanoke Day C team's scores drop?"),
-    ("One loud comment", "Why did the Norfolk night shift's scores drop?"),
-    ("Data we do not have", "What caused turnover on the Norfolk night shift?"),
+    ("A blip with no operations signal", "Why did the Pine Hollow ED Day team's scores drop?"),
+    ("One loud comment", "Why did the Westbrook night shift's scores drop?"),
+    ("Data we do not have", "What caused RN turnover on the Westbrook night shift?"),
     ("A site we do not have", "Why did the Denver site drop?"),
 ]
 
@@ -250,7 +250,7 @@ def _pulse() -> list[dict]:
     hidden = db.run_sql(f"SELECT s.site_name, COUNT(DISTINCT t.team_id) AS hidden FROM v_team_wave_n n JOIN teams t ON t.team_id = n.team_id JOIN sites s ON s.site_id = t.site_id WHERE n.n < {config.MIN_N} GROUP BY 1").rows
     teams = db.run_sql("SELECT s.site_name, COUNT(*) AS teams FROM teams t JOIN sites s ON s.site_id = t.site_id GROUP BY 1").rows
     tw = db.run_sql("SELECT site_name, team_id, item, wave_id, mean_score, reportable FROM v_team_wave_item ORDER BY site_name, team_id, item, wave_id").rows
-    ops = db.run_sql("SELECT site_name, period, ROUND(SUM(late_departures) * 1.0 / SUM(departures), 3) AS late_rate FROM v_ops_hour GROUP BY 1, 2").rows
+    ops = db.run_sql("SELECT site_name, period, ROUND(SUM(late_doses) * 1.0 / SUM(scheduled_doses), 3) AS late_rate FROM v_ops_hour GROUP BY 1, 2").rows
     out = []
     for site in db.sites():
         g = {int(r.wave_id): (float(r.gm), int(r.n)) for r in gm[gm.site_name == site].itertuples()}
@@ -277,7 +277,7 @@ if st.session_state.get("result") is None:
 <div class='row'><span>Respondents</span><b>{row['n1']} → {row['n2']}</b></div>
 <div class='row'><span>Teams hidden (n &lt; {config.MIN_N})</span><b>{row['hidden']} of {row['teams']}</b></div>
 <div class='row'><span>Team-level watch items</span><b class='{'warn' if row['watch'] >= 8 else ''}'>{row['watch']}</b></div>
-<div class='row'><span>Late departures, all shifts</span><b class='{'warn' if dl >= 1 else ''}'>{row['late1'] * 100:.1f}% → {row['late2'] * 100:.1f}%</b></div>
+<div class='row'><span>Late doses, all shifts</span><b class='{'warn' if dl >= 1 else ''}'>{row['late1'] * 100:.1f}% → {row['late2'] * 100:.1f}%</b></div>
 </div>""", unsafe_allow_html=True)
             if st.button(f"Open {row['site']}", key="pulse_" + row["site"], width="stretch"):
                 st.session_state["question"] = f"Where did scores drop across {row['site']}?"
@@ -305,7 +305,7 @@ with st.expander("Red-team cases: what it refuses to do"):
 
 qcol, bcol, rcol = st.columns([6, 1, 1], vertical_alignment="bottom")
 question = qcol.text_input("Or ask in your own words (Enter to ask)", key="question", on_change=_on_enter,
-                           placeholder="e.g., Why did the Richmond night shift's scores drop and why are deliveries late?")
+                           placeholder="e.g., Why did the Lanford night shift's scores drop and why are doses late?")
 if bcol.button("Ask", type="primary", width="stretch") and question.strip():
     _ask(question.strip())
     st.rerun()
@@ -366,7 +366,7 @@ def _chart_ops(res: Result):
                     hovertemplate="%{x} · Jun-Sep: %{y:.1f}%<extra></extra>")
     fig.update_layout(barmode="group")
     fig.update_xaxes(type="category")
-    return _style(fig, 340, "Late departures (%)", "Hour band")
+    return _style(fig, 340, "Late doses (%)", "Hour band")
 
 
 def _chart_tenure(res: Result):
@@ -477,7 +477,7 @@ def _headline(res: Result) -> tuple[str, str, str, str]:
         return ("Evidence brief", f"No material change on {where}.",
                 f"No survey item fell {SURVEY_MATERIAL:.2f} or more between waves. Nothing to diagnose; keep on the watch list.", "grey")
     return ("Evidence brief", f"{where} is too small to report on its own.",
-            f"Fewer than {config.MIN_N} respondents, so team results stay hidden to protect anonymity. The site-level view is shown instead; the manager reviews it with the Site Operations Manager.", "grey")
+            f"Fewer than {config.MIN_N} respondents, so team results stay hidden to protect anonymity. The site-level view is shown instead; the manager reviews it with the Nurse Manager.", "grey")
 
 
 def _kpis(res: Result) -> list[tuple[str, str, str, str]]:
@@ -494,7 +494,7 @@ def _kpis(res: Result) -> list[tuple[str, str, str, str]]:
         ops = by.get("ops_hour", [None])[0]
         if ops:
             v = ops.value
-            tiles.append((f"Late departures, {v['hour_band']} band", f"{v['before'] * 100:.1f}%<span class='arrow'>→</span>{v['after'] * 100:.1f}%",
+            tiles.append((f"Late doses, {v['hour_band']} band", f"{v['before'] * 100:.1f}%<span class='arrow'>→</span>{v['after'] * 100:.1f}%",
                           "operational signal" if v.get("signal") else "no signal", "warn" if v.get("signal") else "grey"))
         th = by.get("comment_themes", [None])[0]
         if th and th.value.get("total"):
@@ -599,7 +599,7 @@ def _memo(res: Result):
             st.markdown(f"<div class='act warn'><div class='eyebrow'>No action proposed {chip('computed')}</div><div style='font-size:15px;line-height:1.45;margin-top:4px'>{_h.escape(b.proposed_test)}</div>"
                         f"<div class='role' style='margin-top:8px'>{_h.escape(b.owner)}</div></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='eyebrow' style='margin-top:6px'>Human decision {chip('human')}</div>", unsafe_allow_html=True)
-        note = st.text_input("Note (optional)", key="note", placeholder="e.g., checked the 06-07 number against dispatch", label_visibility="collapsed")
+        note = st.text_input("Note (optional)", key="note", placeholder="e.g., checked the 06-07 number against the eMAR export", label_visibility="collapsed")
         c1, c2, c3 = st.columns(3)
         if c1.button("Approve", type="primary", width="stretch"):
             approve(res, "approved", note)
@@ -654,7 +654,7 @@ def _charts_tab(res: Result):
     fig = _chart_ops(res)
     if fig:
         ops = [e for e in res.evidence if e.kind == "ops_hour"][0]
-        st.markdown("**Late departures by hour band, before and after June 2026.** " + ("The band with the operational signal is labelled." if ops.value.get("signal") else "No band changed materially."))
+        st.markdown("**Late doses by hour band, before and after June 2026.** " + ("The band with the operational signal is labelled." if ops.value.get("signal") else "No band changed materially."))
         st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG)
         drawn = True
     fig = _chart_heatmap(res)
@@ -785,7 +785,7 @@ with st.container(border=True):
             st.markdown(m["content"])
             if m.get("notes"):
                 st.caption(" · ".join(m["notes"]))
-    examples = (["Why is the handoff the likely obstacle and not staffing?", "What does 'material' mean here?", "What would change the verdict?"] if res and res.brief
+    examples = (["Why is the cabinet restock the likely obstacle and not staffing?", "What does 'material' mean here?", "What would change the verdict?"] if res and res.brief
                 else ["How does the tool decide a verdict?", "What data is this built on, and what was planted?", "What happens for a team with fewer than four people?"])
     ec = st.columns(len(examples))
     asked = None
@@ -820,7 +820,7 @@ with st.expander("How it works: one workflow, five fixed steps, then a person de
 | 1 Scope | The model reads the question into a fixed schema (site, team, items, intent). Names are checked against the tables; unknown sites or data we do not have are declined. | textual (model) + checks |
 | 2 Analyze | SQL over views that hide teams under n = {config.MIN_N}; Python computes changes, rates, staffing ratios, and the who-responded adjustment. | deterministic |
 | 3 Retrieve | Comments and procedures are found by similarity (embeddings) and quoted verbatim; comment themes are counted in code. | deterministic + retrieval |
-| 4 Assess | The verdict comes from thresholds: an item fell ≥ {SURVEY_MATERIAL:.2f}; a late-departure band rose ≥ {OPS_SIGNAL_ABS * 100:.0f} points and ≥ {OPS_SIGNAL_RATIO}×; a theme has ≥ {COMMENT_BREADTH} separate comments; staffing under {STAFFING_LOW * 100:.0f}% is a competing explanation. No corroboration = "insufficient". | deterministic |
+| 4 Assess | The verdict comes from thresholds: an item fell ≥ {SURVEY_MATERIAL:.2f}; a late-dose hour band rose ≥ {OPS_SIGNAL_ABS * 100:.0f} points and ≥ {OPS_SIGNAL_RATIO}×; a theme has ≥ {COMMENT_BREADTH} separate comments; staffing under {STAFFING_LOW * 100:.0f}% is a competing explanation. No corroboration = "insufficient". | deterministic |
 | 5 Explain | The model writes the brief from the evidence it is handed. A checker rejects unknown citations, numbers not in the evidence, causal words, and any owner when the verdict is not supported; two failures and a templated brief is shown. | textual (model) + checks |
 | Decide | A person approves, rejects, or flags. The action plan is built only for supported verdicts. Nothing happens otherwise. | human |
 
@@ -869,15 +869,15 @@ with st.expander("The data: what feeds the tool, and what was planted"):
 
 with st.expander("The business case and the pilot scorecard (hypotheses, to be measured)"):
     st.markdown(f"""
-**Who.** The user is the site or shift manager. The buyer is the client's head of operations or of HR. The data owners are operations
-(dispatch or warehouse exports) and HR (the survey vendor's team-level export). Adoption is approved by the HR business partner with the site
-operations director. Channel hypothesis: sold with the engagement-survey debrief or as an operations-analytics add-on; sponsorship is not a channel.
+**Who.** The user is the nurse manager or charge nurse. The buyer is the Chief Nursing Officer or HR / people analytics. The data owners are
+pharmacy and nursing informatics (eMAR exports), timekeeping, and HR (the survey vendor's team-level export). Adoption is approved by the HR business
+partner with the Chief Nursing Officer. Channel hypothesis: sold with the engagement-survey debrief or as an operations-analytics add-on; sponsorship is not a channel.
 
 **What it replaces.** Today the link between a fallen score and a broken process is made by consultants reading signals during executive briefings,
 or not at all; comments go unread at scale; action planning stalls on follow-through.
 
 **Pilot entry criterion.** A client where manual reading fails: enough teams, waves, and comments that nobody reads them all, and an operation that
-logs daily work (warehouses, logistics, call centers). Knowledge-work firms with only a survey do not qualify.
+logs daily work (hospital units with eMAR, timekeeping and staffing records). Organisations with only a survey do not qualify.
 
 **Pilot scorecard, measured, not claimed.** Time from results release to an owned action; share of briefs approved, rejected, flagged; share of proposed
 tests actually run and re-measured; movement in the operational rate and the focus item at the next wave; manager rating of the State of the Team
@@ -890,7 +890,7 @@ with st.expander("Assumptions and integration options (what we chose, and why)")
     st.markdown("""
 | Question | Options considered | Chosen for the pilot | Why |
 |---|---|---|---|
-| How operational records arrive | manual CSV export; scheduled export to a shared folder; API integration with dispatch or the warehouse system | manual CSV export, approved by the business-unit owner | fastest to start; the owner stays in control; integration is a later decision once value is shown |
+| How operational records arrive | manual CSV export; scheduled export to a shared folder; API integration with the eMAR or timekeeping system | manual CSV export, approved by the business-unit owner | fastest to start; the owner stays in control; integration is a later decision once value is shown |
 | How survey results arrive | the vendor's team-level export; a vendor API | team-level export in the vendor's shape | aggregates only, never respondent rows; real data can replace the synthetic tables without code changes |
 | Where the reporting threshold lives | in prompts; in code; in the database views | the database views | a prompt cannot bypass it; comments under the threshold are never indexed |
 | What the model may do | write numbers; decide verdicts; write text | write text only, checked | numbers and verdicts come from code; the checker rejects invented numbers and causal words |

@@ -11,7 +11,7 @@ from app import metrics as M
 from app import relations as R
 from app.investigate import Ev
 
-KPI_WORD = {"late_departures": "late departures", "absence_days": "absence days", "quits": "quits", "injuries": "injuries", "rework": "rework events"}
+KPI_WORD = {"late_doses": "late doses", "absence_days": "absence days", "quits": "quits", "injuries": "injuries", "overtime_shifts": "overtime shifts"}
 
 
 def _period(ctx) -> list[str]:
@@ -143,7 +143,7 @@ def signal_check(conv, ctx, args, turn, db):
     eng = I._engagement(team["team_id"])
     d = eng.get("biggest_drop")
     if d:
-        ev.append(Ev(conv.new_id("G"), "item_drop_adjusted", f"Largest item change on {team['label']} after adjusting each answer for the respondent's tenure band: "
+        ev.append(Ev(conv.new_id("G"), "item_drop_adjusted", f"Largest item change for {team['label']}, with each answer adjusted for the respondent's tenure band: "
                      f"{d['label']} ({d['item']}) {d['delta']:+.2f} points on a 5-point scale (raw {d['raw_delta']:+.2f}; respondents {eng['n_w1']} and {eng['n_w2']}); "
                      + ("beyond noise by the screening rule." if d["significant"] else "within noise by the screening rule."), "signal_check", turn,
                      source="app/impact.py _engagement", value={**d, "n_w1": eng["n_w1"], "n_w2": eng["n_w2"]}))
@@ -189,19 +189,19 @@ def timeline(conv, ctx, args, turn, db):
 
 
 def hour_bands(conv, ctx, args, turn, db):
-    """Late-departure share by hour band, Jan-May vs Jun-Sep 2026, for the team's site and shift (dispatch is recorded
-    per site and shift, not per team)."""
+    """Late-dose share by hour band, Jan-May vs Jun-Sep 2026, for the team's site and shift (the eMAR export is kept
+    per site and shift, not per unit)."""
     from app import agent as A
     team = R.team_info(ctx["team_id"])
     sc = A.Scope(intent="diagnose_drop", site=team["site"], team=team["team"], shift=team["shift"], team_id=team["team_id"])
-    r = db.run_sql(f"SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = '{team['site']}' "
+    r = db.run_sql(f"SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = '{team['site']}' "
                    f"AND shift = '{team['shift']}' ORDER BY hour_band, period")
     full = [e for e in A.analyze(sc, db) if e.kind == "ops_hour"]
-    stmt = full[0].statement if full else f"No dispatch records for {team['site']} {team['shift'].lower()} shift."
+    stmt = full[0].statement if full else f"No eMAR records for {team['site']} {team['shift'].lower()} shift."
     val = full[0].value if full else {}
-    e = Ev(conv.new_id("H"), "hour_bands", stmt + " (Dispatch is recorded per site and shift, not per team.)", "hour_bands", turn, sql=r.sql, rows=r.to_records(),
+    e = Ev(conv.new_id("H"), "hour_bands", stmt + " (The eMAR export is kept per site and shift, not per unit.)", "hour_bands", turn, sql=r.sql, rows=r.to_records(),
            source="v_ops_hour", value=val)
-    return [e], f"Checked late departures by hour band on {team['site']} {team['shift'].lower()} shift", {"signal": bool(val.get("signal")), "band": val.get("hour_band"), "handoff": bool(val.get("handoff_band"))}
+    return [e], f"Checked late doses by hour band on {team['site']} {team['shift'].lower()} shift", {"signal": bool(val.get("signal")), "band": val.get("hour_band"), "restock": bool(val.get("restock_band"))}
 
 
 INJECTION = __import__("re").compile(r"ignore (all )?(previous|prior) instructions|system note|you are now|admin mode|run select|assistant:", __import__("re").I)
@@ -243,7 +243,7 @@ def retrieve_passages(conv, ctx, args, turn, db, retriever=None):
 
 def owner_lookup(conv, ctx, args, turn, db):
     team = R.team_info(ctx["team_id"])
-    process = args.get("process") or "Shift handoff procedure"
+    process = args.get("process") or "Medication cabinet restocking schedule"
     o = R.owner(process, team["site"])
     if not o:
         e = Ev(conv.new_id("W"), "owner", f"No owner in the directory for '{process}' at {team['site']}.", "owner_lookup", turn, value={})
@@ -282,8 +282,8 @@ def draft_plan(conv, ctx, args, turn, db):
     criterion, assumptions. Drafted from evidence in code; it cannot approve, notify or write anywhere."""
     from datetime import date, timedelta
     kpi, team = args.get("kpi") or ctx["kpi"], R.team_info(ctx["team_id"])
-    theme = args.get("theme") or "handoff"
-    process = {"handoff": "Shift handoff procedure", "equipment": "Forklift and equipment maintenance", "schedule": "Shift scheduling policy"}.get(theme, "Shift handoff procedure")
+    theme = args.get("theme") or "restock"
+    process = {"restock": "Medication cabinet restocking schedule", "equipment": "IV pump and equipment maintenance", "schedule": "Nurse staffing and float policy"}.get(theme, "Medication cabinet restocking schedule")
     o = R.owner(process, team["site"])
     res = M.query_metric(M.MetricQuery(metric=kpi, team_id=team["team_id"], as_of=ctx["as_of"], compare_to="comparable"), db)
     comp = [x for x in (M.query_metric(M.MetricQuery(metric=kpi, team_id=t["team_id"], as_of=ctx["as_of"]), db).shown for t in R.comparable_teams(team["team_id"])[0]) if x is not None]
@@ -292,9 +292,9 @@ def draft_plan(conv, ctx, args, turn, db):
     y, m = int(start[:4]), int(start[5:7]) + 3
     y, m = (y + 1, m - 12) if m > 12 else (y, m)
     review = (date(y, m, 1) - timedelta(days=1)).isoformat()                    # end of the second full month after the start
-    action = {"handoff": "Reinstate the signed handoff log and load checklist for every departure at the shift boundary; dispatch releases no trailer without it.",
-              "equipment": "Review every open maintenance ticket older than seven days with the maintenance lead and set a closure date for each.",
-              "schedule": "Review the staffing report with the director of operations and agree a recovery plan for any month under the policy floor."}.get(theme)
+    action = {"restock": "Restore the 05:00 restock of the unit's dispensing cabinet so every bin is at par before the 06:00 pass; the charge nurse logs any stock-out.",
+              "equipment": "Review every open biomed ticket older than seven days with the clinical engineering lead and set a closure date for each.",
+              "schedule": "Review the RN staffing report with the chief nursing officer and agree a recovery plan for any month under the policy floor."}.get(theme)
     owner = f"{o['name']}, {o['role']}" if o else "Owner needed"
     hi = max(comp) if comp else None
     d = {"team_id": team["team_id"], "team_label": team["label"], "kpi": kpi, "owner": owner, "owner_source": "ownership directory" if o else "none in the directory",
@@ -331,7 +331,7 @@ def review_result(conv, ctx, args, turn, db):
     return [e], f"Computed the review for {team['label']}'s plan", {"result": main, "also": r[1:]}
 
 
-KPI_ENUM = ["late_departures", "absence_days", "quits", "injuries", "rework"]
+KPI_ENUM = ["late_doses", "absence_days", "quits", "injuries", "overtime_shifts"]
 _K = {"kpi": {"type": "string", "enum": KPI_ENUM, "description": "operating metric"}}
 REGISTRY = {
     "query_metric": (query_metric, "Count one operating metric for the team in context over the board's 3-month window, with the comparable teams' pooled rate.", {**_K, "scope": {"type": "string", "enum": ["team", "site", "shift"]}}),
@@ -339,11 +339,11 @@ REGISTRY = {
     "benchmark": (benchmark, "Internal norm for teams like this one on one metric; the external Gallup benchmark returns unavailable.", dict(_K)),
     "signal_check": (signal_check, "Check whether the survey drop is real or a change in who responded.", {}),
     "timeline": (timeline, "Month-by-month: the metric vs the comparable range, staffing shortage months, survey waves, plan dates.", dict(_K)),
-    "hour_bands": (hour_bands, "Late-departure share by hour band before and after June for the team's site and shift.", {}),
-    "retrieve_passages": (retrieve_passages, "Employee comments (counted by theme) and procedures relevant to the question.", {"query": {"type": "string"}}),
-    "owner_lookup": (owner_lookup, "Who owns a process at the team's site (ownership directory).", {"process": {"type": "string", "enum": ["Shift handoff procedure", "Dispatch scheduling", "Forklift and equipment maintenance", "Shift scheduling policy", "Engagement survey and action planning"]}}),
+    "hour_bands": (hour_bands, "Late-dose share by hour band before and after June for the team's site and shift (eMAR export).", {}),
+    "retrieve_passages": (retrieve_passages, "Staff comments (counted by theme) and procedures relevant to the question.", {"query": {"type": "string"}}),
+    "owner_lookup": (owner_lookup, "Who owns a process at the team's site (ownership directory).", {"process": {"type": "string", "enum": ["Medication cabinet restocking schedule", "Unit staffing and bedside shift report", "IV pump and equipment maintenance", "Nurse staffing and float policy", "Engagement survey and action planning"]}}),
     "precedent": (precedent, "Other teams with the same flag or item drop, their plans and results.", dict(_K)),
-    "draft_plan": (draft_plan, "Draft a plan (owner, action, measure, baseline, review date, success criterion) for the manager to edit and approve.", {**_K, "theme": {"type": "string", "enum": ["handoff", "equipment", "schedule"]}}),
+    "draft_plan": (draft_plan, "Draft a plan (owner, action, measure, baseline, review date, success criterion) for the nurse manager to edit and approve.", {**_K, "theme": {"type": "string", "enum": ["restock", "equipment", "schedule"]}}),
     "review_result": (review_result, "The review of the team's approved plan: did the operating metric move vs comparable teams.", {}),
 }
 

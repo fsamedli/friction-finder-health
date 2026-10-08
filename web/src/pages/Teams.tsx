@@ -9,7 +9,7 @@ import { Badge, Card, CsvButton, ErrorState, Method, PageHeader, PageSkeleton, S
 
 type Filter = 'all' | 'attention' | 'normal'
 
-function Kpi({ t, k }: { t: TeamRow; k: 'late_departures' | 'absence_days' | 'quits' }) {
+function Kpi({ t, k }: { t: TeamRow; k: 'late_doses' | 'absence_days' | 'quits' }) {
   const e = t.excess_by_kpi[k]
   if (!e) return <span className="text-fg-faint">—</span>
   if (!e.judgeable) return <span className="text-[12px] text-fg-faint whitespace-nowrap" title={`${e.observed} observed, ${e.expected} expected: fewer than 3 expected in three months`}>too rare to judge</span>
@@ -38,14 +38,14 @@ export default function Teams() {
 
   return (
     <div>
-      <PageHeader crumbs={<>{b.site} DC</>} title="Investigate" sub={`Pick a team to investigate. Every team at ${b.site}, compared with comparable teams (same shift, every site, 4 or more people) · ${monthRange(b.window)}`}
-        actions={<Method>Observed / expected: the team's count in the last three full months vs the count comparable teams' pooled rate predicts for a team this size. Comparable teams are the teams on the same shift at every site with 4 or more people, excluding the team itself. Red means both operations and engagement moved beyond normal variation; amber means one did.</Method>} />
+      <PageHeader crumbs={<>{b.site}</>} title="Investigate" sub={`Pick a unit team to investigate. Every team at ${b.site}, compared with comparable teams (same shift, every hospital, 4 or more people) · ${monthRange(b.window)}`}
+        actions={<Method>Observed / expected: the team's count in the last three full months vs the count comparable teams' pooled rate predicts for a team this size. Comparable teams are the teams on the same shift at every hospital with 4 or more people, excluding the team itself. Red means both operations and engagement moved beyond normal variation; amber means one did.</Method>} />
       <Card pad={false}>
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
           <Segmented value={f} onChange={setF} options={[{ id: 'all', label: `All ${b.teams.length}` }, { id: 'attention', label: `Needs attention ${nAtt}` }, { id: 'normal', label: 'Normal' }]} />
           <span className="ml-auto" />
           <CsvButton filename={`teams_${b.site}_${b.as_of}.csv`} rows={() => rows.map((t) => ({ team: t.team_name, shift: t.shift, headcount: t.headcount, status: t.status,
-            late_departures_observed: t.excess_by_kpi.late_departures?.observed ?? '', late_departures_expected: t.excess_by_kpi.late_departures?.expected ?? '',
+            late_doses_observed: t.excess_by_kpi.late_doses?.observed ?? '', late_doses_expected: t.excess_by_kpi.late_doses?.expected ?? '',
             absence_days_observed: t.excess_by_kpi.absence_days?.observed ?? '', absence_days_expected: t.excess_by_kpi.absence_days?.expected ?? '',
             quits_observed: t.excess_by_kpi.quits?.observed ?? '', excess_cost_usd: t.excess_cost,
             largest_item_change: t.engagement?.biggest_drop?.item ?? '', change_pts: t.engagement?.biggest_drop?.delta ?? '', window: monthRange(b.window) }))} />
@@ -60,7 +60,7 @@ export default function Teams() {
               <tr className="border-b border-border bg-canvas/60 text-left text-[12px] font-medium text-fg-mute">
                 <th className="px-4 py-2.5 font-medium">Team</th>
                 <th className="px-3 py-2.5 font-medium">Status</th>
-                <th className="px-3 py-2.5 font-medium">Late departures <span className="text-fg-faint">obs / exp</span></th>
+                <th className="px-3 py-2.5 font-medium">Late doses <span className="text-fg-faint">obs / exp</span></th>
                 <th className="px-3 py-2.5 font-medium">Absence days <span className="text-fg-faint">obs / exp</span></th>
                 <th className="px-3 py-2.5 font-medium">Quits</th>
                 <th className="px-3 py-2.5 font-medium">Largest survey change</th>
@@ -81,9 +81,9 @@ export default function Teams() {
                     </td>
                     <td className="px-3 py-3"><StatusBadge s={t.status} /></td>
                     {locked ? (
-                      <td colSpan={5} className="px-3 py-3 text-[12.5px]"><span className="inline-flex items-center gap-1.5"><Lock size={13} /> Fewer than 4 people. Included in site totals only, so no one can be identified.</span></td>
+                      <td colSpan={5} className="px-3 py-3 text-[12.5px]"><span className="inline-flex items-center gap-1.5"><Lock size={13} /> Fewer than 4 people. Included in hospital totals only, so no one can be identified.</span></td>
                     ) : (<>
-                      <td className="px-3 py-3"><Kpi t={t} k="late_departures" /></td>
+                      <td className="px-3 py-3"><Kpi t={t} k="late_doses" /></td>
                       <td className="px-3 py-3"><Kpi t={t} k="absence_days" /></td>
                       <td className="px-3 py-3"><Kpi t={t} k="quits" /></td>
                       <td className="px-3 py-3">

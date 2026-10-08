@@ -1,12 +1,12 @@
 {
- "why is night a flagged|4|2026-09-15|first": {
-  "generated_at": "2026-10-08T07:32:04+00:00",
+ "why is med-surg night flagged|4|2026-09-15|first": {
+  "generated_at": "2026-10-08T09:44:50+00:00",
   "model": "gpt-5-mini",
   "investigation": {
-   "id": "22f72c2e45",
-   "conversation_id": "ceeecc855c79",
-   "question": "Why is Night A flagged?",
-   "created_at": "2026-10-08T07:31:39+00:00",
+   "id": "5c15709969",
+   "conversation_id": "967bce6bc3d3",
+   "question": "Why is Med-Surg Night flagged?",
+   "created_at": "2026-10-08T09:44:28+00:00",
    "status": "answered",
    "message": null,
    "function": {
@@ -15,61 +15,54 @@
    },
    "context": {
     "site_id": 1,
-    "site": "Richmond",
+    "site": "Lanford",
     "team_id": 4,
-    "team": "Night A",
+    "team": "Med-Surg Night",
     "shift": "Night",
     "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
     "item": "q02",
     "item_label": "Materials and equipment to do my work right",
     "finding": {
      "status": "red",
-     "kpi": "late_departures",
+     "kpi": "late_doses",
      "item": "q02"
     },
     "dataset": "demo",
     "version": "demo"
    },
    "answer": {
-    "conclusion": "Richmond Night A had 81 late departures in Jun-Aug 2026 versus 51.4 expected. Shift handoff is the best-supported explanation (association), supported by Wave 2 comments.",
-    "evidence_state": "mixed",
+    "conclusion": "Lanford Med-Surg Night had 81 late doses Jun-Aug 2026 (19.3 per 10 people/month vs 12.2 predicted, 51.4 expected). The best-supported explanation is medication cabinet restock as a supported explanation.",
+    "evidence_state": "supported",
     "evidence_ids": [
-     "M1",
-     "Y5"
+     "M15",
+     "Y5",
+     "H14"
     ],
     "competing": {
-     "text": "Staffing fell below 90% of scheduled in Mar 2026; that month is outside Jun-Aug 2026, so staffing shortfall is not supported as an explanation for the Jun-Aug 2026 flag.",
+     "text": "Respondent mix was similar (18.2% vs 15.4% under-one-year); team grand mean moved \u22120.11; q02 fell \u22120.80 after adjusting for tenure. These data provide a competing explanation.",
      "evidence_state": "insufficient",
      "evidence_ids": [
-      "T12",
-      "M1"
+      "G1",
+      "G2",
+      "G3"
      ]
     },
     "next_step": {
-     "kind": "gather",
-     "text": "Collect the missing records before acting (see 'What is missing?').",
-     "owner": "Priya Singh, Site Operations Manager"
+     "kind": "action",
+     "text": "Draft a plan to test the process or restock (medication cabinet restock) fix and review it on the operating number.",
+     "owner": "Priya Singh, Pharmacy Operations Manager"
     },
     "hypotheses": [
      {
       "id": "process",
-      "label": "Process or handoff (shift handoff)",
-      "evidence_state": "mixed",
-      "text": "Process: shift handoff. 4 separate wave-2 comments name it; no hour band rose materially.",
+      "label": "Process or restock (medication cabinet restock)",
+      "evidence_state": "supported",
+      "text": "Process: medication cabinet restock. 4 separate wave-2 comments name it, and late doses rose in the 06-07 hour band (the medication pass before the shift change).",
       "evidence_ids": [
-       "Y5"
-      ]
-     },
-     {
-      "id": "staffing",
-      "label": "Staffing shortage",
-      "evidence_state": "insufficient",
-      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
-      "evidence_ids": [
-       "T12",
-       "M1"
+       "Y5",
+       "H14"
       ]
      },
      {
@@ -78,9 +71,9 @@
       "evidence_state": "insufficient",
       "text": "Who responded: the mix of respondents was similar and q02 still fell -0.80 after adjusting for tenure.",
       "evidence_ids": [
+       "G1",
        "G2",
-       "G3",
-       "G4"
+       "G3"
       ]
      },
      {
@@ -89,7 +82,7 @@
       "evidence_state": "insufficient",
       "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
       "evidence_ids": [
-       "K11"
+       "K4"
       ]
      },
      {
@@ -106,40 +99,9 @@
    },
    "evidence": [
     {
-     "id": "M1",
-     "kind": "metric",
-     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
-     "rows": [
-      {
-       "month": "2026-06",
-       "events": 30,
-       "head_months": 14,
-       "per_10": 21.43
-      },
-      {
-       "month": "2026-07",
-       "events": 29,
-       "head_months": 14,
-       "per_10": 20.71
-      },
-      {
-       "month": "2026-08",
-       "events": 22,
-       "head_months": 14,
-       "per_10": 15.71
-      }
-     ],
-     "source": "v_team_ops_month",
-     "origin": "computed",
-     "tool": "query_metric",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "G2",
+     "id": "G1",
      "kind": "tenure_mix",
-     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "statement": "Who responded on Lanford Med-Surg Night: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
      "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
      "rows": [
       {
@@ -198,7 +160,7 @@
      "stale": false
     },
     {
-     "id": "G3",
+     "id": "G2",
      "kind": "signal_check",
      "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
      "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
@@ -243,9 +205,9 @@
      "stale": false
     },
     {
-     "id": "G4",
+     "id": "G3",
      "kind": "item_drop_adjusted",
-     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "statement": "Largest item change for Lanford Med-Surg Night, with each answer adjusted for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
      "sql": null,
      "rows": [],
      "source": "app/impact.py _engagement",
@@ -255,13 +217,81 @@
      "stale": false
     },
     {
+     "id": "K4",
+     "kind": "compare",
+     "statement": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Lanford EVS Night, Westbrook EVS Night, Pine Hollow EVS Night. Survey item Q02, wave 1 to wave 2: Lanford Med-Surg Night -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Lanford Med-Surg Night",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Lanford ICU Night",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 1,
+     "stale": false
+    },
+    {
      "id": "Y5",
      "kind": "comment_themes",
-     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "statement": "Wave 2 comments from Lanford Med-Surg Night: 6 in total. By theme: medication cabinet restock 4; equipment and maintenance 1; recognition 1. 'medication cabinet restock' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
      "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
      "rows": [
       {
-       "theme": "shift handoff",
+       "theme": "medication cabinet restock",
        "comments": 4,
        "share": 0.67,
        "corroborating": true
@@ -286,36 +316,36 @@
      "stale": false
     },
     {
-     "id": "C6",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "id": "D6",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Purpose): ## Purpose\nEnsure each unit's automated dispensing cabinet (ADC) is restocked so that stock is on hand for\nevery scheduled medication pass, including the 06:00 pass that runs before the 07:00 shift change.",
      "sql": null,
      "rows": [],
-     "source": "comment:52",
+     "source": "doc:medication_cabinet_restock_procedure:1",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 1,
      "stale": false
     },
     {
-     "id": "C7",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
+     "id": "D7",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Steps): ## Steps\n1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight\n   restock report.\n2. The **restock report** lists every item below its par level. The technician signs the report\n   when the cabinet is filled; the signed report is kept at the pharmacy desk.\n3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that\n   t",
      "sql": null,
      "rows": [],
-     "source": "comment:51",
+     "source": "doc:medication_cabinet_restock_procedure:2",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 1,
      "stale": false
     },
     {
-     "id": "C8",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "id": "D8",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Medication Cabinet Restock Procedure (SOP-PHARM-021)): # Medication Cabinet Restock Procedure (SOP-PHARM-021)\n\nIllustrative document written for a fictional hospital system. Not a real Lanford Health document.",
      "sql": null,
      "rows": [],
-     "source": "comment:53",
+     "source": "doc:medication_cabinet_restock_procedure:0",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 1,
@@ -324,7 +354,7 @@
     {
      "id": "C9",
      "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 27 words; theme: medication cabinet restock): \"Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.\"",
      "sql": null,
      "rows": [],
      "source": "comment:54",
@@ -334,10 +364,46 @@
      "stale": false
     },
     {
-     "id": "W10",
+     "id": "C10",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C11",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "C12",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 26 words; theme: medication cabinet restock): \"We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "W13",
      "kind": "owner",
-     "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
-     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure'",
+     "statement": "Process owner for 'Medication cabinet restocking schedule' at Lanford: Pharmacy Operations Manager, Priya Singh (ownership directory).",
+     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Medication cabinet restocking schedule'",
      "rows": [],
      "source": "ownership_directory",
      "origin": "computed",
@@ -346,568 +412,87 @@
      "stale": false
     },
     {
-     "id": "K11",
-     "kind": "compare",
-     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "team": "Richmond Night A",
-       "team_id": 4,
-       "events": 81,
-       "head_months": 42,
-       "per_10": 19.3,
-       "is_team": true,
-       "item_change": -0.81,
-       "item_n": 13
-      },
-      {
-       "team": "Richmond Night B",
-       "team_id": 5,
-       "events": 22,
-       "head_months": 21,
-       "per_10": 10.5,
-       "item_change": -0.23,
-       "item_n": 7
-      },
-      {
-       "team": "Norfolk Night A",
-       "team_id": 12,
-       "events": 65,
-       "head_months": 42,
-       "per_10": 15.5,
-       "item_change": 0.62,
-       "item_n": 12
-      },
-      {
-       "team": "Norfolk Night B",
-       "team_id": 13,
-       "events": 29,
-       "head_months": 21,
-       "per_10": 13.8,
-       "item_change": null,
-       "item_n": null
-      },
-      {
-       "team": "Roanoke Night A",
-       "team_id": 20,
-       "events": 41,
-       "head_months": 42,
-       "per_10": 9.8,
-       "item_change": -0.25,
-       "item_n": 12
-      },
-      {
-       "team": "Roanoke Night B",
-       "team_id": 21,
-       "events": 23,
-       "head_months": 21,
-       "per_10": 11.0,
-       "item_change": 0.03,
-       "item_n": 7
-      }
-     ],
-     "source": "v_team_ops_month, v_team_wave_item",
-     "origin": "computed",
-     "tool": "compare_teams",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "T12",
-     "kind": "timeline",
-     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
-     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
-     "rows": [
-      {
-       "month": "2026-01",
-       "team_per_10": 10.7,
-       "comparable_low": 7.9,
-       "comparable_high": 20.0
-      },
-      {
-       "month": "2026-02",
-       "team_per_10": 17.1,
-       "comparable_low": 5.7,
-       "comparable_high": 12.9
-      },
-      {
-       "month": "2026-03",
-       "team_per_10": 10.0,
-       "comparable_low": 5.7,
-       "comparable_high": 16.4
-      },
-      {
-       "month": "2026-04",
-       "team_per_10": 14.3,
-       "comparable_low": 2.9,
-       "comparable_high": 18.6
-      },
-      {
-       "month": "2026-05",
-       "team_per_10": 13.6,
-       "comparable_low": 5.0,
-       "comparable_high": 12.9
-      },
-      {
-       "month": "2026-06",
-       "team_per_10": 21.4,
-       "comparable_low": 10.0,
-       "comparable_high": 14.3
-      },
-      {
-       "month": "2026-07",
-       "team_per_10": 20.7,
-       "comparable_low": 8.6,
-       "comparable_high": 15.7
-      },
-      {
-       "month": "2026-08",
-       "team_per_10": 15.7,
-       "comparable_low": 10.0,
-       "comparable_high": 20.0
-      }
-     ],
-     "source": "v_team_ops_month, staffing",
-     "origin": "computed",
-     "tool": "timeline",
-     "turn": 1,
-     "stale": false
-    }
-   ],
-   "trace": [
-    {
-     "step": "Choose the next check",
-     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
-     "mode": "model",
-     "seconds": 3.3
-    },
-    {
-     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
-     "detail": "1 evidence item: M1",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "query_metric"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked signal_check",
-     "mode": "model",
-     "seconds": 1.9
-    },
-    {
-     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
-     "detail": "3 evidence items: G2, G3, G4",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "signal_check"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked retrieve_passages {'query': 'Richmond Night A materials equipment q02 comments Jun-Aug 2026 \"Materials and equipment to do my work right\"'}",
-     "mode": "model",
-     "seconds": 2.6
-    },
-    {
-     "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
-     "detail": "5 evidence items: Y5, C6, C7, C8, C9",
-     "mode": "code",
-     "seconds": 1.2,
-     "tool": "retrieve_passages"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
-     "mode": "model",
-     "seconds": 3.1
-    },
-    {
-     "step": "Found who owns shift handoff procedure at Richmond",
-     "detail": "1 evidence item: W10",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "owner_lookup"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked compare_teams {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 3.1
-    },
-    {
-     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
-     "detail": "1 evidence item: K11",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "compare_teams"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked answer_now",
-     "mode": "model",
-     "seconds": 2.9
-    },
-    {
-     "step": "Built the month-by-month timeline for Richmond Night A",
-     "detail": "1 evidence item: T12",
-     "mode": "code",
-     "seconds": 0.1,
-     "tool": "timeline"
-    },
-    {
-     "step": "Write the answer in plain words",
-     "detail": "AI-written, then checked by code: passed",
-     "mode": "model",
-     "seconds": 7.0
-    }
-   ],
-   "budget": {
-    "tool_calls": 6,
-    "max_tool_calls": 6,
-    "model_requests": 7,
-    "max_model_requests": 8,
-    "seconds": 25.7,
-    "max_seconds": 60.0,
-    "stopped": "tool-call budget reached"
-   },
-   "mode": "model",
-   "model": "gpt-5-mini",
-   "selection": "function_calling",
-   "fallback": null,
-   "check": {
-    "passed": true,
-    "notes": [],
-    "numbers_checked": 8,
-    "numbers_total": 8,
-    "rejected": []
-   },
-   "prepared": null,
-   "suggestions": [
-    {
-     "label": "Could staffing explain it?",
-     "question": "Could staffing explain this?",
-     "function": "could_explain"
-    },
-    {
-     "label": "Compare with other night shifts",
-     "question": "Compare {team} with the other night shifts",
-     "function": "compare"
-    },
-    {
-     "label": "What is missing?",
-     "question": "What is missing, and what would change the recommendation?",
-     "function": "whats_missing"
-    }
-   ]
-  }
- },
- "could staffing explain this|4|2026-09-15|followup": {
-  "generated_at": "2026-10-08T07:32:26+00:00",
-  "model": "gpt-5-mini",
-  "investigation": {
-   "id": "f34d1ea9c8",
-   "conversation_id": "ceeecc855c79",
-   "question": "Could staffing explain this?",
-   "created_at": "2026-10-08T07:32:04+00:00",
-   "status": "answered",
-   "message": null,
-   "function": {
-    "id": "could_explain",
-    "label": "Could X explain this?"
-   },
-   "context": {
-    "site_id": 1,
-    "site": "Richmond",
-    "team_id": 4,
-    "team": "Night A",
-    "shift": "Night",
-    "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
-    "item": "q02",
-    "item_label": "Materials and equipment to do my work right",
-    "finding": {
-     "status": "red",
-     "kpi": "late_departures",
-     "item": "q02"
-    },
-    "dataset": "demo",
-    "version": "demo"
-   },
-   "answer": {
-    "conclusion": "Staffing shortfall is not a supported explanation: staffing dipped below 90% in 2026-03, outside the flagged Jun-Aug 2026 window; late departures in Jun-Aug 2026 were 81 (19.3 per 10 people per month), above the predicted 51.4.",
-    "evidence_state": "insufficient",
-    "evidence_ids": [
-     "T13",
-     "M16"
-    ],
-    "competing": {
-     "text": "Shift-handoff issues are a plausible associated explanation: four Wave 2 comments name handoff, and late departures in the 06-07 hour band rose from 7.4% (Jan-May 2026) to 17.8% (Jun-Sep 2026).",
-     "evidence_state": "supported",
-     "evidence_ids": [
-      "Y17",
-      "H15"
-     ]
-    },
-    "next_step": {
-     "kind": "gather",
-     "text": "Ask the process owner for the shift records that would confirm or rule this out.",
-     "owner": "Priya Singh, Site Operations Manager"
-    },
-    "hypotheses": [
-     {
-      "id": "process",
-      "label": "Process or handoff (shift handoff)",
-      "evidence_state": "supported",
-      "text": "Process: shift handoff. 4 separate wave-2 comments name it, and late departures rose in the 06-07 hour band at the shift boundary.",
-      "evidence_ids": [
-       "Y17",
-       "H15"
-      ]
-     },
-     {
-      "id": "staffing",
-      "label": "Staffing shortage",
-      "evidence_state": "insufficient",
-      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
-      "evidence_ids": [
-       "T13",
-       "M16"
-      ]
-     },
-     {
-      "id": "site_wide",
-      "label": "Site-wide or seasonal change",
-      "evidence_state": "insufficient",
-      "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
-      "evidence_ids": [
-       "K14"
-      ]
-     },
-     {
-      "id": "single_comment",
-      "label": "A single loud comment",
-      "evidence_state": "insufficient",
-      "text": "4 separate comments on one theme: not a single voice.",
-      "evidence_ids": [
-       "Y17"
-      ]
-     }
-    ],
-    "written_by": "model"
-   },
-   "evidence": [
-    {
-     "id": "T13",
-     "kind": "timeline",
-     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
-     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
-     "rows": [
-      {
-       "month": "2026-01",
-       "team_per_10": 10.7,
-       "comparable_low": 7.9,
-       "comparable_high": 20.0
-      },
-      {
-       "month": "2026-02",
-       "team_per_10": 17.1,
-       "comparable_low": 5.7,
-       "comparable_high": 12.9
-      },
-      {
-       "month": "2026-03",
-       "team_per_10": 10.0,
-       "comparable_low": 5.7,
-       "comparable_high": 16.4
-      },
-      {
-       "month": "2026-04",
-       "team_per_10": 14.3,
-       "comparable_low": 2.9,
-       "comparable_high": 18.6
-      },
-      {
-       "month": "2026-05",
-       "team_per_10": 13.6,
-       "comparable_low": 5.0,
-       "comparable_high": 12.9
-      },
-      {
-       "month": "2026-06",
-       "team_per_10": 21.4,
-       "comparable_low": 10.0,
-       "comparable_high": 14.3
-      },
-      {
-       "month": "2026-07",
-       "team_per_10": 20.7,
-       "comparable_low": 8.6,
-       "comparable_high": 15.7
-      },
-      {
-       "month": "2026-08",
-       "team_per_10": 15.7,
-       "comparable_low": 10.0,
-       "comparable_high": 20.0
-      }
-     ],
-     "source": "v_team_ops_month, staffing",
-     "origin": "computed",
-     "tool": "timeline",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "K14",
-     "kind": "compare",
-     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "team": "Richmond Night A",
-       "team_id": 4,
-       "events": 81,
-       "head_months": 42,
-       "per_10": 19.3,
-       "is_team": true,
-       "item_change": -0.81,
-       "item_n": 13
-      },
-      {
-       "team": "Richmond Night B",
-       "team_id": 5,
-       "events": 22,
-       "head_months": 21,
-       "per_10": 10.5,
-       "item_change": -0.23,
-       "item_n": 7
-      },
-      {
-       "team": "Norfolk Night A",
-       "team_id": 12,
-       "events": 65,
-       "head_months": 42,
-       "per_10": 15.5,
-       "item_change": 0.62,
-       "item_n": 12
-      },
-      {
-       "team": "Norfolk Night B",
-       "team_id": 13,
-       "events": 29,
-       "head_months": 21,
-       "per_10": 13.8,
-       "item_change": null,
-       "item_n": null
-      },
-      {
-       "team": "Roanoke Night A",
-       "team_id": 20,
-       "events": 41,
-       "head_months": 42,
-       "per_10": 9.8,
-       "item_change": -0.25,
-       "item_n": 12
-      },
-      {
-       "team": "Roanoke Night B",
-       "team_id": 21,
-       "events": 23,
-       "head_months": 21,
-       "per_10": 11.0,
-       "item_change": 0.03,
-       "item_n": 7
-      }
-     ],
-     "source": "v_team_ops_month, v_team_wave_item",
-     "origin": "computed",
-     "tool": "compare_teams",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "H15",
+     "id": "H14",
      "kind": "hour_bands",
-     "statement": "Richmond Night shift, departures in the 06-07 hour band: late-departure rate 7.4% in Jan-May 2026 to 17.8% in Jun-Sep 2026. Other hour bands stayed between 6.5% and 8.8% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (Dispatch is recorded per site and shift, not per team.)",
-     "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Richmond' AND shift = 'Night' ORDER BY hour_band, period",
+     "statement": "Lanford Night shift, scheduled doses in the 06-07 hour band: late-dose rate 8.1% in Jan-May 2026 to 17.7% in Jun-Sep 2026. Other hour bands stayed between 7.7% and 8.0% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (The eMAR export is kept per site and shift, not per unit.)",
+     "sql": "SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = 'Lanford' AND shift = 'Night' ORDER BY hour_band, period",
      "rows": [
       {
        "shift": "Night",
        "hour_band": "02-06",
        "period": "Jan-May 2026",
-       "departures": 2710.0,
-       "late_departures": 192.0,
-       "late_rate": 0.071
+       "scheduled_doses": 21526.0,
+       "late_doses": 1707.0,
+       "late_rate": 0.079
       },
       {
        "shift": "Night",
        "hour_band": "02-06",
        "period": "Jun-Sep 2026",
-       "departures": 1850.0,
-       "late_departures": 160.0,
-       "late_rate": 0.086
+       "scheduled_doses": 14678.0,
+       "late_doses": 1148.0,
+       "late_rate": 0.078
       },
       {
        "shift": "Night",
        "hour_band": "06-07",
        "period": "Jan-May 2026",
-       "departures": 3593.0,
-       "late_departures": 265.0,
-       "late_rate": 0.074
+       "scheduled_doses": 29290.0,
+       "late_doses": 2367.0,
+       "late_rate": 0.081
       },
       {
        "shift": "Night",
        "hour_band": "06-07",
        "period": "Jun-Sep 2026",
-       "departures": 2457.0,
-       "late_departures": 438.0,
-       "late_rate": 0.178
+       "scheduled_doses": 19618.0,
+       "late_doses": 3475.0,
+       "late_rate": 0.177
       },
       {
        "shift": "Night",
        "hour_band": "18-22",
        "period": "Jan-May 2026",
-       "departures": 2719.0,
-       "late_departures": 205.0,
-       "late_rate": 0.075
+       "scheduled_doses": 21719.0,
+       "late_doses": 1730.0,
+       "late_rate": 0.08
       },
       {
        "shift": "Night",
        "hour_band": "18-22",
        "period": "Jun-Sep 2026",
-       "departures": 1870.0,
-       "late_departures": 164.0,
-       "late_rate": 0.088
+       "scheduled_doses": 14510.0,
+       "late_doses": 1162.0,
+       "late_rate": 0.08
       },
       {
        "shift": "Night",
        "hour_band": "22-02",
        "period": "Jan-May 2026",
-       "departures": 2611.0,
-       "late_departures": 235.0,
-       "late_rate": 0.09
+       "scheduled_doses": 21585.0,
+       "late_doses": 1757.0,
+       "late_rate": 0.081
       },
       {
        "shift": "Night",
        "hour_band": "22-02",
        "period": "Jun-Sep 2026",
-       "departures": 1781.0,
-       "late_departures": 115.0,
-       "late_rate": 0.065
+       "scheduled_doses": 14648.0,
+       "late_doses": 1131.0,
+       "late_rate": 0.077
       }
      ],
      "source": "v_ops_hour",
      "origin": "computed",
      "tool": "hour_bands",
-     "turn": 2,
+     "turn": 1,
      "stale": false
     },
     {
-     "id": "M16",
+     "id": "M15",
      "kind": "metric",
-     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "statement": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
      "rows": [
       {
        "month": "2026-06",
@@ -931,17 +516,369 @@
      "source": "v_team_ops_month",
      "origin": "computed",
      "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 2.7
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Lanford Med-Surg Night",
+     "detail": "3 evidence items: G1, G2, G3",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 2.3
+    },
+    {
+     "step": "Compared Lanford Med-Surg Night with 5 comparable teams on late doses",
+     "detail": "1 evidence item: K4",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': 'Lanford Med-Surg Night materials and equipment to do my work right q02 comments; late doses medication administration issues; staff notes about pumps, cabinets, restocking, eMAR, med cart, IV supplies; timeframe Jun-Aug 2026; team 4 site Lanford Night'}",
+     "mode": "model",
+     "seconds": 2.7
+    },
+    {
+     "step": "Read 4 employee comments and 3 procedures for Lanford Med-Surg Night (embeddings search)",
+     "detail": "8 evidence items: Y5, D6, D7, D8, C9, C10, C11, C12",
+     "mode": "code",
+     "seconds": 1.1,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked owner_lookup {'process': 'Medication cabinet restocking schedule'}",
+     "mode": "model",
+     "seconds": 2.3
+    },
+    {
+     "step": "Found who owns medication cabinet restocking schedule at Lanford",
+     "detail": "1 evidence item: W13",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "owner_lookup"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked hour_bands",
+     "mode": "model",
+     "seconds": 2.1
+    },
+    {
+     "step": "Checked late doses by hour band on Lanford night shift",
+     "detail": "1 evidence item: H14",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "hour_bands"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 3.6
+    },
+    {
+     "step": "Counted late doses for Lanford Med-Surg Night in Jun-Aug 2026",
+     "detail": "1 evidence item: M15",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 4.6
+    }
+   ],
+   "budget": {
+    "tool_calls": 6,
+    "max_tool_calls": 6,
+    "model_requests": 7,
+    "max_model_requests": 8,
+    "seconds": 21.9,
+    "max_seconds": 60.0,
+    "stopped": "tool-call budget reached"
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 10,
+    "numbers_total": 10,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "Could staffing explain it?",
+     "question": "Could staffing explain this?",
+     "function": "could_explain"
+    },
+    {
+     "label": "Compare with other night shifts",
+     "question": "Compare {team} with the other night shifts",
+     "function": "compare"
+    },
+    {
+     "label": "What is missing?",
+     "question": "What is missing, and what would change the recommendation?",
+     "function": "whats_missing"
+    }
+   ]
+  }
+ },
+ "could staffing explain this|4|2026-09-15|followup": {
+  "generated_at": "2026-10-08T09:45:49+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "d08d72bf44",
+   "conversation_id": "967bce6bc3d3",
+   "question": "Could staffing explain this?",
+   "created_at": "2026-10-08T09:44:50+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "could_explain",
+    "label": "Could X explain this?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Lanford",
+    "team_id": 4,
+    "team": "Med-Surg Night",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_doses",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "Staffing shortage is not supported by these data. Staffing fell below 90% of scheduled only in 2026-03, while the late-dose window is Jun\u2013Aug 2026. Unplanned absences were 24 days (5.7 per 10 people per month), near comparables.",
+    "evidence_state": "insufficient",
+    "evidence_ids": [
+     "T16",
+     "M26"
+    ],
+    "competing": {
+     "text": "A process issue is a supported explanation: four Wave\u20112 comments named medication cabinet restock, and the 06\u201307 hour late-dose rate rose from 8.1% to 17.7% in Jun\u2013Sep 2026.",
+     "evidence_state": "supported",
+     "evidence_ids": [
+      "Y18",
+      "H27"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Ask the process owner for the restock and stock-out records that would confirm or rule this out.",
+     "owner": "Priya Singh, Pharmacy Operations Manager"
+    },
+    "hypotheses": [
+     {
+      "id": "process",
+      "label": "Process or restock (medication cabinet restock)",
+      "evidence_state": "supported",
+      "text": "Process: medication cabinet restock. 4 separate wave-2 comments name it, and late doses rose in the 06-07 hour band (the medication pass before the shift change).",
+      "evidence_ids": [
+       "Y18",
+       "H27"
+      ]
+     },
+     {
+      "id": "staffing",
+      "label": "Staffing shortage",
+      "evidence_state": "insufficient",
+      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+      "evidence_ids": [
+       "T16",
+       "M26"
+      ]
+     },
+     {
+      "id": "site_wide",
+      "label": "Site-wide or seasonal change",
+      "evidence_state": "insufficient",
+      "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
+      "evidence_ids": [
+       "K17"
+      ]
+     },
+     {
+      "id": "single_comment",
+      "label": "A single loud comment",
+      "evidence_state": "insufficient",
+      "text": "4 separate comments on one theme: not a single voice.",
+      "evidence_ids": [
+       "Y18"
+      ]
+     }
+    ],
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "T16",
+     "kind": "timeline",
+     "statement": "Late doses on Lanford Med-Surg Night were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Lanford night shift fell below 90% of scheduled in: 2026-03.",
+     "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
+     "rows": [
+      {
+       "month": "2026-01",
+       "team_per_10": 10.7,
+       "comparable_low": 7.9,
+       "comparable_high": 20.0
+      },
+      {
+       "month": "2026-02",
+       "team_per_10": 17.1,
+       "comparable_low": 5.7,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-03",
+       "team_per_10": 10.0,
+       "comparable_low": 5.7,
+       "comparable_high": 16.4
+      },
+      {
+       "month": "2026-04",
+       "team_per_10": 14.3,
+       "comparable_low": 2.9,
+       "comparable_high": 18.6
+      },
+      {
+       "month": "2026-05",
+       "team_per_10": 13.6,
+       "comparable_low": 5.0,
+       "comparable_high": 12.9
+      },
+      {
+       "month": "2026-06",
+       "team_per_10": 21.4,
+       "comparable_low": 10.0,
+       "comparable_high": 14.3
+      },
+      {
+       "month": "2026-07",
+       "team_per_10": 20.7,
+       "comparable_low": 8.6,
+       "comparable_high": 15.7
+      },
+      {
+       "month": "2026-08",
+       "team_per_10": 15.7,
+       "comparable_low": 10.0,
+       "comparable_high": 20.0
+      }
+     ],
+     "source": "v_team_ops_month, staffing",
+     "origin": "computed",
+     "tool": "timeline",
      "turn": 2,
      "stale": false
     },
     {
-     "id": "Y17",
+     "id": "K17",
+     "kind": "compare",
+     "statement": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Lanford EVS Night, Westbrook EVS Night, Pine Hollow EVS Night. Survey item Q02, wave 1 to wave 2: Lanford Med-Surg Night -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Lanford Med-Surg Night",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Lanford ICU Night",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "Y18",
      "kind": "comment_themes",
-     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "statement": "Wave 2 comments from Lanford Med-Surg Night: 6 in total. By theme: medication cabinet restock 4; equipment and maintenance 1; recognition 1. 'medication cabinet restock' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
      "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
      "rows": [
       {
-       "theme": "shift handoff",
+       "theme": "medication cabinet restock",
        "comments": 4,
        "share": 0.67,
        "corroborating": true
@@ -966,48 +903,36 @@
      "stale": false
     },
     {
-     "id": "D18",
-     "kind": "doc",
-     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Steps): ## Steps\n1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**\n   for every trailer worked during the shift: trailer number, load status (empty, partial,\n   complete), seal status, and scheduled departure time.\n2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing\n   paperwork, staffing gaps for the next shift.\n3. The inco",
-     "sql": null,
-     "rows": [],
-     "source": "doc:shift_handoff_procedure:2",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
      "id": "D19",
      "kind": "doc",
-     "statement": "Document (Shift Scheduling Policy (POL-HR-006) / Shift Scheduling Policy (POL-HR-006)): # Shift Scheduling Policy (POL-HR-006)\n\nIllustrative document written for a fictional company.\n\n- Schedules are published at least 14 days in advance.\n- Minimum staffing per shift is set by the Site Operations Manager and reviewed monthly\n  against the staffing report (scheduled versus actual headcount).\n- When actual headcount falls below 85% of scheduled for a shift in a given month, the\n  Direc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Purpose): ## Purpose\nEnsure each unit's automated dispensing cabinet (ADC) is restocked so that stock is on hand for\nevery scheduled medication pass, including the 06:00 pass that runs before the 07:00 shift change.",
      "sql": null,
      "rows": [],
-     "source": "doc:shift_scheduling_policy:0",
+     "source": "doc:medication_cabinet_restock_procedure:1",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
      "stale": false
     },
     {
-     "id": "C20",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "id": "D20",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Steps): ## Steps\n1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight\n   restock report.\n2. The **restock report** lists every item below its par level. The technician signs the report\n   when the cabinet is filled; the signed report is kept at the pharmacy desk.\n3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that\n   t",
      "sql": null,
      "rows": [],
-     "source": "comment:52",
+     "source": "doc:medication_cabinet_restock_procedure:2",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
      "stale": false
     },
     {
-     "id": "C21",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
+     "id": "D21",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Medication Cabinet Restock Procedure (SOP-PHARM-021)): # Medication Cabinet Restock Procedure (SOP-PHARM-021)\n\nIllustrative document written for a fictional hospital system. Not a real Lanford Health document.",
      "sql": null,
      "rows": [],
-     "source": "comment:53",
+     "source": "doc:medication_cabinet_restock_procedure:0",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
@@ -1016,19 +941,7 @@
     {
      "id": "C22",
      "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:51",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C23",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 27 words; theme: medication cabinet restock): \"Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.\"",
      "sql": null,
      "rows": [],
      "source": "comment:54",
@@ -1038,25 +951,146 @@
      "stale": false
     },
     {
-     "id": "R24",
-     "kind": "precedent",
-     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
+     "id": "C23",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.\"",
      "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C24",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C25",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 26 words; theme: medication cabinet restock): \"We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "M26",
+     "kind": "metric",
+     "statement": "Lanford Med-Surg Night recorded 24 unplanned absence days (sick calls) in Jun-Aug 2026: 5.7 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 6.1 per 10 people per month, which predicts 25.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(absence_days) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(absence_days) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
      "rows": [
       {
-       "team": "Norfolk Day A",
-       "plan": null,
-       "result": null
+       "month": "2026-06",
+       "events": 4,
+       "head_months": 14,
+       "per_10": 2.86
       },
       {
-       "team": "Roanoke Yard Day",
-       "plan": null,
-       "result": null
+       "month": "2026-07",
+       "events": 10,
+       "head_months": 14,
+       "per_10": 7.14
+      },
+      {
+       "month": "2026-08",
+       "events": 10,
+       "head_months": 14,
+       "per_10": 7.14
       }
      ],
-     "source": "app/impact.py board, plans",
+     "source": "v_team_ops_month",
      "origin": "computed",
-     "tool": "precedent",
+     "tool": "query_metric",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "H27",
+     "kind": "hour_bands",
+     "statement": "Lanford Night shift, scheduled doses in the 06-07 hour band: late-dose rate 8.1% in Jan-May 2026 to 17.7% in Jun-Sep 2026. Other hour bands stayed between 7.7% and 8.0% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (The eMAR export is kept per site and shift, not per unit.)",
+     "sql": "SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = 'Lanford' AND shift = 'Night' ORDER BY hour_band, period",
+     "rows": [
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jan-May 2026",
+       "scheduled_doses": 21526.0,
+       "late_doses": 1707.0,
+       "late_rate": 0.079
+      },
+      {
+       "shift": "Night",
+       "hour_band": "02-06",
+       "period": "Jun-Sep 2026",
+       "scheduled_doses": 14678.0,
+       "late_doses": 1148.0,
+       "late_rate": 0.078
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jan-May 2026",
+       "scheduled_doses": 29290.0,
+       "late_doses": 2367.0,
+       "late_rate": 0.081
+      },
+      {
+       "shift": "Night",
+       "hour_band": "06-07",
+       "period": "Jun-Sep 2026",
+       "scheduled_doses": 19618.0,
+       "late_doses": 3475.0,
+       "late_rate": 0.177
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jan-May 2026",
+       "scheduled_doses": 21719.0,
+       "late_doses": 1730.0,
+       "late_rate": 0.08
+      },
+      {
+       "shift": "Night",
+       "hour_band": "18-22",
+       "period": "Jun-Sep 2026",
+       "scheduled_doses": 14510.0,
+       "late_doses": 1162.0,
+       "late_rate": 0.08
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jan-May 2026",
+       "scheduled_doses": 21585.0,
+       "late_doses": 1757.0,
+       "late_rate": 0.081
+      },
+      {
+       "shift": "Night",
+       "hour_band": "22-02",
+       "period": "Jun-Sep 2026",
+       "scheduled_doses": 14648.0,
+       "late_doses": 1131.0,
+       "late_rate": 0.077
+      }
+     ],
+     "source": "v_ops_hour",
+     "origin": "computed",
+     "tool": "hour_bands",
      "turn": 2,
      "stale": false
     }
@@ -1064,95 +1098,76 @@
    "trace": [
     {
      "step": "Choose the next check",
-     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "detail": "picked timeline {'kpi': 'late_doses'}",
      "mode": "model",
-     "seconds": 1.7
+     "seconds": 44.2
     },
     {
-     "step": "Built the month-by-month timeline for Richmond Night A",
-     "detail": "1 evidence item: T13",
+     "step": "Built the month-by-month timeline for Lanford Med-Surg Night",
+     "detail": "1 evidence item: T16",
      "mode": "code",
      "seconds": 0.1,
      "tool": "timeline"
     },
     {
      "step": "Choose the next check",
-     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "detail": "picked compare_teams {'kpi': 'late_doses'}",
      "mode": "model",
      "seconds": 2.1
     },
     {
-     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
-     "detail": "1 evidence item: K14",
+     "step": "Compared Lanford Med-Surg Night with 5 comparable teams on late doses",
+     "detail": "1 evidence item: K17",
      "mode": "code",
      "seconds": 0.0,
      "tool": "compare_teams"
     },
     {
      "step": "Choose the next check",
-     "detail": "picked hour_bands",
+     "detail": "picked retrieve_passages {'query': \"staffing fell night shift Lanford Med-Surg comments staffing float shifts shortages missed med passes nurse comments staffing coverage 'Lanford Med-Surg Night'\"}",
      "mode": "model",
-     "seconds": 2.3
+     "seconds": 3.1
     },
     {
-     "step": "Checked late departures by hour band on Richmond night shift",
-     "detail": "1 evidence item: H15",
+     "step": "Read 4 employee comments and 3 procedures for Lanford Med-Surg Night (embeddings search)",
+     "detail": "8 evidence items: Y18, D19, D20, D21, C22, C23, C24, C25",
      "mode": "code",
-     "seconds": 0.0,
-     "tool": "hour_bands"
+     "seconds": 1.0,
+     "tool": "retrieve_passages"
     },
     {
      "step": "Choose the next check",
-     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+     "detail": "picked query_metric {'kpi': 'absence_days', 'scope': 'team'}",
      "mode": "model",
-     "seconds": 2.8
+     "seconds": 2.4
     },
     {
-     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
-     "detail": "1 evidence item: M16",
+     "step": "Counted absence days for Lanford Med-Surg Night in Jun-Aug 2026",
+     "detail": "1 evidence item: M26",
      "mode": "code",
      "seconds": 0.0,
      "tool": "query_metric"
     },
     {
-     "step": "Choose the next check",
-     "detail": "picked retrieve_passages {'query': \"Richmond Night A staffing fall late departures staffing levels comments procedures staffing change 'Richmond Night' 'staffing' 'late departures' 'shift' 'headcount' 'Jun 2026' 'Jul 2026' 'Aug 2026'\"}",
-     "mode": "model",
-     "seconds": 3.0
-    },
-    {
-     "step": "Read 4 employee comments and 2 procedures for Richmond Night A (embeddings search)",
-     "detail": "7 evidence items: Y17, D18, D19, C20, C21, C22, C23",
+     "step": "Checked late doses by hour band on Lanford night shift",
+     "detail": "1 evidence item: H27",
      "mode": "code",
-     "seconds": 1.2,
-     "tool": "retrieve_passages"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked precedent {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 2.4
-    },
-    {
-     "step": "Looked for the same problem on other teams: 2 found",
-     "detail": "1 evidence item: R24",
-     "mode": "code",
-     "seconds": 0.6,
-     "tool": "precedent"
+     "seconds": 0.0,
+     "tool": "hour_bands"
     },
     {
      "step": "Write the answer in plain words",
      "detail": "AI-written, then checked by code: passed",
      "mode": "model",
-     "seconds": 5.0
+     "seconds": 6.3
     }
    ],
    "budget": {
-    "tool_calls": 6,
+    "tool_calls": 5,
     "max_tool_calls": 6,
-    "model_requests": 7,
+    "model_requests": 5,
     "max_model_requests": 8,
-    "seconds": 21.4,
+    "seconds": 59.6,
     "max_seconds": 60.0,
     "stopped": null
    },
@@ -1163,8 +1178,8 @@
    "check": {
     "passed": true,
     "notes": [],
-    "numbers_checked": 16,
-    "numbers_total": 16,
+    "numbers_checked": 13,
+    "numbers_total": 13,
     "rejected": []
    },
    "prepared": null,
@@ -1188,13 +1203,13 @@
   }
  },
  "compare it with the other night shifts|4|2026-09-15|first": {
-  "generated_at": "2026-10-08T07:32:45+00:00",
+  "generated_at": "2026-10-08T09:46:11+00:00",
   "model": "gpt-5-mini",
   "investigation": {
-   "id": "db239f120f",
-   "conversation_id": "731ac331b1a4",
+   "id": "f3d137a982",
+   "conversation_id": "90c237345420",
    "question": "Compare it with the other night shifts",
-   "created_at": "2026-10-08T07:32:26+00:00",
+   "created_at": "2026-10-08T09:45:49+00:00",
    "status": "answered",
    "message": null,
    "function": {
@@ -1203,25 +1218,25 @@
    },
    "context": {
     "site_id": 1,
-    "site": "Richmond",
+    "site": "Lanford",
     "team_id": 4,
-    "team": "Night A",
+    "team": "Med-Surg Night",
     "shift": "Night",
     "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
     "item": "q02",
     "item_label": "Materials and equipment to do my work right",
     "finding": {
      "status": "red",
-     "kpi": "late_departures",
+     "kpi": "late_doses",
      "item": "q02"
     },
     "dataset": "demo",
     "version": "demo"
    },
    "answer": {
-    "conclusion": "Richmond Night A had 19.3 late departures per 10 people per month in Jun-Aug 2026. Five comparable night teams ranged 9.8 to 15.5, so Richmond Night A is higher than every comparable team.",
+    "conclusion": "In Jun-Aug 2026, Lanford Med-Surg Night had 19.3 late doses per 10 people per month. Five comparable night teams ranged 9.8 to 15.5 per 10 people per month, so Lanford is above every comparable team.",
     "evidence_state": "supported",
     "evidence_ids": [
      "K1"
@@ -1230,11 +1245,11 @@
     "next_step": {
      "kind": "gather",
      "text": "Open 'When did it start?' to see whether the gap is recent or long-running.",
-     "owner": "You (site manager)"
+     "owner": "You (nurse manager)"
     },
     "chart": {
      "type": "bars",
-     "title": "Late departures per 10 people per month",
+     "title": "Late doses per 10 people per month",
      "unit": "per 10 people per month",
      "period": "Jun-Aug 2026",
      "baseline": "comparable teams: same shift at every site, 4 or more people",
@@ -1242,37 +1257,37 @@
      "series": [
       {
        "key": "per_10",
-       "label": "Late departures per 10 people per month",
+       "label": "Late doses per 10 people per month",
        "role": "team"
       }
      ],
      "rows": [
       {
-       "team": "Richmond Night A",
+       "team": "Lanford Med-Surg Night",
        "per_10": 19.3
       },
       {
-       "team": "Richmond Night B",
+       "team": "Lanford ICU Night",
        "per_10": 10.5
       },
       {
-       "team": "Norfolk Night A",
+       "team": "Westbrook Med-Surg Night",
        "per_10": 15.5
       },
       {
-       "team": "Norfolk Night B",
+       "team": "Westbrook ICU Night",
        "per_10": 13.8
       },
       {
-       "team": "Roanoke Night A",
+       "team": "Pine Hollow Med-Surg Night",
        "per_10": 9.8
       },
       {
-       "team": "Roanoke Night B",
+       "team": "Pine Hollow ICU Night",
        "per_10": 11.0
       }
      ],
-     "highlight": "Richmond Night A"
+     "highlight": "Lanford Med-Surg Night"
     },
     "written_by": "model"
    },
@@ -1280,11 +1295,11 @@
     {
      "id": "K1",
      "kind": "compare",
-     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "statement": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Lanford EVS Night, Westbrook EVS Night, Pine Hollow EVS Night. Survey item Q02, wave 1 to wave 2: Lanford Med-Surg Night -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
      "rows": [
       {
-       "team": "Richmond Night A",
+       "team": "Lanford Med-Surg Night",
        "team_id": 4,
        "events": 81,
        "head_months": 42,
@@ -1294,7 +1309,7 @@
        "item_n": 13
       },
       {
-       "team": "Richmond Night B",
+       "team": "Lanford ICU Night",
        "team_id": 5,
        "events": 22,
        "head_months": 21,
@@ -1303,7 +1318,7 @@
        "item_n": 7
       },
       {
-       "team": "Norfolk Night A",
+       "team": "Westbrook Med-Surg Night",
        "team_id": 12,
        "events": 65,
        "head_months": 42,
@@ -1312,7 +1327,7 @@
        "item_n": 12
       },
       {
-       "team": "Norfolk Night B",
+       "team": "Westbrook ICU Night",
        "team_id": 13,
        "events": 29,
        "head_months": 21,
@@ -1321,7 +1336,7 @@
        "item_n": null
       },
       {
-       "team": "Roanoke Night A",
+       "team": "Pine Hollow Med-Surg Night",
        "team_id": 20,
        "events": 41,
        "head_months": 42,
@@ -1330,7 +1345,7 @@
        "item_n": 12
       },
       {
-       "team": "Roanoke Night B",
+       "team": "Pine Hollow ICU Night",
        "team_id": 21,
        "events": 23,
        "head_months": 21,
@@ -1346,9 +1361,40 @@
      "stale": false
     },
     {
-     "id": "T2",
+     "id": "M2",
+     "kind": "metric",
+     "statement": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "T3",
      "kind": "timeline",
-     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "statement": "Late doses on Lanford Med-Surg Night were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Lanford night shift fell below 90% of scheduled in: 2026-03.",
      "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
      "rows": [
       {
@@ -1407,49 +1453,18 @@
      "stale": false
     },
     {
-     "id": "M3",
-     "kind": "metric",
-     "statement": "Richmond night shift (teams of 4 or more people) recorded 103 late outbound departures in Jun-Aug 2026: 16.3 per 10 people per month (63 head-months).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE site_id = 1 AND shift = 'Night' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "month": "2026-06",
-       "events": 37,
-       "head_months": 21,
-       "per_10": 17.62
-      },
-      {
-       "month": "2026-07",
-       "events": 36,
-       "head_months": 21,
-       "per_10": 17.14
-      },
-      {
-       "month": "2026-08",
-       "events": 30,
-       "head_months": 21,
-       "per_10": 14.29
-      }
-     ],
-     "source": "v_team_ops_month",
-     "origin": "computed",
-     "tool": "query_metric",
-     "turn": 1,
-     "stale": false
-    },
-    {
      "id": "R4",
      "kind": "precedent",
-     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
+     "statement": "Other teams with the same flag or item drop: Westbrook Med-Surg Day (plan: none recorded; result: n/a); Pine Hollow Resp Therapy Day (plan: none recorded; result: n/a).",
      "sql": null,
      "rows": [
       {
-       "team": "Norfolk Day A",
+       "team": "Westbrook Med-Surg Day",
        "plan": null,
        "result": null
       },
       {
-       "team": "Roanoke Yard Day",
+       "team": "Pine Hollow Resp Therapy Day",
        "plan": null,
        "result": null
       }
@@ -1459,17 +1474,29 @@
      "tool": "precedent",
      "turn": 1,
      "stale": false
+    },
+    {
+     "id": "V5",
+     "kind": "review",
+     "statement": "No approved plan for Lanford Med-Surg Night on 2026-09-15: nothing to review yet.",
+     "sql": null,
+     "rows": [],
+     "source": "",
+     "origin": "computed",
+     "tool": "review_result",
+     "turn": 1,
+     "stale": false
     }
    ],
    "trace": [
     {
      "step": "Choose the next check",
-     "detail": "picked compare_teams {'kpi': 'late_departures'}",
+     "detail": "picked compare_teams {'kpi': 'late_doses'}",
      "mode": "model",
-     "seconds": 1.7
+     "seconds": 2.4
     },
     {
-     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+     "step": "Compared Lanford Med-Surg Night with 5 comparable teams on late doses",
      "detail": "1 evidence item: K1",
      "mode": "code",
      "seconds": 0.0,
@@ -1477,35 +1504,35 @@
     },
     {
      "step": "Choose the next check",
-     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "detail": "picked query_metric {'kpi': 'late_doses', 'scope': 'team'}",
      "mode": "model",
-     "seconds": 3.4
+     "seconds": 2.5
     },
     {
-     "step": "Built the month-by-month timeline for Richmond Night A",
-     "detail": "1 evidence item: T2",
-     "mode": "code",
-     "seconds": 0.1,
-     "tool": "timeline"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'shift'}",
-     "mode": "model",
-     "seconds": 2.4
-    },
-    {
-     "step": "Counted late departures for Richmond night shift (teams of 4 or more people) in Jun-Aug 2026",
-     "detail": "1 evidence item: M3",
+     "step": "Counted late doses for Lanford Med-Surg Night in Jun-Aug 2026",
+     "detail": "1 evidence item: M2",
      "mode": "code",
      "seconds": 0.0,
      "tool": "query_metric"
     },
     {
      "step": "Choose the next check",
-     "detail": "picked precedent {'kpi': 'late_departures'}",
+     "detail": "picked timeline {'kpi': 'late_doses'}",
      "mode": "model",
      "seconds": 2.5
+    },
+    {
+     "step": "Built the month-by-month timeline for Lanford Med-Surg Night",
+     "detail": "1 evidence item: T3",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked precedent {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 2.8
     },
     {
      "step": "Looked for the same problem on other teams: 2 found",
@@ -1516,23 +1543,36 @@
     },
     {
      "step": "Choose the next check",
+     "detail": "picked review_result",
+     "mode": "model",
+     "seconds": 3.4
+    },
+    {
+     "step": "Looked for a plan to review: none",
+     "detail": "1 evidence item: V5",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "review_result"
+    },
+    {
+     "step": "Choose the next check",
      "detail": "picked answer_now",
      "mode": "model",
-     "seconds": 4.1
+     "seconds": 3.9
     },
     {
      "step": "Write the answer in plain words",
      "detail": "AI-written, then checked by code: passed",
      "mode": "model",
-     "seconds": 3.9
+     "seconds": 3.5
     }
    ],
    "budget": {
-    "tool_calls": 4,
+    "tool_calls": 5,
     "max_tool_calls": 6,
-    "model_requests": 6,
+    "model_requests": 7,
     "max_model_requests": 8,
-    "seconds": 19.0,
+    "seconds": 22.0,
     "max_seconds": 60.0,
     "stopped": null
    },
@@ -1543,8 +1583,8 @@
    "check": {
     "passed": true,
     "notes": [],
-    "numbers_checked": 5,
-    "numbers_total": 5,
+    "numbers_checked": 6,
+    "numbers_total": 6,
     "rejected": []
    },
    "prepared": null,
@@ -1568,13 +1608,13 @@
   }
  },
  "when did it start|4|2026-09-15|followup": {
-  "generated_at": "2026-10-08T07:33:11+00:00",
+  "generated_at": "2026-10-08T09:46:39+00:00",
   "model": "gpt-5-mini",
   "investigation": {
-   "id": "0320ddf574",
-   "conversation_id": "731ac331b1a4",
+   "id": "3532e3d685",
+   "conversation_id": "90c237345420",
    "question": "When did it start?",
-   "created_at": "2026-10-08T07:32:45+00:00",
+   "created_at": "2026-10-08T09:46:11+00:00",
    "status": "answered",
    "message": null,
    "function": {
@@ -1583,45 +1623,45 @@
    },
    "context": {
     "site_id": 1,
-    "site": "Richmond",
+    "site": "Lanford",
     "team_id": 4,
-    "team": "Night A",
+    "team": "Med-Surg Night",
     "shift": "Night",
     "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
     "item": "q02",
     "item_label": "Materials and equipment to do my work right",
     "finding": {
      "status": "red",
-     "kpi": "late_departures",
+     "kpi": "late_doses",
      "item": "q02"
     },
     "dataset": "demo",
     "version": "demo"
    },
    "answer": {
-    "conclusion": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+    "conclusion": "Late doses on Lanford Med-Surg Night were above every comparable team in Feb, May, Jun and Jul 2026; not above the range in the latest month. The survey change falls between wave 1 (closed Mar 2026) and wave 2 (closed Sep 2026). Association supported. ",
     "evidence_state": "supported",
     "evidence_ids": [
-     "T5"
+     "T6"
     ],
     "competing": {
-     "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+     "text": "Staffing on Lanford night fell below 90% of scheduled in Mar 2026, while the flagged high-rate window is Jun\u2013Aug 2026. Because the shortage month (Mar 2026) is outside Jun\u2013Aug 2026, a staffing explanation is not supported for the flagged window.",
      "evidence_state": "insufficient",
      "evidence_ids": [
-      "T5",
-      "M15"
+      "T6",
+      "M7"
      ]
     },
     "next_step": {
      "kind": "gather",
-     "text": "Check what changed on the shift in the first month above the range (rota, equipment, procedure).",
-     "owner": "Priya Singh, Site Operations Manager"
+     "text": "Check what changed on the unit in the first month above the range (roster, equipment, restock schedule).",
+     "owner": "Priya Singh, Pharmacy Operations Manager"
     },
     "chart": {
      "type": "line",
-     "title": "Late departures per 10 people per month",
+     "title": "Late doses per 10 people per month",
      "unit": "per 10 people per month",
      "period": "2026-01 to 2026-08",
      "baseline": "highest comparable team each month",
@@ -1629,7 +1669,7 @@
      "series": [
       {
        "key": "team_per_10",
-       "label": "Richmond Night A",
+       "label": "Lanford Med-Surg Night",
        "role": "team"
       },
       {
@@ -1689,13 +1729,14 @@
       }
      ],
      "highlight": null
-    }
+    },
+    "written_by": "model"
    },
    "evidence": [
     {
-     "id": "T5",
+     "id": "T6",
      "kind": "timeline",
-     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "statement": "Late doses on Lanford Med-Surg Night were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Lanford night shift fell below 90% of scheduled in: 2026-03.",
      "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
      "rows": [
       {
@@ -1754,275 +1795,10 @@
      "stale": false
     },
     {
-     "id": "G6",
-     "kind": "tenure_mix",
-     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
-     "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
-     "rows": [
-      {
-       "wave_id": 1,
-       "tenure_band": "1_to_3",
-       "n": 3,
-       "grand_mean": null
-      },
-      {
-       "wave_id": 1,
-       "tenure_band": "3_to_10",
-       "n": 4,
-       "grand_mean": 4.0
-      },
-      {
-       "wave_id": 1,
-       "tenure_band": "over_10",
-       "n": 2,
-       "grand_mean": null
-      },
-      {
-       "wave_id": 1,
-       "tenure_band": "under_1",
-       "n": 2,
-       "grand_mean": null
-      },
-      {
-       "wave_id": 2,
-       "tenure_band": "1_to_3",
-       "n": 4,
-       "grand_mean": 3.63
-      },
-      {
-       "wave_id": 2,
-       "tenure_band": "3_to_10",
-       "n": 4,
-       "grand_mean": 3.88
-      },
-      {
-       "wave_id": 2,
-       "tenure_band": "over_10",
-       "n": 3,
-       "grand_mean": null
-      },
-      {
-       "wave_id": 2,
-       "tenure_band": "under_1",
-       "n": 2,
-       "grand_mean": null
-      }
-     ],
-     "source": "v_team_tenure_mix",
-     "origin": "computed",
-     "tool": "signal_check",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "G7",
-     "kind": "signal_check",
-     "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
-     "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
-     "rows": [
-      {
-       "tenure_band": "under_1",
-       "share_w1": 0.18,
-       "share_w2": 0.15,
-       "company_band_mean": 4.18,
-       "n_w1": 2,
-       "n_w2": 2
-      },
-      {
-       "tenure_band": "1_to_3",
-       "share_w1": 0.27,
-       "share_w2": 0.31,
-       "company_band_mean": 3.81,
-       "n_w1": 3,
-       "n_w2": 4
-      },
-      {
-       "tenure_band": "3_to_10",
-       "share_w1": 0.36,
-       "share_w2": 0.31,
-       "company_band_mean": 3.83,
-       "n_w1": 4,
-       "n_w2": 4
-      },
-      {
-       "tenure_band": "over_10",
-       "share_w1": 0.18,
-       "share_w2": 0.23,
-       "company_band_mean": 3.82,
-       "n_w1": 2,
-       "n_w2": 3
-      }
-     ],
-     "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
-     "origin": "computed",
-     "tool": "signal_check",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "G8",
-     "kind": "item_drop_adjusted",
-     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
-     "sql": null,
-     "rows": [],
-     "source": "app/impact.py _engagement",
-     "origin": "computed",
-     "tool": "signal_check",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "Y9",
-     "kind": "comment_themes",
-     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
-     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
-     "rows": [
-      {
-       "theme": "shift handoff",
-       "comments": 4,
-       "share": 0.67,
-       "corroborating": true
-      },
-      {
-       "theme": "equipment and maintenance",
-       "comments": 1,
-       "share": 0.17,
-       "corroborating": false
-      },
-      {
-       "theme": "recognition",
-       "comments": 1,
-       "share": 0.17,
-       "corroborating": false
-      }
-     ],
-     "source": "v_comments_reportable",
-     "origin": "computed",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C10",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:52",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C11",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:53",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C12",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:51",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C13",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:54",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "K14",
-     "kind": "compare",
-     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "team": "Richmond Night A",
-       "team_id": 4,
-       "events": 81,
-       "head_months": 42,
-       "per_10": 19.3,
-       "is_team": true,
-       "item_change": -0.81,
-       "item_n": 13
-      },
-      {
-       "team": "Richmond Night B",
-       "team_id": 5,
-       "events": 22,
-       "head_months": 21,
-       "per_10": 10.5,
-       "item_change": -0.23,
-       "item_n": 7
-      },
-      {
-       "team": "Norfolk Night A",
-       "team_id": 12,
-       "events": 65,
-       "head_months": 42,
-       "per_10": 15.5,
-       "item_change": 0.62,
-       "item_n": 12
-      },
-      {
-       "team": "Norfolk Night B",
-       "team_id": 13,
-       "events": 29,
-       "head_months": 21,
-       "per_10": 13.8,
-       "item_change": null,
-       "item_n": null
-      },
-      {
-       "team": "Roanoke Night A",
-       "team_id": 20,
-       "events": 41,
-       "head_months": 42,
-       "per_10": 9.8,
-       "item_change": -0.25,
-       "item_n": 12
-      },
-      {
-       "team": "Roanoke Night B",
-       "team_id": 21,
-       "events": 23,
-       "head_months": 21,
-       "per_10": 11.0,
-       "item_change": 0.03,
-       "item_n": 7
-      }
-     ],
-     "source": "v_team_ops_month, v_team_wave_item",
-     "origin": "computed",
-     "tool": "compare_teams",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "M15",
+     "id": "M7",
      "kind": "metric",
-     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "statement": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
      "rows": [
       {
        "month": "2026-06",
@@ -2048,618 +1824,15 @@
      "tool": "query_metric",
      "turn": 2,
      "stale": false
-    }
-   ],
-   "trace": [
-    {
-     "step": "Choose the next check",
-     "detail": "picked timeline {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 2.5
     },
     {
-     "step": "Built the month-by-month timeline for Richmond Night A",
-     "detail": "1 evidence item: T5",
-     "mode": "code",
-     "seconds": 0.1,
-     "tool": "timeline"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked signal_check",
-     "mode": "model",
-     "seconds": 2.6
-    },
-    {
-     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
-     "detail": "3 evidence items: G6, G7, G8",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "signal_check"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked retrieve_passages {'query': \"Richmond Night A q02 'Materials and equipment to do my work right' decline when did it start comments timing 'materials' 'equipment' 'broken' 'start' 'since' 'when' 'wave 1' 'wave 2' Richmond Night A late departures start timing\"}",
-     "mode": "model",
-     "seconds": 4.5
-    },
-    {
-     "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
-     "detail": "5 evidence items: Y9, C10, C11, C12, C13",
-     "mode": "code",
-     "seconds": 0.9,
-     "tool": "retrieve_passages"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked compare_teams {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 6.3
-    },
-    {
-     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
-     "detail": "1 evidence item: K14",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "compare_teams"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked answer_now",
-     "mode": "model",
-     "seconds": 7.8
-    },
-    {
-     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
-     "detail": "1 evidence item: M15",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "query_metric"
-    }
-   ],
-   "budget": {
-    "tool_calls": 5,
-    "max_tool_calls": 6,
-    "model_requests": 6,
-    "max_model_requests": 8,
-    "seconds": 26.3,
-    "max_seconds": 60.0,
-    "stopped": null
-   },
-   "mode": "model",
-   "model": "gpt-5-mini",
-   "selection": "function_calling",
-   "fallback": "Model unavailable for the wording (RateLimitError: Error code: 429 - {'error': {'message': 'Your requests to gpt-5-mini for gpt-5-mini ); templated text shown.",
-   "check": {
-    "passed": true,
-    "notes": [],
-    "numbers_checked": 22,
-    "numbers_total": 22,
-    "rejected": []
-   },
-   "prepared": null,
-   "suggestions": [
-    {
-     "label": "How widespread?",
-     "question": "How widespread is it?",
-     "function": "how_widespread"
-    },
-    {
-     "label": "Could staffing explain it?",
-     "question": "Could staffing explain this?",
-     "function": "could_explain"
-    },
-    {
-     "label": "Draft a plan",
-     "question": "Draft a plan I can review",
-     "function": "draft_plan"
-    }
-   ]
-  }
- },
- "is this normal for teams like ours|4|2026-09-15|first": {
-  "generated_at": "2026-10-08T07:33:41+00:00",
-  "model": "gpt-5-mini",
-  "investigation": {
-   "id": "c3dc804dee",
-   "conversation_id": "896e3ef7dce9",
-   "question": "Is this normal for teams like ours?",
-   "created_at": "2026-10-08T07:33:11+00:00",
-   "status": "answered",
-   "message": null,
-   "function": {
-    "id": "normal",
-    "label": "Is this normal for teams like ours?"
-   },
-   "context": {
-    "site_id": 1,
-    "site": "Richmond",
-    "team_id": 4,
-    "team": "Night A",
-    "shift": "Night",
-    "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
-    "item": "q02",
-    "item_label": "Materials and equipment to do my work right",
-    "finding": {
-     "status": "red",
-     "kpi": "late_departures",
-     "item": "q02"
-    },
-    "dataset": "demo",
-    "version": "demo"
-   },
-   "answer": {
-    "conclusion": "For teams like Richmond Night A (night shift, 4+ people), Jun-Aug 2026 median late departures were 11.0 per 10 people per month (range 9.8 to 15.5). Richmond Night A had 19.3 per 10 people per month.",
-    "evidence_state": "supported",
-    "evidence_ids": [
-     "B2"
-    ],
-    "competing": {
-     "text": "All night-shift teams averaged 13.8 late departures per 10 people per month in Jun-Aug 2026; all day-shift teams averaged 7.9. The norm above compares night teams with night teams, so that gap is already netted out.",
-     "evidence_state": "supported",
-     "evidence_ids": [
-      "B3"
-     ]
-    },
-    "next_step": {
-     "kind": "gather",
-     "text": "Ask HR whether the client's Access export includes benchmark percentiles (an assumed source, not in this prototype).",
-     "owner": "Dana Whitfield, HR Business Partner"
-    },
-    "chart": {
-     "type": "bars",
-     "title": "Late departures per 10 people per month",
-     "unit": "per 10 people per month",
-     "period": "Jun-Aug 2026",
-     "baseline": "comparable teams: same shift at every site, 4 or more people",
-     "x": "team",
-     "series": [
-      {
-       "key": "per_10",
-       "label": "Late departures per 10 people per month",
-       "role": "team"
-      }
-     ],
-     "rows": [
-      {
-       "team": "Richmond Night B",
-       "per_10": 10.5
-      },
-      {
-       "team": "Norfolk Night A",
-       "per_10": 15.5
-      },
-      {
-       "team": "Norfolk Night B",
-       "per_10": 13.8
-      },
-      {
-       "team": "Roanoke Night A",
-       "per_10": 9.8
-      },
-      {
-       "team": "Roanoke Night B",
-       "per_10": 11.0
-      },
-      {
-       "team": "Richmond Night A",
-       "per_10": 19.3
-      }
-     ],
-     "highlight": "Richmond Night A"
-    },
-    "external": {
-     "text": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
-     "evidence_state": "unavailable",
-     "evidence_ids": [
-      "B4"
-     ]
-    },
-    "written_by": "model"
-   },
-   "evidence": [
-    {
-     "id": "K1",
-     "kind": "compare",
-     "statement": "Late departures, Jun-Aug 2026, per 10 people per month: Richmond Night A 19.3; 5 comparable teams ranged 9.8 to 15.5, so Richmond Night A is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Richmond Maintenance Night, Norfolk Maintenance Night, Roanoke Maintenance Night. Survey item Q02, wave 1 to wave 2: Richmond Night A -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "team": "Richmond Night A",
-       "team_id": 4,
-       "events": 81,
-       "head_months": 42,
-       "per_10": 19.3,
-       "is_team": true,
-       "item_change": -0.81,
-       "item_n": 13
-      },
-      {
-       "team": "Richmond Night B",
-       "team_id": 5,
-       "events": 22,
-       "head_months": 21,
-       "per_10": 10.5,
-       "item_change": -0.23,
-       "item_n": 7
-      },
-      {
-       "team": "Norfolk Night A",
-       "team_id": 12,
-       "events": 65,
-       "head_months": 42,
-       "per_10": 15.5,
-       "item_change": 0.62,
-       "item_n": 12
-      },
-      {
-       "team": "Norfolk Night B",
-       "team_id": 13,
-       "events": 29,
-       "head_months": 21,
-       "per_10": 13.8,
-       "item_change": null,
-       "item_n": null
-      },
-      {
-       "team": "Roanoke Night A",
-       "team_id": 20,
-       "events": 41,
-       "head_months": 42,
-       "per_10": 9.8,
-       "item_change": -0.25,
-       "item_n": 12
-      },
-      {
-       "team": "Roanoke Night B",
-       "team_id": 21,
-       "events": 23,
-       "head_months": 21,
-       "per_10": 11.0,
-       "item_change": 0.03,
-       "item_n": 7
-      }
-     ],
-     "source": "v_team_ops_month, v_team_wave_item",
-     "origin": "computed",
-     "tool": "compare_teams",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "B2",
-     "kind": "benchmark_internal",
-     "statement": "Norm for teams like Richmond Night A (5 night-shift teams at every site, 4+ people), late departures, Jun-Aug 2026: median 11.0 per 10 people per month, range 9.8 to 15.5. Richmond Night A: 19.3.",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [
-      {
-       "team": "Richmond Night B",
-       "per_10": 10.5
-      },
-      {
-       "team": "Norfolk Night A",
-       "per_10": 15.5
-      },
-      {
-       "team": "Norfolk Night B",
-       "per_10": 13.8
-      },
-      {
-       "team": "Roanoke Night A",
-       "per_10": 9.8
-      },
-      {
-       "team": "Roanoke Night B",
-       "per_10": 11.0
-      }
-     ],
-     "source": "v_team_ops_month",
-     "origin": "computed",
-     "tool": "benchmark",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "B3",
-     "kind": "benchmark_shift",
-     "statement": "All night-shift teams together ran 13.8 late departures per 10 people per month in Jun-Aug 2026; all day-shift teams 7.9 (teams of 4 or more people).",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Night' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Day' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
-     "rows": [],
-     "source": "v_team_ops_month",
-     "origin": "computed",
-     "tool": "benchmark",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "B4",
-     "kind": "benchmark_external",
-     "statement": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
-     "sql": null,
-     "rows": [],
-     "source": "",
-     "origin": "computed",
-     "tool": "benchmark",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "M5",
-     "kind": "metric",
-     "statement": "Richmond Night A recorded 81 late outbound departures in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
-     "sql": "SELECT month, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_departures) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
-     "rows": [
-      {
-       "month": "2026-06",
-       "events": 30,
-       "head_months": 14,
-       "per_10": 21.43
-      },
-      {
-       "month": "2026-07",
-       "events": 29,
-       "head_months": 14,
-       "per_10": 20.71
-      },
-      {
-       "month": "2026-08",
-       "events": 22,
-       "head_months": 14,
-       "per_10": 15.71
-      }
-     ],
-     "source": "v_team_ops_month",
-     "origin": "computed",
-     "tool": "query_metric",
-     "turn": 1,
-     "stale": false
-    },
-    {
-     "id": "R6",
-     "kind": "precedent",
-     "statement": "Other teams with the same flag or item drop: Norfolk Day A (plan: none recorded; result: n/a); Roanoke Yard Day (plan: none recorded; result: n/a).",
-     "sql": null,
-     "rows": [
-      {
-       "team": "Norfolk Day A",
-       "plan": null,
-       "result": null
-      },
-      {
-       "team": "Roanoke Yard Day",
-       "plan": null,
-       "result": null
-      }
-     ],
-     "source": "app/impact.py board, plans",
-     "origin": "computed",
-     "tool": "precedent",
-     "turn": 1,
-     "stale": false
-    }
-   ],
-   "trace": [
-    {
-     "step": "Choose the next check",
-     "detail": "picked compare_teams {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 4.3
-    },
-    {
-     "step": "Compared Richmond Night A with 5 comparable teams on late departures",
-     "detail": "1 evidence item: K1",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "compare_teams"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked benchmark {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 5.7
-    },
-    {
-     "step": "Built the norm for teams like Richmond Night A from 5 comparable teams",
-     "detail": "3 evidence items: B2, B3, B4",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "benchmark"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
-     "mode": "model",
-     "seconds": 5.2
-    },
-    {
-     "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
-     "detail": "1 evidence item: M5",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "query_metric"
-    },
-    {
-     "step": "Choose the next check",
-     "detail": "picked precedent {'kpi': 'late_departures'}",
-     "mode": "model",
-     "seconds": 5.8
-    },
-    {
-     "step": "Looked for the same problem on other teams: 2 found",
-     "detail": "1 evidence item: R6",
-     "mode": "code",
-     "seconds": 0.5,
-     "tool": "precedent"
-    },
-    {
-     "step": "Write the answer in plain words",
-     "detail": "AI-written, then checked by code: passed",
-     "mode": "model",
-     "seconds": 7.9
-    }
-   ],
-   "budget": {
-    "tool_calls": 4,
-    "max_tool_calls": 6,
-    "model_requests": 7,
-    "max_model_requests": 8,
-    "seconds": 29.9,
-    "max_seconds": 60.0,
-    "stopped": null
-   },
-   "mode": "model",
-   "model": "gpt-5-mini",
-   "selection": "function_calling",
-   "fallback": null,
-   "check": {
-    "passed": true,
-    "notes": [],
-    "numbers_checked": 12,
-    "numbers_total": 12,
-    "rejected": []
-   },
-   "prepared": null,
-   "suggestions": [
-    {
-     "label": "What is missing?",
-     "question": "What is missing, and what would change the recommendation?",
-     "function": "whats_missing"
-    },
-    {
-     "label": "Compare with other night shifts",
-     "question": "Compare {team} with the other night shifts",
-     "function": "compare"
-    },
-    {
-     "label": "Why flagged?",
-     "question": "Why is {team} flagged?",
-     "function": "why_flagged"
-    }
-   ]
-  }
- },
- "what is missing|4|2026-09-15|followup": {
-  "generated_at": "2026-10-08T07:34:23+00:00",
-  "model": "gpt-5-mini",
-  "investigation": {
-   "id": "7f2865d7e7",
-   "conversation_id": "896e3ef7dce9",
-   "question": "What is missing?",
-   "created_at": "2026-10-08T07:33:41+00:00",
-   "status": "answered",
-   "message": null,
-   "function": {
-    "id": "whats_missing",
-    "label": "What is missing?"
-   },
-   "context": {
-    "site_id": 1,
-    "site": "Richmond",
-    "team_id": 4,
-    "team": "Night A",
-    "shift": "Night",
-    "as_of": "2026-09-15",
-    "kpi": "late_departures",
-    "kpi_label": "Late outbound departures",
-    "item": "q02",
-    "item_label": "Materials and equipment to do my work right",
-    "finding": {
-     "status": "red",
-     "kpi": "late_departures",
-     "item": "q02"
-    },
-    "dataset": "demo",
-    "version": "demo"
-   },
-   "answer": {
-    "conclusion": "Shift handoff is the leading supported explanation. Wave 2 shows 4 shift-handoff comments from Richmond Night A, and departures in the 06-07 hour rose from 7.4% to 17.8% in Jun-Sep 2026, an association with the handoff issue.",
-    "evidence_state": "supported",
-    "evidence_ids": [
-     "Y7",
-     "H19"
-    ],
-    "competing": null,
-    "next_step": {
-     "kind": "gather",
-     "text": "Pull the signed handoff logs for the flagged months",
-     "owner": "Priya Singh, Site Operations Manager"
-    },
-    "gaps": [
-     {
-      "gap": "Whether the handoff checklist and signed log are completed each shift",
-      "step": "Pull the signed handoff logs for the flagged months",
-      "owner": "Priya Singh, Site Operations Manager"
-     },
-     {
-      "gap": "Which trailers left late and why (dispatch notes)",
-      "step": "Export dispatch notes for the late departures",
-      "owner": "Sam Kim, Dispatch Supervisor"
-     },
-     {
-      "gap": "An external benchmark for teams like this one",
-      "step": "Ask whether the client's Access export includes benchmark percentiles (assumed source)",
-      "owner": "Dana Whitfield, HR Business Partner"
-     },
-     {
-      "gap": "A follow-up pulse on the focus item two months after a plan starts",
-      "step": "Schedule the pulse with HR when a plan is approved (an assumption for a pilot)",
-      "owner": "Dana Whitfield, HR Business Partner"
-     }
-    ],
-    "hypotheses": [
-     {
-      "id": "process",
-      "label": "Process or handoff (shift handoff)",
-      "evidence_state": "supported",
-      "text": "Process: shift handoff. 4 separate wave-2 comments name it, and late departures rose in the 06-07 hour band at the shift boundary.",
-      "evidence_ids": [
-       "Y7",
-       "H19"
-      ]
-     },
-     {
-      "id": "staffing",
-      "label": "Staffing shortage",
-      "evidence_state": "insufficient",
-      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
-      "evidence_ids": [
-       "T20"
-      ]
-     },
-     {
-      "id": "who_responded",
-      "label": "Change in who responded",
-      "evidence_state": "insufficient",
-      "text": "Who responded: the mix of respondents was similar and q02 still fell -0.80 after adjusting for tenure.",
-      "evidence_ids": [
-       "G16",
-       "G17",
-       "G18"
-      ]
-     },
-     {
-      "id": "single_comment",
-      "label": "A single loud comment",
-      "evidence_state": "insufficient",
-      "text": "4 separate comments on one theme: not a single voice.",
-      "evidence_ids": [
-       "Y7"
-      ]
-     }
-    ],
-    "written_by": "model"
-   },
-   "evidence": [
-    {
-     "id": "Y7",
+     "id": "Y8",
      "kind": "comment_themes",
-     "statement": "Wave 2 comments from Richmond Night A: 6 in total. By theme: shift handoff 4; equipment and maintenance 1; recognition 1. 'shift handoff' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "statement": "Wave 2 comments from Lanford Med-Surg Night: 6 in total. By theme: medication cabinet restock 4; equipment and maintenance 1; recognition 1. 'medication cabinet restock' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
      "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
      "rows": [
       {
-       "theme": "shift handoff",
+       "theme": "medication cabinet restock",
        "comments": 4,
        "share": 0.67,
        "corroborating": true
@@ -2679,18 +1852,6 @@
      ],
      "source": "v_comments_reportable",
      "origin": "computed",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "D8",
-     "kind": "doc",
-     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Steps): ## Steps\n1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**\n   for every trailer worked during the shift: trailer number, load status (empty, partial,\n   complete), seal status, and scheduled departure time.\n2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing\n   paperwork, staffing gaps for the next shift.\n3. The inco",
-     "sql": null,
-     "rows": [],
-     "source": "doc:shift_handoff_procedure:2",
-     "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
      "stale": false
@@ -2698,10 +1859,10 @@
     {
      "id": "D9",
      "kind": "doc",
-     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Shift Handoff Procedure (SOP-OPS-014)): # Shift Handoff Procedure (SOP-OPS-014)\n\nIllustrative document written for a fictional company. Not a real Northline document.",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Purpose): ## Purpose\nEnsure each unit's automated dispensing cabinet (ADC) is restocked so that stock is on hand for\nevery scheduled medication pass, including the 06:00 pass that runs before the 07:00 shift change.",
      "sql": null,
      "rows": [],
-     "source": "doc:shift_handoff_procedure:0",
+     "source": "doc:medication_cabinet_restock_procedure:1",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
@@ -2710,19 +1871,31 @@
     {
      "id": "D10",
      "kind": "doc",
-     "statement": "Document (Shift Handoff Procedure (SOP-OPS-014) / Purpose): ## Purpose\nEnsure the incoming shift has complete information about loads in progress, trailers ready\nfor departure, and open issues, so that scheduled departures leave on time.",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Steps): ## Steps\n1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight\n   restock report.\n2. The **restock report** lists every item below its par level. The technician signs the report\n   when the cabinet is filled; the signed report is kept at the pharmacy desk.\n3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that\n   t",
      "sql": null,
      "rows": [],
-     "source": "doc:shift_handoff_procedure:1",
+     "source": "doc:medication_cabinet_restock_procedure:2",
      "origin": "retrieved",
      "tool": "retrieve_passages",
      "turn": 2,
      "stale": false
     },
     {
-     "id": "C11",
+     "id": "D11",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Medication Cabinet Restock Procedure (SOP-PHARM-021)): # Medication Cabinet Restock Procedure (SOP-PHARM-021)\n\nIllustrative document written for a fictional hospital system. Not a real Lanford Health document.",
+     "sql": null,
+     "rows": [],
+     "source": "doc:medication_cabinet_restock_procedure:0",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C12",
      "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 21 words; theme: shift handoff): \"Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.\"",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.\"",
      "sql": null,
      "rows": [],
      "source": "comment:52",
@@ -2732,33 +1905,9 @@
      "stale": false
     },
     {
-     "id": "C12",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 16 words; theme: shift handoff): \"Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:53",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
      "id": "C13",
      "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 18 words; theme: shift handoff): \"We never know what has been loaded when we come in. The handoff log is empty most nights.\"",
-     "sql": null,
-     "rows": [],
-     "source": "comment:51",
-     "origin": "retrieved",
-     "tool": "retrieve_passages",
-     "turn": 2,
-     "stale": false
-    },
-    {
-     "id": "C14",
-     "kind": "comment",
-     "statement": "Employee comment (Comment, Richmond Night A, wave 2; 22 words; theme: shift handoff): \"We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.\"",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 27 words; theme: medication cabinet restock): \"Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.\"",
      "sql": null,
      "rows": [],
      "source": "comment:54",
@@ -2768,21 +1917,33 @@
      "stale": false
     },
     {
-     "id": "W15",
-     "kind": "owner",
-     "statement": "Process owner for 'Shift handoff procedure' at Richmond: Site Operations Manager, Priya Singh (ownership directory).",
-     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Shift handoff procedure'",
+     "id": "C14",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.\"",
+     "sql": null,
      "rows": [],
-     "source": "ownership_directory",
-     "origin": "computed",
-     "tool": "owner_lookup",
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C15",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 26 words; theme: medication cabinet restock): \"We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
      "turn": 2,
      "stale": false
     },
     {
      "id": "G16",
      "kind": "tenure_mix",
-     "statement": "Who responded on Richmond Night A: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "statement": "Who responded on Lanford Med-Surg Night: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
      "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
      "rows": [
       {
@@ -2888,7 +2049,7 @@
     {
      "id": "G18",
      "kind": "item_drop_adjusted",
-     "statement": "Largest item change on Richmond Night A after adjusting each answer for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "statement": "Largest item change for Lanford Med-Surg Night, with each answer adjusted for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
      "sql": null,
      "rows": [],
      "source": "app/impact.py _engagement",
@@ -2896,76 +2057,820 @@
      "tool": "signal_check",
      "turn": 2,
      "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 2.0
     },
     {
-     "id": "H19",
+     "step": "Built the month-by-month timeline for Lanford Med-Surg Night",
+     "detail": "1 evidence item: T6",
+     "mode": "code",
+     "seconds": 0.1,
+     "tool": "timeline"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_doses', 'scope': 'team'}",
+     "mode": "model",
+     "seconds": 4.1
+    },
+    {
+     "step": "Counted late doses for Lanford Med-Surg Night in Jun-Aug 2026",
+     "detail": "1 evidence item: M7",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked retrieve_passages {'query': 'late doses start timing Lanford Med-Surg Night when did late doses begin q02 comments staffing fall timeline Feb May Jun Jul 2026'}",
+     "mode": "model",
+     "seconds": 3.6
+    },
+    {
+     "step": "Read 4 employee comments and 3 procedures for Lanford Med-Surg Night (embeddings search)",
+     "detail": "8 evidence items: Y8, D9, D10, D11, C12, C13, C14, C15",
+     "mode": "code",
+     "seconds": 1.0,
+     "tool": "retrieve_passages"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 2.2
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Lanford Med-Surg Night",
+     "detail": "3 evidence items: G16, G17, G18",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 3.9
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 10.4
+    }
+   ],
+   "budget": {
+    "tool_calls": 4,
+    "max_tool_calls": 6,
+    "model_requests": 6,
+    "max_model_requests": 8,
+    "seconds": 27.8,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 10,
+    "numbers_total": 10,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "How widespread?",
+     "question": "How widespread is it?",
+     "function": "how_widespread"
+    },
+    {
+     "label": "Could staffing explain it?",
+     "question": "Could staffing explain this?",
+     "function": "could_explain"
+    },
+    {
+     "label": "Draft a plan",
+     "question": "Draft a plan I can review",
+     "function": "draft_plan"
+    }
+   ]
+  }
+ },
+ "is this normal for teams like ours|4|2026-09-15|first": {
+  "generated_at": "2026-10-08T09:47:15+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "6dc70986d5",
+   "conversation_id": "4ebc8dc40d22",
+   "question": "Is this normal for teams like ours?",
+   "created_at": "2026-10-08T09:46:39+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "normal",
+    "label": "Is this normal for teams like ours?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Lanford",
+    "team_id": 4,
+    "team": "Med-Surg Night",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_doses",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "For Jun-Aug 2026, among 5 similar night teams (4+ staff) the median was 11.0 late doses per 10 people per month (range 9.8 to 15.5). Lanford Med-Surg Night was 19.3.",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "B2"
+    ],
+    "competing": {
+     "text": "All night-shift teams ran 13.8 late doses per 10 people per month in Jun-Aug 2026; all day-shift teams ran 7.9. The norm above compares night teams, so that gap is already netted out.",
+     "evidence_state": "supported",
+     "evidence_ids": [
+      "B3"
+     ]
+    },
+    "next_step": {
+     "kind": "gather",
+     "text": "Ask HR whether the client's Access export includes benchmark percentiles (an assumed source, not in this prototype).",
+     "owner": "Dana Whitfield, HR Business Partner"
+    },
+    "chart": {
+     "type": "bars",
+     "title": "Late doses per 10 people per month",
+     "unit": "per 10 people per month",
+     "period": "Jun-Aug 2026",
+     "baseline": "comparable teams: same shift at every site, 4 or more people",
+     "x": "team",
+     "series": [
+      {
+       "key": "per_10",
+       "label": "Late doses per 10 people per month",
+       "role": "team"
+      }
+     ],
+     "rows": [
+      {
+       "team": "Lanford ICU Night",
+       "per_10": 10.5
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "per_10": 15.5
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "per_10": 13.8
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "per_10": 9.8
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "per_10": 11.0
+      },
+      {
+       "team": "Lanford Med-Surg Night",
+       "per_10": 19.3
+      }
+     ],
+     "highlight": "Lanford Med-Surg Night"
+    },
+    "external": {
+     "text": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
+     "evidence_state": "unavailable",
+     "evidence_ids": [
+      "B4"
+     ]
+    },
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "K1",
+     "kind": "compare",
+     "statement": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Lanford EVS Night, Westbrook EVS Night, Pine Hollow EVS Night. Survey item Q02, wave 1 to wave 2: Lanford Med-Surg Night -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Lanford Med-Surg Night",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Lanford ICU Night",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B2",
+     "kind": "benchmark_internal",
+     "statement": "Norm for teams like Lanford Med-Surg Night (5 night-shift teams at every site, 4+ people), late doses, Jun-Aug 2026: median 11.0 per 10 people per month, range 9.8 to 15.5. Lanford Med-Surg Night: 19.3.",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Lanford ICU Night",
+       "per_10": 10.5
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "per_10": 15.5
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "per_10": 13.8
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "per_10": 9.8
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "per_10": 11.0
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B3",
+     "kind": "benchmark_shift",
+     "statement": "All night-shift teams together ran 13.8 late doses per 10 people per month in Jun-Aug 2026; all day-shift teams 7.9 (teams of 4 or more people).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Night' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE shift = 'Day' AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "B4",
+     "kind": "benchmark_external",
+     "statement": "External benchmark (Gallup's database for similar roles or industries): unavailable. It is an assumed data source, not in this prototype; with a client's Access export it would be read from the export, not estimated.",
+     "sql": null,
+     "rows": [],
+     "source": "",
+     "origin": "computed",
+     "tool": "benchmark",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "M5",
+     "kind": "metric",
+     "statement": "Lanford Med-Surg Night recorded 81 late medication doses in Jun-Aug 2026: 19.3 per 10 people per month (42 head-months). Comparable teams (5, same shift (Night) at every site, 4 or more people, excluding the team itself) ran at 12.2 per 10 people per month, which predicts 51.4 for a team this size.",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT team_id, site_name, team_name, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months FROM v_team_ops_month WHERE team_id IN (5, 12, 13, 20, 21) AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY ALL ORDER BY team_id",
+     "rows": [
+      {
+       "month": "2026-06",
+       "events": 30,
+       "head_months": 14,
+       "per_10": 21.43
+      },
+      {
+       "month": "2026-07",
+       "events": 29,
+       "head_months": 14,
+       "per_10": 20.71
+      },
+      {
+       "month": "2026-08",
+       "events": 22,
+       "head_months": 14,
+       "per_10": 15.71
+      }
+     ],
+     "source": "v_team_ops_month",
+     "origin": "computed",
+     "tool": "query_metric",
+     "turn": 1,
+     "stale": false
+    },
+    {
+     "id": "R6",
+     "kind": "precedent",
+     "statement": "Other teams with the same flag or item drop: Westbrook Med-Surg Day (plan: none recorded; result: n/a); Pine Hollow Resp Therapy Day (plan: none recorded; result: n/a).",
+     "sql": null,
+     "rows": [
+      {
+       "team": "Westbrook Med-Surg Day",
+       "plan": null,
+       "result": null
+      },
+      {
+       "team": "Pine Hollow Resp Therapy Day",
+       "plan": null,
+       "result": null
+      }
+     ],
+     "source": "app/impact.py board, plans",
+     "origin": "computed",
+     "tool": "precedent",
+     "turn": 1,
+     "stale": false
+    }
+   ],
+   "trace": [
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 3.7
+    },
+    {
+     "step": "Compared Lanford Med-Surg Night with 5 comparable teams on late doses",
+     "detail": "1 evidence item: K1",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked benchmark {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 6.1
+    },
+    {
+     "step": "Built the norm for teams like Lanford Med-Surg Night from 5 comparable teams",
+     "detail": "3 evidence items: B2, B3, B4",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "benchmark"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked query_metric {'kpi': 'late_doses', 'scope': 'team'}",
+     "mode": "model",
+     "seconds": 5.2
+    },
+    {
+     "step": "Counted late doses for Lanford Med-Surg Night in Jun-Aug 2026",
+     "detail": "1 evidence item: M5",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "query_metric"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked precedent {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 5.8
+    },
+    {
+     "step": "Looked for the same problem on other teams: 2 found",
+     "detail": "1 evidence item: R6",
+     "mode": "code",
+     "seconds": 0.5,
+     "tool": "precedent"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked answer_now",
+     "mode": "model",
+     "seconds": 7.0
+    },
+    {
+     "step": "Write the answer in plain words",
+     "detail": "AI-written, then checked by code: passed",
+     "mode": "model",
+     "seconds": 7.6
+    }
+   ],
+   "budget": {
+    "tool_calls": 4,
+    "max_tool_calls": 6,
+    "model_requests": 6,
+    "max_model_requests": 8,
+    "seconds": 36.5,
+    "max_seconds": 60.0,
+    "stopped": null
+   },
+   "mode": "model",
+   "model": "gpt-5-mini",
+   "selection": "function_calling",
+   "fallback": null,
+   "check": {
+    "passed": true,
+    "notes": [],
+    "numbers_checked": 12,
+    "numbers_total": 12,
+    "rejected": []
+   },
+   "prepared": null,
+   "suggestions": [
+    {
+     "label": "What is missing?",
+     "question": "What is missing, and what would change the recommendation?",
+     "function": "whats_missing"
+    },
+    {
+     "label": "Compare with other night shifts",
+     "question": "Compare {team} with the other night shifts",
+     "function": "compare"
+    },
+    {
+     "label": "Why flagged?",
+     "question": "Why is {team} flagged?",
+     "function": "why_flagged"
+    }
+   ]
+  }
+ },
+ "what is missing|4|2026-09-15|followup": {
+  "generated_at": "2026-10-08T09:48:10+00:00",
+  "model": "gpt-5-mini",
+  "investigation": {
+   "id": "66a5d9bdf8",
+   "conversation_id": "4ebc8dc40d22",
+   "question": "What is missing?",
+   "created_at": "2026-10-08T09:47:15+00:00",
+   "status": "answered",
+   "message": null,
+   "function": {
+    "id": "whats_missing",
+    "label": "What is missing?"
+   },
+   "context": {
+    "site_id": 1,
+    "site": "Lanford",
+    "team_id": 4,
+    "team": "Med-Surg Night",
+    "shift": "Night",
+    "as_of": "2026-09-15",
+    "kpi": "late_doses",
+    "kpi_label": "Late medication doses",
+    "item": "q02",
+    "item_label": "Materials and equipment to do my work right",
+    "finding": {
+     "status": "red",
+     "kpi": "late_doses",
+     "item": "q02"
+    },
+    "dataset": "demo",
+    "version": "demo"
+   },
+   "answer": {
+    "conclusion": "The current lead explanation is 'medication cabinet restock' (supported). Wave 2 had 6 comments, 4 about restock, and the 06\u201307 late-dose rate rose from 8.1% to 17.7%, which supports an association with restock timing. (supported)",
+    "evidence_state": "supported",
+    "evidence_ids": [
+     "Y7",
+     "H16"
+    ],
+    "competing": null,
+    "next_step": {
+     "kind": "gather",
+     "text": "Pull the pharmacy restock log for the flagged months",
+     "owner": "Priya Singh, Pharmacy Operations Manager"
+    },
+    "gaps": [
+     {
+      "gap": "Whether the unit cabinet is actually restocked by 05:00 each day (pharmacy restock log)",
+      "step": "Pull the pharmacy restock log for the flagged months",
+      "owner": "Priya Singh, Pharmacy Operations Manager"
+     },
+     {
+      "gap": "Which scheduled doses in the 06:00 pass were late and why (eMAR late-dose detail, stock-out log)",
+      "step": "Export the eMAR late-dose detail and the charge nurse's stock-out log",
+      "owner": "Sam Kim, Nurse Manager, Med-Surg"
+     },
+     {
+      "gap": "An external benchmark for teams like this one",
+      "step": "Ask whether the client's Access export includes benchmark percentiles (assumed source)",
+      "owner": "Dana Whitfield, HR Business Partner"
+     },
+     {
+      "gap": "A follow-up pulse on the focus item two months after a plan starts",
+      "step": "Schedule the pulse with HR when a plan is approved (an assumption for a pilot)",
+      "owner": "Dana Whitfield, HR Business Partner"
+     }
+    ],
+    "hypotheses": [
+     {
+      "id": "process",
+      "label": "Process or restock (medication cabinet restock)",
+      "evidence_state": "supported",
+      "text": "Process: medication cabinet restock. 4 separate wave-2 comments name it, and late doses rose in the 06-07 hour band (the medication pass before the shift change).",
+      "evidence_ids": [
+       "Y7",
+       "H16"
+      ]
+     },
+     {
+      "id": "staffing",
+      "label": "Staffing shortage",
+      "evidence_state": "insufficient",
+      "text": "Staffing fell below 90% of scheduled in Mar 2026; the flagged window is Jun-Aug 2026. No shortage month falls in the window, so staffing does not account for it.",
+      "evidence_ids": [
+       "T21"
+      ]
+     },
+     {
+      "id": "who_responded",
+      "label": "Change in who responded",
+      "evidence_state": "insufficient",
+      "text": "Who responded: the mix of respondents was similar and q02 still fell -0.80 after adjusting for tenure.",
+      "evidence_ids": [
+       "G17",
+       "G18",
+       "G19"
+      ]
+     },
+     {
+      "id": "site_wide",
+      "label": "Site-wide or seasonal change",
+      "evidence_state": "insufficient",
+      "text": "Comparable teams are measured over the same months, so a season that hits every night team is already netted out; this team is above every comparable team.",
+      "evidence_ids": [
+       "K20"
+      ]
+     },
+     {
+      "id": "single_comment",
+      "label": "A single loud comment",
+      "evidence_state": "insufficient",
+      "text": "4 separate comments on one theme: not a single voice.",
+      "evidence_ids": [
+       "Y7"
+      ]
+     }
+    ],
+    "written_by": "model"
+   },
+   "evidence": [
+    {
+     "id": "Y7",
+     "kind": "comment_themes",
+     "statement": "Wave 2 comments from Lanford Med-Surg Night: 6 in total. By theme: medication cabinet restock 4; equipment and maintenance 1; recognition 1. 'medication cabinet restock' has 4 separate comments, which meets the breadth rule (3 or more) and counts as corroborating.",
+     "sql": "SELECT comment_id, wave_id, text FROM v_comments_reportable WHERE team_id = 4 AND wave_id = 2 ORDER BY comment_id",
+     "rows": [
+      {
+       "theme": "medication cabinet restock",
+       "comments": 4,
+       "share": 0.67,
+       "corroborating": true
+      },
+      {
+       "theme": "equipment and maintenance",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      },
+      {
+       "theme": "recognition",
+       "comments": 1,
+       "share": 0.17,
+       "corroborating": false
+      }
+     ],
+     "source": "v_comments_reportable",
+     "origin": "computed",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D8",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Steps): ## Steps\n1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight\n   restock report.\n2. The **restock report** lists every item below its par level. The technician signs the report\n   when the cabinet is filled; the signed report is kept at the pharmacy desk.\n3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that\n   t",
+     "sql": null,
+     "rows": [],
+     "source": "doc:medication_cabinet_restock_procedure:2",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D9",
+     "kind": "doc",
+     "statement": "Document (Medication Cabinet Restock Procedure (SOP-PHARM-021) / Medication Cabinet Restock Procedure (SOP-PHARM-021)): # Medication Cabinet Restock Procedure (SOP-PHARM-021)\n\nIllustrative document written for a fictional hospital system. Not a real Lanford Health document.",
+     "sql": null,
+     "rows": [],
+     "source": "doc:medication_cabinet_restock_procedure:0",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "D10",
+     "kind": "doc",
+     "statement": "Document (Process Ownership Directory / Process Ownership Directory): # Process Ownership Directory\n\nIllustrative directory for a fictional hospital system.\n\n| Process | Site | Owner role | Owner name |\n|---|---|---|---|\n| Medication cabinet restocking schedule | Lanford | Pharmacy Operations Manager | Priya Singh |\n| Unit staffing and bedside shift report | Lanford | Nurse Manager, Med-Surg | Sam Kim |\n| IV pump and equipment maintenance | Lanford | Clinical Engine",
+     "sql": null,
+     "rows": [],
+     "source": "doc:ownership_directory:0",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C11",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:52",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C12",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 25 words; theme: medication cabinet restock): \"Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:51",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C13",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 27 words; theme: medication cabinet restock): \"Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:54",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "C14",
+     "kind": "comment",
+     "statement": "Employee comment (Comment, Lanford Med-Surg Night, wave 2; 26 words; theme: medication cabinet restock): \"We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.\"",
+     "sql": null,
+     "rows": [],
+     "source": "comment:53",
+     "origin": "retrieved",
+     "tool": "retrieve_passages",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "W15",
+     "kind": "owner",
+     "statement": "Process owner for 'Medication cabinet restocking schedule' at Lanford: Pharmacy Operations Manager, Priya Singh (ownership directory).",
+     "sql": "SELECT process_name, site_name, owner_role, owner_name FROM ownership_directory WHERE process_name = 'Medication cabinet restocking schedule'",
+     "rows": [],
+     "source": "ownership_directory",
+     "origin": "computed",
+     "tool": "owner_lookup",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "H16",
      "kind": "hour_bands",
-     "statement": "Richmond Night shift, departures in the 06-07 hour band: late-departure rate 7.4% in Jan-May 2026 to 17.8% in Jun-Sep 2026. Other hour bands stayed between 6.5% and 8.8% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (Dispatch is recorded per site and shift, not per team.)",
-     "sql": "SELECT shift, hour_band, period, departures, late_departures, late_rate FROM v_ops_hour WHERE site_name = 'Richmond' AND shift = 'Night' ORDER BY hour_band, period",
+     "statement": "Lanford Night shift, scheduled doses in the 06-07 hour band: late-dose rate 8.1% in Jan-May 2026 to 17.7% in Jun-Sep 2026. Other hour bands stayed between 7.7% and 8.0% in Jun-Sep. This is an operational signal (rise of 5 points or more and at least 1.5x). (The eMAR export is kept per site and shift, not per unit.)",
+     "sql": "SELECT shift, hour_band, period, scheduled_doses, late_doses, late_rate FROM v_ops_hour WHERE site_name = 'Lanford' AND shift = 'Night' ORDER BY hour_band, period",
      "rows": [
       {
        "shift": "Night",
        "hour_band": "02-06",
        "period": "Jan-May 2026",
-       "departures": 2710.0,
-       "late_departures": 192.0,
-       "late_rate": 0.071
+       "scheduled_doses": 21526.0,
+       "late_doses": 1707.0,
+       "late_rate": 0.079
       },
       {
        "shift": "Night",
        "hour_band": "02-06",
        "period": "Jun-Sep 2026",
-       "departures": 1850.0,
-       "late_departures": 160.0,
-       "late_rate": 0.086
+       "scheduled_doses": 14678.0,
+       "late_doses": 1148.0,
+       "late_rate": 0.078
       },
       {
        "shift": "Night",
        "hour_band": "06-07",
        "period": "Jan-May 2026",
-       "departures": 3593.0,
-       "late_departures": 265.0,
-       "late_rate": 0.074
+       "scheduled_doses": 29290.0,
+       "late_doses": 2367.0,
+       "late_rate": 0.081
       },
       {
        "shift": "Night",
        "hour_band": "06-07",
        "period": "Jun-Sep 2026",
-       "departures": 2457.0,
-       "late_departures": 438.0,
-       "late_rate": 0.178
+       "scheduled_doses": 19618.0,
+       "late_doses": 3475.0,
+       "late_rate": 0.177
       },
       {
        "shift": "Night",
        "hour_band": "18-22",
        "period": "Jan-May 2026",
-       "departures": 2719.0,
-       "late_departures": 205.0,
-       "late_rate": 0.075
+       "scheduled_doses": 21719.0,
+       "late_doses": 1730.0,
+       "late_rate": 0.08
       },
       {
        "shift": "Night",
        "hour_band": "18-22",
        "period": "Jun-Sep 2026",
-       "departures": 1870.0,
-       "late_departures": 164.0,
-       "late_rate": 0.088
+       "scheduled_doses": 14510.0,
+       "late_doses": 1162.0,
+       "late_rate": 0.08
       },
       {
        "shift": "Night",
        "hour_band": "22-02",
        "period": "Jan-May 2026",
-       "departures": 2611.0,
-       "late_departures": 235.0,
-       "late_rate": 0.09
+       "scheduled_doses": 21585.0,
+       "late_doses": 1757.0,
+       "late_rate": 0.081
       },
       {
        "shift": "Night",
        "hour_band": "22-02",
        "period": "Jun-Sep 2026",
-       "departures": 1781.0,
-       "late_departures": 115.0,
-       "late_rate": 0.065
+       "scheduled_doses": 14648.0,
+       "late_doses": 1131.0,
+       "late_rate": 0.077
       }
      ],
      "source": "v_ops_hour",
@@ -2975,9 +2880,195 @@
      "stale": false
     },
     {
-     "id": "T20",
+     "id": "G17",
+     "kind": "tenure_mix",
+     "statement": "Who responded on Lanford Med-Surg Night: under-one-year employees were 18.2% of respondents in Wave 1 and 15.4% in Wave 2 (respondents 11 and 13). The mix of who answered is similar across waves, so the change is not explained by who responded.",
+     "sql": "SELECT wave_id, tenure_band, n, grand_mean FROM v_team_tenure_mix WHERE team_id = 4 ORDER BY wave_id, tenure_band",
+     "rows": [
+      {
+       "wave_id": 1,
+       "tenure_band": "1_to_3",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 4.0
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "over_10",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 1,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "1_to_3",
+       "n": 4,
+       "grand_mean": 3.63
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "3_to_10",
+       "n": 4,
+       "grand_mean": 3.88
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "over_10",
+       "n": 3,
+       "grand_mean": null
+      },
+      {
+       "wave_id": 2,
+       "tenure_band": "under_1",
+       "n": 2,
+       "grand_mean": null
+      }
+     ],
+     "source": "v_team_tenure_mix",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G18",
+     "kind": "signal_check",
+     "statement": "The team grand mean moved -0.11, less than 0.30: no material change to explain.",
+     "sql": "SELECT tenure_band, ROUND(SUM(mean_score * n) / SUM(n), 2) AS band_mean, SUM(n) / 12 AS n FROM v_tenure_wave_item WHERE reportable GROUP BY 1 ORDER BY 1;\nSELECT wave_id, ROUND(AVG(mean_score), 2) AS grand_mean, MIN(n) AS n FROM v_team_wave_item WHERE team_id = 4 AND reportable GROUP BY 1 ORDER BY 1",
+     "rows": [
+      {
+       "tenure_band": "under_1",
+       "share_w1": 0.18,
+       "share_w2": 0.15,
+       "company_band_mean": 4.18,
+       "n_w1": 2,
+       "n_w2": 2
+      },
+      {
+       "tenure_band": "1_to_3",
+       "share_w1": 0.27,
+       "share_w2": 0.31,
+       "company_band_mean": 3.81,
+       "n_w1": 3,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "3_to_10",
+       "share_w1": 0.36,
+       "share_w2": 0.31,
+       "company_band_mean": 3.83,
+       "n_w1": 4,
+       "n_w2": 4
+      },
+      {
+       "tenure_band": "over_10",
+       "share_w1": 0.18,
+       "share_w2": 0.23,
+       "company_band_mean": 3.82,
+       "n_w1": 2,
+       "n_w2": 3
+      }
+     ],
+     "source": "v_team_tenure_mix, v_tenure_wave_item, v_team_wave_item",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "G19",
+     "kind": "item_drop_adjusted",
+     "statement": "Largest item change for Lanford Med-Surg Night, with each answer adjusted for the respondent's tenure band: Materials and equipment to do my work right (q02) -0.80 points on a 5-point scale (raw -0.80; respondents 11 and 13); beyond noise by the screening rule.",
+     "sql": null,
+     "rows": [],
+     "source": "app/impact.py _engagement",
+     "origin": "computed",
+     "tool": "signal_check",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "K20",
+     "kind": "compare",
+     "statement": "Late doses, Jun-Aug 2026, per 10 people per month: Lanford Med-Surg Night 19.3; 5 comparable teams ranged 9.8 to 15.5, so Lanford Med-Surg Night is above every comparable team. Selection: same shift (Night) at every site, 4 or more people. Left out (fewer than 4 people, never shown): Lanford EVS Night, Westbrook EVS Night, Pine Hollow EVS Night. Survey item Q02, wave 1 to wave 2: Lanford Med-Surg Night -0.81; reportable comparable teams -0.25 to +0.62 (teams with fewer than 4 respondents not shown).",
+     "sql": "SELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 4 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 5 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 12 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 13 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 20 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month;\nSELECT month, CAST(SUM(late_doses) AS BIGINT) AS events, CAST(SUM(headcount) AS BIGINT) AS head_months, COUNT(*) AS team_months FROM v_team_ops_month WHERE team_id = 21 AND month IN ('2026-06', '2026-07', '2026-08') GROUP BY month ORDER BY month",
+     "rows": [
+      {
+       "team": "Lanford Med-Surg Night",
+       "team_id": 4,
+       "events": 81,
+       "head_months": 42,
+       "per_10": 19.3,
+       "is_team": true,
+       "item_change": -0.81,
+       "item_n": 13
+      },
+      {
+       "team": "Lanford ICU Night",
+       "team_id": 5,
+       "events": 22,
+       "head_months": 21,
+       "per_10": 10.5,
+       "item_change": -0.23,
+       "item_n": 7
+      },
+      {
+       "team": "Westbrook Med-Surg Night",
+       "team_id": 12,
+       "events": 65,
+       "head_months": 42,
+       "per_10": 15.5,
+       "item_change": 0.62,
+       "item_n": 12
+      },
+      {
+       "team": "Westbrook ICU Night",
+       "team_id": 13,
+       "events": 29,
+       "head_months": 21,
+       "per_10": 13.8,
+       "item_change": null,
+       "item_n": null
+      },
+      {
+       "team": "Pine Hollow Med-Surg Night",
+       "team_id": 20,
+       "events": 41,
+       "head_months": 42,
+       "per_10": 9.8,
+       "item_change": -0.25,
+       "item_n": 12
+      },
+      {
+       "team": "Pine Hollow ICU Night",
+       "team_id": 21,
+       "events": 23,
+       "head_months": 21,
+       "per_10": 11.0,
+       "item_change": 0.03,
+       "item_n": 7
+      }
+     ],
+     "source": "v_team_ops_month, v_team_wave_item",
+     "origin": "computed",
+     "tool": "compare_teams",
+     "turn": 2,
+     "stale": false
+    },
+    {
+     "id": "T21",
      "kind": "timeline",
-     "statement": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+     "statement": "Late doses on Lanford Med-Surg Night were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Lanford night shift fell below 90% of scheduled in: 2026-03.",
      "sql": "SELECT month, scheduled_headcount, actual_headcount, ROUND(actual_headcount * 1.0 / scheduled_headcount, 2) AS ratio FROM staffing WHERE site_id = 1 AND shift = 'Night' ORDER BY month",
      "rows": [
       {
@@ -3039,12 +3130,12 @@
    "trace": [
     {
      "step": "Choose the next check",
-     "detail": "picked retrieve_passages {'query': 'team 4 q02 late_departures site team 4 item q02 comments procedures related to late departures and handoff scheduling as of 2026-09-15'}",
+     "detail": "picked retrieve_passages {'query': 'team 4 late_doses q02 site team 4 item q02 late doses comments procedures as of 2026-09-15'}",
      "mode": "model",
-     "seconds": 3.4
+     "seconds": 2.1
     },
     {
-     "step": "Read 4 employee comments and 3 procedures for Richmond Night A (embeddings search)",
+     "step": "Read 4 employee comments and 3 procedures for Lanford Med-Surg Night (embeddings search)",
      "detail": "8 evidence items: Y7, D8, D9, D10, C11, C12, C13, C14",
      "mode": "code",
      "seconds": 1.1,
@@ -3052,12 +3143,12 @@
     },
     {
      "step": "Choose the next check",
-     "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
+     "detail": "picked owner_lookup {'process': 'Medication cabinet restocking schedule'}",
      "mode": "model",
-     "seconds": 3.9
+     "seconds": 4.0
     },
     {
-     "step": "Found who owns shift handoff procedure at Richmond",
+     "step": "Found who owns medication cabinet restocking schedule at Lanford",
      "detail": "1 evidence item: W15",
      "mode": "code",
      "seconds": 0.0,
@@ -3065,39 +3156,52 @@
     },
     {
      "step": "Choose the next check",
-     "detail": "picked signal_check",
-     "mode": "model",
-     "seconds": 7.1
-    },
-    {
-     "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
-     "detail": "3 evidence items: G16, G17, G18",
-     "mode": "code",
-     "seconds": 0.0,
-     "tool": "signal_check"
-    },
-    {
-     "step": "Choose the next check",
      "detail": "picked hour_bands",
      "mode": "model",
-     "seconds": 6.3
+     "seconds": 8.6
     },
     {
-     "step": "Checked late departures by hour band on Richmond night shift",
-     "detail": "1 evidence item: H19",
+     "step": "Checked late doses by hour band on Lanford night shift",
+     "detail": "1 evidence item: H16",
      "mode": "code",
      "seconds": 0.0,
      "tool": "hour_bands"
     },
     {
      "step": "Choose the next check",
-     "detail": "picked timeline {'kpi': 'late_departures'}",
+     "detail": "picked signal_check",
+     "mode": "model",
+     "seconds": 8.2
+    },
+    {
+     "step": "Checked whether a change in who responded explains the survey drop on Lanford Med-Surg Night",
+     "detail": "3 evidence items: G17, G18, G19",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "signal_check"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked compare_teams {'kpi': 'late_doses'}",
      "mode": "model",
      "seconds": 9.1
     },
     {
-     "step": "Built the month-by-month timeline for Richmond Night A",
-     "detail": "1 evidence item: T20",
+     "step": "Compared Lanford Med-Surg Night with 5 comparable teams on late doses",
+     "detail": "1 evidence item: K20",
+     "mode": "code",
+     "seconds": 0.0,
+     "tool": "compare_teams"
+    },
+    {
+     "step": "Choose the next check",
+     "detail": "picked timeline {'kpi': 'late_doses'}",
+     "mode": "model",
+     "seconds": 8.2
+    },
+    {
+     "step": "Built the month-by-month timeline for Lanford Med-Surg Night",
+     "detail": "1 evidence item: T21",
      "mode": "code",
      "seconds": 0.1,
      "tool": "timeline"
@@ -3106,15 +3210,15 @@
      "step": "Write the answer in plain words",
      "detail": "AI-written, then checked by code: passed",
      "mode": "model",
-     "seconds": 10.2
+     "seconds": 12.9
     }
    ],
    "budget": {
-    "tool_calls": 5,
+    "tool_calls": 6,
     "max_tool_calls": 6,
     "model_requests": 7,
     "max_model_requests": 8,
-    "seconds": 41.7,
+    "seconds": 54.7,
     "max_seconds": 60.0,
     "stopped": null
    },

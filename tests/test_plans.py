@@ -10,12 +10,13 @@ import app.impact as I
 from app import config
 
 c = TestClient(M.app)
-BODY = {"team_id": 4, "item": "q02", "kpi": "late_departures", "start": "2026-09-21", "status": "approved",
-        "actions": [{"text": "Reinstate the signed handoff log", "owner": "Priya Singh, Site Operations Manager", "due": "2026-09-28"}],
-        "owner": "Priya Singh, Site Operations Manager", "measure": "Late outbound departures per 10 people per month",
+BODY = {"team_id": 4, "item": "q02", "kpi": "late_doses", "start": "2026-09-21", "status": "approved",
+        "actions": [{"text": "Restore the 05:00 cabinet restock", "owner": "Priya Singh, Pharmacy Operations Manager", "due": "2026-09-28"}],
+        "owner": "Priya Singh, Pharmacy Operations Manager", "measure": "Late medication doses per 10 people per month",
         "success": "Back inside the comparable range", "baseline": "19.3 per 10 people per month in Jun-Aug 2026",
         "assumptions": ["Two full months of operating data after the start."], "evidence_ids": ["M1", "K2"], "investigation_id": "inv1",
-        "edits": [{"field": "owner", "from": "Owner needed", "to": "Priya Singh, Site Operations Manager"}]}
+        "edits": [{"field": "owner", "from": "Owner needed", "to": "Priya Singh, Pharmacy Operations Manager"}]}
+SEED = "plan-lanford-med-surg-night"
 
 
 @pytest.fixture(autouse=True)
@@ -28,10 +29,10 @@ def scratch(tmp_path, monkeypatch):
 
 
 def test_check_ignores_seed_then_finds_live_plan():
-    chk = c.get("/api/plans/check", params={"team_id": 4, "kpi": "late_departures", "start": "2026-09-21"}).json()
+    chk = c.get("/api/plans/check", params={"team_id": 4, "kpi": "late_doses", "start": "2026-09-21"}).json()
     assert chk["existing"] == [] and "none found" in chk["explanation"]
     p = c.post("/api/plans", json={**BODY, "request_id": "r1"}).json()
-    chk = c.get("/api/plans/check", params={"team_id": 4, "kpi": "late_departures", "start": "2026-09-21"}).json()
+    chk = c.get("/api/plans/check", params={"team_id": 4, "kpi": "late_doses", "start": "2026-09-21"}).json()
     assert [x["id"] for x in chk["existing"]] == [p["id"]] and "already cover" in chk["explanation"]
 
 
@@ -42,7 +43,7 @@ def test_approve_records_edits_and_double_submit_is_explained(scratch):
     assert again.status_code == 200 and again.json()["duplicate"] and again.json()["id"] == p["id"]
     other = c.post("/api/plans", json={**BODY, "request_id": "r2"})          # a second click with a new id, same team/KPI/period
     assert other.status_code == 200 and other.json()["duplicate"] and other.json()["id"] == p["id"]
-    assert len([x for x in I.load_plans() if x["id"] != "plan-richmond-night-a"]) == 1   # survives reload: read back from plans.jsonl
+    assert len([x for x in I.load_plans() if x["id"] != SEED]) == 1   # survives reload: read back from plans.jsonl
     recs = [json.loads(l) for l in (scratch / "approvals.jsonl").read_text().splitlines()]
     assert len(recs) == 1 and recs[0]["decision"] == "approved" and recs[0]["edits"][0]["field"] == "owner" and recs[0]["plan_id"] == p["id"]
 
@@ -63,7 +64,7 @@ def test_states_and_queue_across_the_demo_clock():
     before = c.get("/api/plans/board", params={"as_of": "2026-09-15"}).json()
     row = next(x for x in before["plans"] if x["id"] == p["id"])
     assert row["state"] == "approved" and row["result"]["status"] == "not_reached"
-    assert all(x["id"] != "plan-richmond-night-a" for x in before["plans"])   # the seed hides behind the live plan
+    assert all(x["id"] != SEED for x in before["plans"])   # the seed hides behind the live plan
     after = c.get("/api/plans/board", params={"as_of": "2026-11-30"}).json()
     row = next(x for x in after["plans"] if x["id"] == p["id"])
     assert row["state"] == "reviewed" and row["result"]["verdict"] == "worked"

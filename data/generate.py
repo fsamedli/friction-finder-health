@@ -1,9 +1,10 @@
-"""Synthetic data generator for the Friction Finder prototype.
+"""Synthetic data generator for the Friction Finder prototype (healthcare variant).
 
-Everything here is fictional. Northline Logistics does not exist. The survey is shaped like a
-12-item, 1-to-5 engagement survey with two waves; the operational and staffing records are
-invented; the documents are written by the team. Planted patterns are recorded in truth.json
-so the assistant can be scored against known answers.
+Everything here is fictional. Lanford Health does not exist. The survey is shaped like a
+12-item, 1-to-5 engagement survey with two waves; the operating and staffing records are
+invented; the documents are written by the team. No patient-level data of any kind: every
+operating metric is a count at unit, shift, or site level. Planted patterns are recorded in
+truth.json so the assistant can be scored against known answers.
 
 Run:  python data/generate.py   (writes to data/generated/ and data/docs/)
 """
@@ -26,6 +27,8 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE / "generated"
 DOCS = HERE / "docs"
 MIN_N = 4  # Gallup's stated minimum reporting n (Keegan, Sept 14, 2026)
+COMPANY = "Lanford Health (fictional)"
+KEEP_DOCS = {"gallup_item_discussion_questions.md"}  # written by hand, not by this script; every other .md here is regenerated
 
 ITEMS = [
     ("q01", "Know what is expected of me"),
@@ -43,26 +46,32 @@ ITEMS = [
 ]
 ITEM_CODES = [c for c, _ in ITEMS]
 
-SITES = [(1, "Richmond"), (2, "Norfolk"), (3, "Roanoke")]
-# (team_name, shift, headcount). Small teams are deliberate: they fall under MIN_N.
+# Short names; the long forms are Lanford Medical Center, Westbrook Community Hospital, Pine Hollow Hospital.
+SITES = [(1, "Lanford"), (2, "Westbrook"), (3, "Pine Hollow")]
+# (team_name, shift, headcount). Same order, shifts and headcounts as v0.8, so team ids are unchanged (1 to 24).
+# Small teams are deliberate: they fall under MIN_N.
 TEAM_TEMPLATE = [
-    ("Day A", "Day", 12),
-    ("Day B", "Day", 12),
-    ("Day C", "Day", 8),
-    ("Night A", "Night", 14),
-    ("Night B", "Night", 7),
-    ("Yard Day", "Day", 5),
-    ("Dispatch Day", "Day", 3),
-    ("Maintenance Night", "Night", 2),
+    ("Med-Surg Day", "Day", 12),
+    ("Telemetry Day", "Day", 12),
+    ("ED Day", "Day", 8),
+    ("Med-Surg Night", "Night", 14),
+    ("ICU Night", "Night", 7),
+    ("Resp Therapy Day", "Day", 5),
+    ("Pharmacy Day", "Day", 3),
+    ("EVS Night", "Night", 2),
 ]
+PLANTED_TEAM = ("Lanford", "Med-Surg Night")        # P1, P2, P3, P8, P11 (team_id 4)
+COHORT_TEAM = ("Westbrook", "Telemetry Day")        # P6 (team_id 10)
+BLIP_TEAM = ("Pine Hollow", "ED Day")               # P9 (team_id 19)
+LOUD_TEAM = ("Westbrook", "Med-Surg Night")         # P10 (team_id 12)
 TENURE_BANDS = ["under_1", "1_to_3", "3_to_10", "over_10"]
 TENURE_P = [0.22, 0.30, 0.33, 0.15]
 HONEYMOON = 0.35  # under_1 scores this much higher on every item (P5)
-COHORT_EXTRA = 0.25  # Norfolk Day B's new-hire cohort is unusually upbeat (makes P6 visible)
+COHORT_EXTRA = 0.25  # Westbrook Telemetry Day's new-graduate residency cohort is unusually upbeat (makes P6 visible)
 NOISE_SD = 0.5
 EMP_SD = 0.2
-PLANTED_DROPS = {"q02": -0.9, "q07": -0.7}  # Richmond Night A, wave 2 (P1, P2)
-BLIP_DROP = {"q04": -0.6}  # P9: Roanoke Day C, wave 2. A survey-only blip: no operational signal, no comments.
+PLANTED_DROPS = {"q02": -0.9, "q07": -0.7}  # Lanford Med-Surg Night, wave 2 (P1, P2)
+BLIP_DROP = {"q04": -0.6}  # P9: Pine Hollow ED Day, wave 2. A survey-only blip: no operating signal, no comments.
                            # Red-team case from judge Lederman (MITRE, Sept 15, 2026): the brief must say
                            # "insufficient evidence", not propose an action.
 
@@ -75,53 +84,55 @@ LAST = ["Alvarez", "Brooks", "Chen", "Diallo", "Evans", "Farah", "Garcia", "Hugh
         "Jensen", "Kim", "Lopez", "Mensah", "Novak", "Okafor", "Patel", "Quinn", "Reyes",
         "Singh", "Turner", "Usman", "Vega", "Walsh", "Young"]
 
+# Same number of themes and of lines per theme as v0.8, so the comment RNG stream is unchanged.
 GENERIC_COMMENTS = {
     "workload": [
         "The workload has been heavy this quarter but the team pulls together.",
-        "Too many priorities at once; it is hard to know what matters most this week.",
-        "Overtime has been manageable but I would like more notice.",
+        "Too many priorities at once; it is hard to know what matters most on a busy shift.",
+        "Patient assignments are fair most days, but I would like more notice when we are short.",
     ],
     "recognition": [
-        "My supervisor notices good work and says so. That helps.",
+        "My nurse manager notices good work and says so. That helps.",
         "Recognition is rare here. A thank you now and then would go a long way.",
     ],
     "tools": [
-        "The new scanners work well most days.",
-        "Forklift maintenance requests take too long to close.",
+        "The new computers on wheels work well most days.",
+        "Supplies run out on the unit and it takes too long to get them replaced.",
     ],
     "communication": [
-        "Weekly huddles are useful. Keep them short.",
-        "Changes to routes get announced late and we scramble.",
+        "Daily huddles are useful. Keep them short.",
+        "Policy changes get announced late and we scramble to catch up.",
     ],
     "schedule": [
-        "Schedules come out on time. No complaints.",
-        "Shift swaps are hard to arrange when someone is out.",
+        "Self-scheduling works well. No complaints.",
+        "Shift swaps are hard to arrange when someone calls in sick.",
     ],
     "development": [
-        "I would like a clearer path to a lead role.",
-        "Cross-training on dispatch has been great for me.",
+        "I would like a clearer path to a charge nurse role.",
+        "Preceptor training and certification support have been great for me.",
     ],
 }
 
 # P10: one long comment (red-team case from judge Chang, FI Consulting, Sept 15, 2026). One
-# employee writes a page about equipment; the brief must weight breadth, not length, and label
+# nurse writes a page about IV pumps; the brief must weight breadth, not length, and label
 # it single-source.
 LOUD_COMMENT = (
-    "I want to put on record how bad the forklift situation has become on nights. Three of the five "
-    "forklifts on our side have had intermittent hydraulic faults since spring, and every time we raise a "
-    "maintenance ticket it sits for a week or more before anyone looks at it. When a lift goes down "
-    "mid-shift we have to borrow from the day side, which they resent, and the loaders end up walking "
-    "pallets across the dock by hand. It is slow, it is unsafe, and nobody upstairs seems to notice. I have "
-    "raised it in three huddles. The maintenance lead says parts are on order but that has been the answer "
-    "since April. If leadership wants to know why people are frustrated on this shift, start with the "
-    "forklifts. Fix the ticket queue, buy the parts, and stop treating night shift as an afterthought."
+    "I want to put on record how bad the IV pump situation has become on nights. Half of the pumps "
+    "on our unit have been tagged out for service since spring, and every time we open a biomed ticket "
+    "it sits for weeks before anyone looks at it. When a pump fails mid-shift we borrow from the unit "
+    "next door, who resent it, and nurses end up running secondary lines by gravity and counting drops. "
+    "It is slow, it is unsafe, and nobody upstairs seems to notice. I have raised it in three huddles. "
+    "Clinical engineering says replacement parts are on order but that has been the answer since April. "
+    "If leadership wants to know why people are frustrated on this shift, start with the pumps. Fix the "
+    "ticket queue, buy the parts, and stop treating night shift as an afterthought."
 )
 
-HANDOFF_COMMENTS = [
-    "We never know what has been loaded when we come in. The handoff log is empty most nights.",
-    "Day shift leaves before the load checklist is done, so we start blind and the 6 AM trucks go out late.",
-    "Handoff at six is chaos. Dispatch does not know which trailers we finished, so departures slip.",
-    "We spend the first hour of every shift figuring out what the last shift actually did. The handoff log tells us nothing.",
+# P8: four wave-2 comments from the planted team about the automated dispensing cabinet (ADC).
+RESTOCK_COMMENTS = [
+    "Pharmacy restocks our cabinet at seven now, after the six o'clock pass. We open the bins and half of what we need is not there.",
+    "Since spring the cabinet is empty at 06:00. We call pharmacy or borrow from the unit next door, and the pass runs late either way.",
+    "We raised the restock time in three huddles and nothing changed. The 06:00 pass is late most mornings because the bins are not filled until 07:00.",
+    "Waiting on pharmacy at six in the morning is the worst part of the shift. The cabinet restock used to be done before we started the pass.",
 ]
 
 
@@ -147,15 +158,15 @@ def build_teams():
 
 def build_employees(teams: pd.DataFrame):
     r = rng()
-    norfolk_day_b = team_key(teams, "Norfolk", "Day B")
+    cohort_team = team_key(teams, *COHORT_TEAM)
     rows = []
     eid = 0
     for _, t in teams.iterrows():
         for i in range(int(t.headcount)):
             eid += 1
             band = r.choice(TENURE_BANDS, p=TENURE_P)
-            if int(t.team_id) == norfolk_day_b:
-                # P6: half of this team is a new-hire cohort
+            if int(t.team_id) == cohort_team:
+                # P6: half of this team is a new-graduate nurse residency cohort
                 band = "under_1" if i < int(t.headcount) // 2 else r.choice(TENURE_BANDS[1:], p=[0.4, 0.4, 0.2])
             years = {"under_1": r.uniform(0.1, 0.95), "1_to_3": r.uniform(1, 3),
                      "3_to_10": r.uniform(3, 10), "over_10": r.uniform(10, 22)}[band]
@@ -172,19 +183,19 @@ def team_key(teams, site_name, team_name):
 
 
 def build_responses(teams: pd.DataFrame, employees: pd.DataFrame):
-    """Respondent-level answers. Planted: P1, P2 (Richmond Night A drop), P5 honeymoon,
-    P6 mix-shift on Norfolk Day B. Response rate about 85% otherwise."""
+    """Respondent-level answers. Planted: P1, P2 (Lanford Med-Surg Night drop), P5 honeymoon,
+    P6 mix-shift on Westbrook Telemetry Day. Response rate about 85% otherwise."""
     r = rng()
-    rich_night_a = team_key(teams, "Richmond", "Night A")
-    norfolk_day_b = team_key(teams, "Norfolk", "Day B")
-    roanoke_day_c = team_key(teams, "Roanoke", "Day C")
+    planted = team_key(teams, *PLANTED_TEAM)
+    cohort_team = team_key(teams, *COHORT_TEAM)
+    blip_team = team_key(teams, *BLIP_TEAM)
 
     # team x item baseline around 3.8, stable across waves except planted shifts
     base = {}
     for tid in teams.team_id:
         base[tid] = {c: float(np.clip(r.normal(3.85, 0.15), 3.4, 4.3)) for c in ITEM_CODES}
     # planted drops (wave 2 only)
-    drop = {rich_night_a: PLANTED_DROPS, roanoke_day_c: BLIP_DROP}  # P1/P2 and P9
+    drop = {planted: PLANTED_DROPS, blip_team: BLIP_DROP}  # P1/P2 and P9
 
     emp_effect = {int(e.emp_id): float(r.normal(0, EMP_SD)) for e in employees.itertuples()}
 
@@ -194,11 +205,11 @@ def build_responses(teams: pd.DataFrame, employees: pd.DataFrame):
             tid = int(e.team_id)
             # response decision
             p_respond = 0.85
-            if tid == rich_night_a:
+            if tid == planted:
                 p_respond = 0.95  # keep n high on the planted team so the drop is not noise
-            if tid == norfolk_day_b and wave_id == 1:
+            if tid == cohort_team and wave_id == 1:
                 p_respond = 0.95
-            if tid == norfolk_day_b and wave_id == 2:
+            if tid == cohort_team and wave_id == 2:
                 p_respond = 0.10 if e.tenure_band == "under_1" else 0.95  # P6 mix shift
             if r.uniform() > p_respond:
                 continue
@@ -207,7 +218,7 @@ def build_responses(teams: pd.DataFrame, employees: pd.DataFrame):
                 mu = base[tid][c] + emp_effect[int(e.emp_id)]
                 if e.tenure_band == "under_1":
                     mu += HONEYMOON
-                    if tid == norfolk_day_b:
+                    if tid == cohort_team:
                         mu += COHORT_EXTRA
                 if wave_id == 2 and tid in drop and c in drop[tid]:
                     mu += drop[tid][c]
@@ -219,8 +230,8 @@ def build_responses(teams: pd.DataFrame, employees: pd.DataFrame):
 
 def build_comments(teams: pd.DataFrame, responses: pd.DataFrame):
     r = rng()
-    rich_night_a = team_key(teams, "Richmond", "Night A")
-    norfolk_night_a = team_key(teams, "Norfolk", "Night A")
+    planted = team_key(teams, *PLANTED_TEAM)
+    loud_team = team_key(teams, *LOUD_TEAM)
     rows = []
     cid = 0
     # generic comments: about 2 per team per wave for larger teams
@@ -233,25 +244,27 @@ def build_comments(teams: pd.DataFrame, responses: pd.DataFrame):
                 cid += 1
                 rows.append({"comment_id": cid, "team_id": int(tid), "wave_id": wave_id,
                              "text": str(r.choice(GENERIC_COMMENTS[theme])), "theme": theme})
-    # P8: handoff comments, Richmond Night A, wave 2
-    for text in HANDOFF_COMMENTS:
+    # P8: restock comments, Lanford Med-Surg Night, wave 2
+    for text in RESTOCK_COMMENTS:
         cid += 1
-        rows.append({"comment_id": cid, "team_id": rich_night_a, "wave_id": 2, "text": text,
-                     "theme": "handoff"})
-    # P10: one loud comment, Norfolk Night A, wave 2
+        rows.append({"comment_id": cid, "team_id": planted, "wave_id": 2, "text": text,
+                     "theme": "restock"})
+    # P10: one loud comment, Westbrook Med-Surg Night, wave 2
     cid += 1
-    rows.append({"comment_id": cid, "team_id": norfolk_night_a, "wave_id": 2, "text": LOUD_COMMENT,
+    rows.append({"comment_id": cid, "team_id": loud_team, "wave_id": 2, "text": LOUD_COMMENT,
                  "theme": "tools_loud"})
     return pd.DataFrame(rows)
 
 
+# Medication-pass hour bands. The 06-07 band is the 06:00 medication pass before the 07:00 shift change.
 HOUR_BANDS = [("02-06", "Night"), ("06-07", "Night"), ("07-10", "Day"), ("10-14", "Day"),
               ("14-18", "Day"), ("18-22", "Night"), ("22-02", "Night")]
+DOSE_MEAN = {"default": 144, "06-07": 192}   # about 8x the v0.8 means (18 and 24) so counts look like a hospital unit group
 
 
 def build_ops(teams: pd.DataFrame):
-    """Daily departures per site, shift, hour band. P3: Richmond Night 06-07 late rate rises
-    from ~8% to ~18% from 2026-06-01. Everything else flat at ~8%."""
+    """Daily scheduled medication doses per site, shift, hour band (eMAR counts; nothing patient-level).
+    P3: Lanford Night 06-07 late-dose rate rises from ~8% to ~18% from 2026-06-01. Everything else flat at ~8%."""
     r = rng()
     rows = []
     d = date(2026, 1, 1)
@@ -259,21 +272,21 @@ def build_ops(teams: pd.DataFrame):
     while d <= end:
         for site_id, site_name in SITES:
             for band, shift in HOUR_BANDS:
-                departures = int(r.poisson(18 if band != "06-07" else 24))
+                scheduled = int(r.poisson(DOSE_MEAN.get(band, DOSE_MEAN["default"])))
                 late_rate = 0.08
-                if site_name == "Richmond" and shift == "Night" and band == "06-07" and d >= date(2026, 6, 1):
+                if site_name == PLANTED_TEAM[0] and shift == "Night" and band == "06-07" and d >= date(2026, 6, 1):
                     late_rate = 0.18
-                late = int(r.binomial(departures, late_rate))
-                rework = int(r.poisson(1.5))
+                late = int(r.binomial(scheduled, late_rate))
+                missed = int(r.poisson(1.5))
                 rows.append({"date": d.isoformat(), "site_id": site_id, "shift": shift,
-                             "hour_band": band, "departures": departures,
-                             "late_departures": late, "rework_count": rework})
+                             "hour_band": band, "scheduled_doses": scheduled,
+                             "late_doses": late, "missed_doses": missed})
         d += timedelta(days=1)
     return pd.DataFrame(rows)
 
 
 def build_staffing(teams: pd.DataFrame):
-    """Monthly scheduled vs actual headcount per site and shift. P4: Richmond Night March
+    """Monthly scheduled vs actual RN headcount per site and shift. P4: Lanford Night March
     2026 at ~80% of scheduled, April ~90%, normal (~97%) otherwise."""
     r = rng()
     rows = []
@@ -289,84 +302,92 @@ def build_staffing(teams: pd.DataFrame):
     return pd.DataFrame(rows)
 
 
+RESTOCK_PROCESS = "Medication cabinet restocking schedule"
+RESTOCK_OWNER_ROLE = "Pharmacy Operations Manager"
+
+
 def build_ownership(teams: pd.DataFrame):
-    r = rng()
+    r = rng()  # same draw order as v0.8, so the owner names are unchanged
     rows = []
     for site_id, site_name in SITES:
-        ops_mgr = f"{r.choice(FIRST)} {r.choice(LAST)}"
-        disp = f"{r.choice(FIRST)} {r.choice(LAST)}"
+        pharm = f"{r.choice(FIRST)} {r.choice(LAST)}"
+        nurse_mgr = f"{r.choice(FIRST)} {r.choice(LAST)}"
         rows += [
-            {"process_name": "Shift handoff procedure", "site_id": site_id, "site_name": site_name,
-             "owner_role": "Site Operations Manager", "owner_name": ops_mgr},
-            {"process_name": "Dispatch scheduling", "site_id": site_id, "site_name": site_name,
-             "owner_role": "Dispatch Supervisor", "owner_name": disp},
-            {"process_name": "Forklift and equipment maintenance", "site_id": site_id,
-             "site_name": site_name, "owner_role": "Maintenance Lead",
+            {"process_name": RESTOCK_PROCESS, "site_id": site_id, "site_name": site_name,
+             "owner_role": RESTOCK_OWNER_ROLE, "owner_name": pharm},
+            {"process_name": "Unit staffing and bedside shift report", "site_id": site_id, "site_name": site_name,
+             "owner_role": "Nurse Manager, Med-Surg", "owner_name": nurse_mgr},
+            {"process_name": "IV pump and equipment maintenance", "site_id": site_id,
+             "site_name": site_name, "owner_role": "Clinical Engineering Lead",
              "owner_name": f"{r.choice(FIRST)} {r.choice(LAST)}"},
         ]
     rows += [
         {"process_name": "Engagement survey and action planning", "site_id": 0, "site_name": "ALL",
          "owner_role": "HR Business Partner", "owner_name": "Dana Whitfield"},
-        {"process_name": "Shift scheduling policy", "site_id": 0, "site_name": "ALL",
-         "owner_role": "Director of Operations", "owner_name": "Marcus Okafor"},
+        {"process_name": "Nurse staffing and float policy", "site_id": 0, "site_name": "ALL",
+         "owner_role": "Chief Nursing Officer", "owner_name": "Marcus Okafor"},
     ]
     return pd.DataFrame(rows)
 
 
 def write_docs(ownership: pd.DataFrame):
     DOCS.mkdir(parents=True, exist_ok=True)
-    (DOCS / "shift_handoff_procedure.md").write_text("""# Shift Handoff Procedure (SOP-OPS-014)
+    for stale in DOCS.glob("*.md"):  # the v0.8 documents are replaced, not kept beside the new ones
+        if stale.name not in KEEP_DOCS:
+            stale.unlink()
+    (DOCS / "medication_cabinet_restock_procedure.md").write_text("""# Medication Cabinet Restock Procedure (SOP-PHARM-021)
 
-Illustrative document written for a fictional company. Not a real Northline document.
+Illustrative document written for a fictional hospital system. Not a real Lanford Health document.
 
 ## Purpose
-Ensure the incoming shift has complete information about loads in progress, trailers ready
-for departure, and open issues, so that scheduled departures leave on time.
+Ensure each unit's automated dispensing cabinet (ADC) is restocked so that stock is on hand for
+every scheduled medication pass, including the 06:00 pass that runs before the 07:00 shift change.
 
 ## Steps
-1. Thirty minutes before shift end, the outgoing shift lead completes the **load checklist**
-   for every trailer worked during the shift: trailer number, load status (empty, partial,
-   complete), seal status, and scheduled departure time.
-2. The outgoing lead records open issues in the **handoff log**: equipment faults, missing
-   paperwork, staffing gaps for the next shift.
-3. The incoming shift lead reviews the checklist and the log with the outgoing lead in a
-   ten-minute handoff meeting at the dispatch desk.
-4. Both leads sign the handoff log. Dispatch does not release a 06:00 or 18:00 departure
-   until the signed log for that trailer is on file.
+1. Pharmacy technicians restock each unit cabinet **by 05:00 daily**, working from the overnight
+   restock report.
+2. The **restock report** lists every item below its par level. The technician signs the report
+   when the cabinet is filled; the signed report is kept at the pharmacy desk.
+3. The charge nurse reviews the restock report at the start of the 06:00 pass and confirms that
+   the items below par have been filled.
+4. A stock-out during a pass is logged in the **stock-out log** (item, time, unit). Pharmacy brings
+   the item to the unit within 30 minutes of the log entry.
 
 ## Ownership
-The Site Operations Manager at each site owns this procedure and its compliance. The
-Dispatch Supervisor owns the departure release step (step 4).
+The Pharmacy Operations Manager at each site owns the restock schedule and its compliance
+(steps 1 and 2). The Nurse Manager owns the stock-out log (step 4).
 
 ## Review
 Reviewed annually. Last review: January 2026.
 """)
-    (DOCS / "shift_scheduling_policy.md").write_text("""# Shift Scheduling Policy (POL-HR-006)
+    (DOCS / "nurse_staffing_policy.md").write_text("""# Nurse Staffing Policy (POL-NURS-006)
 
-Illustrative document written for a fictional company.
+Illustrative document written for a fictional hospital system.
 
-- Schedules are published at least 14 days in advance.
-- Minimum staffing per shift is set by the Site Operations Manager and reviewed monthly
-  against the staffing report (scheduled versus actual headcount).
-- When actual headcount falls below 85% of scheduled for a shift in a given month, the
-  Director of Operations is notified and a recovery plan is required within two weeks.
-- Shift swaps require approval by the shift lead and must not reduce a shift below minimum.
-- The Director of Operations owns this policy.
+- Unit schedules are published at least 4 weeks in advance.
+- Minimum RN staffing per shift is set by the Nurse Manager and reviewed monthly against the
+  staffing report (scheduled versus actual RN headcount).
+- When actual RN headcount falls below 85% of scheduled for a shift in a given month, the
+  Chief Nursing Officer is notified and a recovery plan is required within two weeks.
+- Float pool nurses are assigned by the house supervisor. Agency nurses are used only after the
+  float pool is exhausted and require Chief Nursing Officer approval.
+- Shift swaps are approved by the charge nurse and must not reduce a shift below minimum staffing.
+- The Chief Nursing Officer owns this policy.
 """)
     (DOCS / "engagement_action_planning_guide.md").write_text("""# Engagement Action Planning Guide (internal)
 
-Illustrative document written for a fictional company. Generic guidance, not vendor material.
+Illustrative document written for a fictional hospital system. Generic guidance, not vendor material.
 
-After survey results are released, each manager with reportable results (four or more
-respondents) reviews them with the team, selects one or two focus areas, and records an action
-with an owner, a success measure, and a review date. Results for teams with fewer than four
+After survey results are released, each nurse manager with reportable results (four or more
+respondents) reviews them with the unit, selects one or two focus areas, and records an action
+with an owner, a success measure, and a review date. Results for units with fewer than four
 respondents are not shown; those managers review the site-level results with their
-Site Operations Manager instead.
+Director of Nursing instead.
 
 Actions are reviewed at the mid-point between surveys. The HR Business Partner owns the
 process and tracks completion.
 """)
-    lines = ["# Process Ownership Directory\n", "Illustrative directory for a fictional company.\n",
+    lines = ["# Process Ownership Directory\n", "Illustrative directory for a fictional hospital system.\n",
              "| Process | Site | Owner role | Owner name |", "|---|---|---|---|"]
     for o in ownership.itertuples():
         lines.append(f"| {o.process_name} | {o.site_name} | {o.owner_role} | {o.owner_name} |")
@@ -377,13 +398,14 @@ def write_data_spec(frames: dict, truth: dict):
     """One-page data specification (judge Lederman, MITRE, Sept 15, 2026: 'what's the data feeding
     this tool? How many records? What fields?'). Regenerated on every run."""
     lines = ["# Data specification (synthetic)", "",
-             f"Generated by `data/generate.py`, seed {SEED}, on every run. Fictional company: Northline Logistics "
-             "(three sites, Day and Night shifts). Nothing here is real. The shape follows a survey-vendor team export "
+             f"Generated by `data/generate.py`, seed {SEED}, on every run. Fictional company: {COMPANY}, a regional hospital "
+             "system (three hospitals, Day and Night shifts). Nothing here is real, and nothing is patient-level: every operating "
+             "metric is a count at unit, shift, or site level. The shape follows a survey-vendor team export "
              "(team x wave x item aggregates) so that a real export could replace the survey tables without code changes.",
              "", "## Tables", "", "| Table | Grain | Rows | Fields |", "|---|---|---|---|"]
-    grain = {"sites": "site", "teams": "team", "employees": "employee (no PII; unique emp_id)", "waves": "survey wave",
+    grain = {"sites": "hospital site", "teams": "nursing unit team", "employees": "employee (no PII; unique emp_id)", "waves": "survey wave",
              "responses": "respondent x wave (never shown to the model)", "comments": "open-text comment (reportable team-waves only are indexed)",
-             "ops_daily": "site x shift x hour band x day", "staffing": "site x shift x month",
+             "ops_daily": "site x shift x hour band x day (eMAR dose counts)", "staffing": "site x shift x month (RN headcount)",
              "ownership_directory": "process x site", "q12_items": "survey item"}
     for name, df in frames.items():
         lines.append(f"| {name} | {grain.get(name, '')} | {len(df):,} | {', '.join(df.columns)} |")
@@ -392,20 +414,26 @@ def write_data_spec(frames: dict, truth: dict):
               f"each answer adds noise (SD {NOISE_SD}) and is rounded to 1 to 5. Response rate about 85% per wave.",
               f"- Tenure: bands under_1, 1_to_3, 3_to_10, over_10 with shares {TENURE_P}. Under-one-year employees score {HONEYMOON} higher "
               "on every item (the year-one honeymoon effect Gallup described on Sept 14, 2026).",
-              "- Operations: daily departures per site, shift, and hour band (Poisson), with a flat 8% late rate except where planted.",
-              "- Staffing: monthly scheduled versus actual headcount, about 97% except where planted.",
+              "- Medication passes: daily scheduled doses per site, shift, and hour band (Poisson), with a flat 8% late-dose rate "
+              "(given more than 60 minutes after the scheduled time) except where planted; missed doses Poisson(1.5).",
+              "- Staffing: monthly scheduled versus actual RN headcount, about 97% except where planted.",
               "- Comments: one to two generic comments per reportable team-wave, drawn from a small bank, plus the planted ones.",
+              "- Team-month operating records (`team_ops_monthly`): absence days, late doses, quits, overtime shifts and injuries per team "
+              "and month, Poisson around a per-head base rate that moves with the team's engagement (P12), plus the P11 multipliers.",
               "", "## Planted patterns (the answer key the assistant is scored against)", "",
               "| Id | What | Planted how | Expected behaviour |", "|---|---|---|---|",
-              "| P1, P2 | Richmond Night A: Q02 (materials and equipment) and Q07 (opinions count) fall in Wave 2 | item means shifted by -0.9 and -0.7 | found, material, corroborated |",
-              "| P3 | Richmond Night 06-07 late departures rise from June 2026 | late rate 8% to 18% in that band only | operational signal found |",
-              "| P4 | Richmond Night staffing shortage, March 2026 | actual 80% of scheduled | listed as a competing explanation |",
+              "| P1, P2 | Lanford Med-Surg Night: Q02 (materials and equipment) and Q07 (opinions count) fall in Wave 2 | item means shifted by -0.9 and -0.7 | found, material, corroborated |",
+              "| P3 | Lanford Night 06-07 late doses rise from June 2026 | late-dose rate 8% to 18% in that band only | operating signal found |",
+              "| P4 | Lanford Night RN staffing shortage, March 2026 | actual 80% of scheduled | listed as a competing explanation |",
               "| P5 | Honeymoon effect | under_1 +0.35 on every item | tenure chart shows it |",
-              "| P6 | Norfolk Day B: apparent decline is a change in who responded | under_1 share 55% to 0% between waves | signal check says mix, not real |",
+              "| P6 | Westbrook Telemetry Day: apparent decline is a change in who responded | under_1 share 55% to 0% between waves | signal check says mix, not real |",
               "| P7 | Teams with fewer than 4 respondents | headcounts 2 and 3 | suppressed, rolled up to site |",
-              "| P8 | Four Wave 2 comments about the shift handoff, Richmond Night A | written text | retrieved, counted as 4 of N |",
-              "| P9 | Blip: Roanoke Day C Q04 falls, no operations change, no comments | item mean shifted by -0.6 only | 'insufficient evidence', watch item, no owner |",
-              "| P10 | One long equipment comment, Norfolk Night A, no drop | one 150-word comment | 'single source', not an obstacle |",
+              "| P8 | Four Wave 2 comments about the dispensing-cabinet restock, Lanford Med-Surg Night | written text | retrieved, counted as 4 of N |",
+              "| P9 | Blip: Pine Hollow ED Day Q04 falls, no operating change, no comments | item mean shifted by -0.6 only | 'insufficient evidence', watch item, no owner |",
+              "| P10 | One long IV-pump comment, Westbrook Med-Surg Night, no drop | one 150-word comment | 'single source', not an obstacle |",
+              "| P11 | Lanford Med-Surg Night: late doses, absences, quits elevated Jun-Sep 2026, recover Oct-Nov | multipliers 2.0, 1.35, 1.6 | flagged at detect, 'worked' at review |",
+              "| P12 | Lower Q02 goes with more late doses and overtime shifts; lower grand mean with more absences and quits | log-rate elasticities | association found |",
+              "| P13 | Injuries independent of engagement | constant base rate | 'no association detected' |",
               "", "## Checks", "",
               "- `tests/test_data.py`: every planted pattern is present at the stated strength; no comment comes from a suppressed team-wave; every employee id is unique.",
               "- `tests/test_agent.py`: suppression in SQL, numbers match the truth file, refusals, brief checks, red-team verdicts.",
@@ -414,32 +442,37 @@ def write_data_spec(frames: dict, truth: dict):
               "- Real survey text is human behaviour; the comment bank is small and the wording is ours (judge Chang, Sept 15, 2026).",
               "- Response bias (only the happy or the angry answer) is not modelled (judges Fullowan and Lederman).",
               "- Two waves only; no Gallup global-database benchmark or percentile rank, because we have no licensed source for one.",
+              "- Dose counts are unit-level eMAR aggregates; no patient identifiers, diagnoses or patient-experience responses exist anywhere in the data.",
               ""]
     (HERE.parent / "DATA_SPEC.md").write_text("\n".join(lines))
 
 
 def compute_truth(teams, employees, responses, comments, ops, staffing):
     """Record what was planted, using the values actually generated."""
-    rich_night_a = team_key(teams, "Richmond", "Night A")
-    norfolk_day_b = team_key(teams, "Norfolk", "Day B")
-    roanoke_day_c = team_key(teams, "Roanoke", "Day C")
-    norfolk_night_a = team_key(teams, "Norfolk", "Night A")
+    planted = team_key(teams, *PLANTED_TEAM)
+    cohort_team = team_key(teams, *COHORT_TEAM)
+    blip_team = team_key(teams, *BLIP_TEAM)
+    loud_team = team_key(teams, *LOUD_TEAM)
+    planted_label = " ".join(PLANTED_TEAM)
+    cohort_label = " ".join(COHORT_TEAM)
+    blip_label = " ".join(BLIP_TEAM)
+    loud_label = " ".join(LOUD_TEAM)
 
     def team_item(tid, item, wave):
         sub = responses[(responses.team_id == tid) & (responses.wave_id == wave)]
         return round(float(sub[item].mean()), 2), int(len(sub))
 
-    p1_w1, n1 = team_item(rich_night_a, "q02", 1)
-    p1_w2, n2 = team_item(rich_night_a, "q02", 2)
-    p2_w1, _ = team_item(rich_night_a, "q07", 1)
-    p2_w2, _ = team_item(rich_night_a, "q07", 2)
+    p1_w1, n1 = team_item(planted, "q02", 1)
+    p1_w2, n2 = team_item(planted, "q02", 2)
+    p2_w1, _ = team_item(planted, "q07", 1)
+    p2_w2, _ = team_item(planted, "q07", 2)
 
     o = ops[(ops["site_id"] == 1) & (ops["shift"] == "Night") & (ops["hour_band"] == "06-07")].copy()
     o["month"] = o.date.str.slice(0, 7)
     pre = o[o.date < "2026-06-01"]
     post = o[o.date >= "2026-06-01"]
-    late_pre = round(float(pre.late_departures.sum() / pre.departures.sum()), 3)
-    late_post = round(float(post.late_departures.sum() / post.departures.sum()), 3)
+    late_pre = round(float(pre.late_doses.sum() / pre.scheduled_doses.sum()), 3)
+    late_post = round(float(post.late_doses.sum() / post.scheduled_doses.sum()), 3)
 
     st = staffing[(staffing["site_id"] == 1) & (staffing["shift"] == "Night") & (staffing["month"] == "2026-03")].iloc[0]
 
@@ -448,10 +481,10 @@ def compute_truth(teams, employees, responses, comments, ops, staffing):
     merged["grand"] = merged[ITEM_CODES].mean(axis=1)
     by_band = merged.groupby("tenure_band").grand.mean().round(2).to_dict()
 
-    # P6 mix shift on Norfolk Day B
-    nb = merged[merged.team_id == norfolk_day_b]
+    # P6 mix shift on Westbrook Telemetry Day
+    nb = merged[merged.team_id == cohort_team]
     p6 = {
-        "team_id": norfolk_day_b,
+        "team_id": cohort_team,
         "team_mean_w1": round(float(nb[nb.wave_id == 1].grand.mean()), 2),
         "team_mean_w2": round(float(nb[nb.wave_id == 2].grand.mean()), 2),
         "under_1_share_w1": round(float((nb[nb.wave_id == 1].tenure_band == "under_1").mean()), 2),
@@ -466,53 +499,53 @@ def compute_truth(teams, employees, responses, comments, ops, staffing):
     p7 = [{"team_id": int(r.team_id), "site_id": int(r.site_id), "team_name": r.team_name,
            "wave_id": int(r.wave_id), "n": int(r.n)} for r in small.itertuples()]
 
-    p8 = comments[(comments.team_id == rich_night_a) & (comments.theme == "handoff")]
+    p8 = comments[(comments.team_id == planted) & (comments.theme == "restock")]
 
-    # P9 blip: Roanoke Day C q04 falls, nothing else moves for that site and shift
-    p9_w1, p9_n1 = team_item(roanoke_day_c, "q04", 1)
-    p9_w2, p9_n2 = team_item(roanoke_day_c, "q04", 2)
+    # P9 blip: Pine Hollow ED Day q04 falls, nothing else moves for that site and shift
+    p9_w1, p9_n1 = team_item(blip_team, "q04", 1)
+    p9_w2, p9_n2 = team_item(blip_team, "q04", 2)
     o3 = ops[(ops["site_id"] == 3) & (ops["shift"] == "Day")].copy()
     pre3, post3 = o3[o3.date < "2026-06-01"], o3[o3.date >= "2026-06-01"]
-    p9_late_pre = round(float(pre3.late_departures.sum() / pre3.departures.sum()), 3)
-    p9_late_post = round(float(post3.late_departures.sum() / post3.departures.sum()), 3)
-    p9_comments = int(((comments.team_id == roanoke_day_c) & (comments.wave_id == 2)).sum())
+    p9_late_pre = round(float(pre3.late_doses.sum() / pre3.scheduled_doses.sum()), 3)
+    p9_late_post = round(float(post3.late_doses.sum() / post3.scheduled_doses.sum()), 3)
+    p9_comments = int(((comments.team_id == blip_team) & (comments.wave_id == 2)).sum())
 
-    # P10 loud comment: Norfolk Night A has no planted drop; one long equipment comment
-    p10 = comments[(comments.team_id == norfolk_night_a) & (comments.theme == "tools_loud")]
-    nna = responses[responses.team_id == norfolk_night_a]
+    # P10 loud comment: Westbrook Med-Surg Night has no planted drop; one long IV-pump comment
+    p10 = comments[(comments.team_id == loud_team) & (comments.theme == "tools_loud")]
+    nna = responses[responses.team_id == loud_team]
     p10_gm = {w: round(float(nna[nna.wave_id == w][ITEM_CODES].mean(axis=1).mean()), 2) for w in (1, 2)}
-    p10_total_w2 = int(((comments.team_id == norfolk_night_a) & (comments.wave_id == 2)).sum())
+    p10_total_w2 = int(((comments.team_id == loud_team) & (comments.wave_id == 2)).sum())
 
     truth = {
-        "company": "Northline Logistics (fictional)",
+        "company": COMPANY,
         "min_n": MIN_N,
         "patterns": {
-            "P1": {"what": "Richmond Night A q02 drop", "team_id": rich_night_a, "item": "q02",
+            "P1": {"what": f"{planted_label} q02 drop", "team_id": planted, "item": "q02",
                    "wave1_mean": p1_w1, "wave2_mean": p1_w2, "n_wave1": n1, "n_wave2": n2},
-            "P2": {"what": "Richmond Night A q07 drop", "team_id": rich_night_a, "item": "q07",
+            "P2": {"what": f"{planted_label} q07 drop", "team_id": planted, "item": "q07",
                    "wave1_mean": p2_w1, "wave2_mean": p2_w2},
-            "P3": {"what": "Richmond Night 06-07 late departures rise from June 2026",
+            "P3": {"what": f"{PLANTED_TEAM[0]} Night 06-07 late doses rise from June 2026",
                    "site_id": 1, "shift": "Night", "hour_band": "06-07",
                    "late_rate_before_june": late_pre, "late_rate_from_june": late_post},
-            "P4": {"what": "Richmond Night staffing shortage March 2026", "site_id": 1,
+            "P4": {"what": f"{PLANTED_TEAM[0]} Night RN staffing shortage March 2026", "site_id": 1,
                    "shift": "Night", "month": "2026-03",
                    "scheduled": int(st.scheduled_headcount), "actual": int(st.actual_headcount)},
             "P5": {"what": "Honeymoon effect: under_1 scores higher", "grand_mean_by_tenure": by_band,
                    "planted_offset": HONEYMOON},
-            "P6": {"what": "Norfolk Day B apparent decline is a response-mix change", **p6},
+            "P6": {"what": f"{cohort_label} apparent decline is a response-mix change (new-graduate residency cohort answered wave 1 only)", **p6},
             "P7": {"what": "Team-waves with n under MIN_N (must be suppressed)", "rows": p7},
-            "P8": {"what": "Handoff comments, Richmond Night A, wave 2",
+            "P8": {"what": f"Dispensing-cabinet restock comments, {planted_label}, wave 2",
                    "comment_ids": [int(c) for c in p8.comment_id]},
-            "P9": {"what": "Blip: Roanoke Day C q04 drops with no operational signal and no comments (must be 'insufficient')",
-                   "team_id": roanoke_day_c, "item": "q04", "wave1_mean": p9_w1, "wave2_mean": p9_w2,
+            "P9": {"what": f"Blip: {blip_label} q04 drops with no operating signal and no comments (must be 'insufficient')",
+                   "team_id": blip_team, "item": "q04", "wave1_mean": p9_w1, "wave2_mean": p9_w2,
                    "n_wave1": p9_n1, "n_wave2": p9_n2, "site_day_late_rate_before_june": p9_late_pre,
                    "site_day_late_rate_from_june": p9_late_post, "wave2_comments": p9_comments},
-            "P10": {"what": "One loud comment: Norfolk Night A, wave 2, long equipment comment; no planted drop (must be 'single source')",
-                    "team_id": norfolk_night_a, "comment_ids": [int(c) for c in p10.comment_id],
+            "P10": {"what": f"One loud comment: {loud_label}, wave 2, long IV-pump comment; no planted drop (must be 'single source')",
+                    "team_id": loud_team, "comment_ids": [int(c) for c in p10.comment_id],
                     "comment_words": int(len(LOUD_COMMENT.split())), "wave2_comments_total": p10_total_w2,
                     "grand_mean_w1": p10_gm[1], "grand_mean_w2": p10_gm[2]},
         },
-        "owner_for_handoff_richmond": "Site Operations Manager, Richmond (see ownership_directory)",
+        "owner_for_restock_lanford": f"{RESTOCK_OWNER_ROLE}, {PLANTED_TEAM[0]} (see ownership_directory)",
     }
     return truth
 
@@ -536,7 +569,7 @@ def main():
         df.to_csv(OUT / f"{name}.csv", index=False)
     write_docs(ownership)
     truth = compute_truth(teams, employees, responses, comments, ops, staffing)
-    truth = generate_impact.run(teams, responses, truth)  # v0.6 tables; own RNG, v0.5 files unchanged
+    truth = generate_impact.run(teams, responses, truth, ownership)  # v0.6 tables; own RNG, survey files unchanged
     (OUT / "truth.json").write_text(json.dumps(truth, indent=2))
     write_data_spec({"sites": sites, "teams": teams, "employees": employees, "waves": waves, "responses": responses,
                      "comments": comments, "ops_daily": ops, "staffing": staffing, "ownership_directory": ownership,
@@ -550,6 +583,7 @@ def main():
     print("P7 small team-waves:", len(truth["patterns"]["P7"]["rows"]))
     print("P9", truth["patterns"]["P9"])
     print("P10", {k: v for k, v in truth["patterns"]["P10"].items() if k != "what"})
+    print("P11", {k: v for k, v in truth["patterns"]["P11"].items() if k.startswith("late_rate")})
 
 
 if __name__ == "__main__":

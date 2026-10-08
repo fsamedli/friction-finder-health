@@ -82,7 +82,7 @@ def _fresh(case: dict) -> tuple[DB, Retriever]:
     inj = case.get("inject_comment")
     if inj:  # injected at test time into the in-memory database; data/ is never changed
         next_id = db.con.execute("SELECT MAX(comment_id) + 1 FROM comments").fetchone()[0]
-        db.con.execute("INSERT INTO comments VALUES (?, ?, ?, ?, ?)", [next_id, inj["team_id"], inj["wave_id"], inj["text"], "handoff"])
+        db.con.execute("INSERT INTO comments VALUES (?, ?, ?, ?, ?)", [next_id, inj["team_id"], inj["wave_id"], inj["text"], "restock"])
     return db, Retriever(db)
 
 

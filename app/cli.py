@@ -1,4 +1,4 @@
-"""Command-line runner:  python -m app.cli "Why did the Richmond night shift's scores drop?" """
+"""Command-line runner:  python -m app.cli "Why did the Lanford night shift's scores drop?" """
 from __future__ import annotations
 
 import sys
@@ -10,7 +10,7 @@ from app.retrieval import Retriever
 
 
 def main():
-    q = " ".join(sys.argv[1:]) or "Why did the Richmond night shift's scores drop and why are deliveries late?"
+    q = " ".join(sys.argv[1:]) or "Why did the Lanford night shift's scores drop and why are doses late?"
     db = DB()
     retriever = Retriever(db)
     res = run(q, db, retriever)

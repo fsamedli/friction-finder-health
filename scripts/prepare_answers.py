@@ -19,9 +19,9 @@ from api import main as M  # noqa: E402
 from app import config  # noqa: E402
 
 QUESTIONS = [
-    "Why did the Richmond night shift's scores drop and why are deliveries late?",
-    "Did the Norfolk Day B team really decline?",
-    "Who owns the shift handoff procedure at Richmond?",
+    "Why did the Lanford night shift's scores drop and why are doses late?",
+    "Did the Westbrook Telemetry Day team really decline?",
+    "Who owns the medication cabinet restock schedule at Lanford?",
 ]
 
 

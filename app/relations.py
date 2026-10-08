@@ -2,8 +2,8 @@
 tables, no graph database: site -> teams, team -> shift and comparable teams, KPI <-> survey items (from the
 cross-team association matrix), process -> owner (the ownership directory), plan -> team -> KPI.
 
-resolve() turns phrases like "it", "this team", "the other night shifts", "Norfolk Night A", "no, I meant
-Night B" into a context update. It never guesses: an ambiguous referent comes back as a clarification."""
+resolve() turns phrases like "it", "this team", "the other night shifts", "Westbrook Med-Surg Night", "no, I meant
+ICU Night" into a context update. It never guesses: an ambiguous referent comes back as a clarification."""
 from __future__ import annotations
 
 import re
@@ -67,7 +67,7 @@ def owner(process: str, site: str | None) -> dict | None:
 def plans_for_team(team_id: int, as_of: str | None = None) -> list[dict]:
     """Approved plans for a team as they exist on the demo clock (the seeded plan is a fallback, as in the web app)."""
     ps = [p for p in I.load_plans() if int(p["team_id"]) == team_id and p.get("status") == "approved"]
-    live = [p for p in ps if p["id"] != "plan-richmond-night-a"]
+    live = [p for p in ps if p["id"] != "plan-lanford-med-surg-night"]
     if live:
         return live
     return [p for p in ps if as_of is None or as_of >= p["start"]]
@@ -78,7 +78,7 @@ _IT = re.compile(r"\b(it|this|that|this team|that team|the team|they|them|their|
 
 
 def find_teams(text: str, site_hint: str | None = None) -> list[dict]:
-    """Every team the text names. 'Night A' alone resolves at the site in context; with no site it is ambiguous."""
+    """Every team the text names. 'Med-Surg Night' alone resolves at the site in context; with no site it is ambiguous."""
     t = teams()
     tl = text.lower()
     named_sites = [s for s in t.site_name.unique() if s.lower() in tl]
@@ -104,14 +104,14 @@ def resolve(question: str, ctx: dict) -> dict:
     cur_site = site_name(ctx["site_id"]) if ctx.get("site_id") else None
     named_sites = [s for s in t.site_name.unique() if s.lower() in ql]
     hits = find_teams(q, site_hint=named_sites[0] if len(named_sites) == 1 else cur_site)
-    # peers, not a new subject: "compare it with the other night shifts / comparable teams / Norfolk Night A"
+    # peers, not a new subject: "compare it with the other night shifts / comparable teams / Westbrook Med-Surg Night"
     if re.search(r"\b(other|the rest of the)\b.*\b(night|day)\s+shifts?\b|\bcomparable teams?\b|\bteams like (ours|this|it)\b", ql):
         out["peers"] = "comparable"
     compare = bool(re.search(r"\bcompare|versus|\bvs\.?\b|against\b", ql))
     if hits:
         uniq = {h["team_id"]: h for h in hits}
         if compare and out["team_id"] and len(uniq) == 1 and next(iter(uniq)) != out["team_id"]:
-            out["peers"] = f"team:{next(iter(uniq))}"     # "compare it with Norfolk Night A": the subject stays
+            out["peers"] = f"team:{next(iter(uniq))}"     # "compare it with Westbrook Med-Surg Night": the subject stays
         elif len(uniq) == 1 or (compare and out["team_id"] in uniq):
             new = next(iter(uniq.values())) if len(uniq) == 1 else uniq[out["team_id"]]
             if new["team_id"] != out["team_id"]:
@@ -126,7 +126,7 @@ def resolve(question: str, ctx: dict) -> dict:
         if sid != out["site_id"]:
             out["changed"].append(f"site: {cur_site or 'none'} -> {named_sites[0]}")
             out["site_id"] = sid
-            # a site switch drops the team unless the same-named team exists there ("switch to Norfolk")
+            # a site switch drops the team unless the same-named team exists there ("switch to Westbrook")
             if out["team_id"]:
                 old = team_info(out["team_id"])
                 same = t[(t.site_name == named_sites[0]) & (t.team_name == old["team"])]
@@ -134,5 +134,5 @@ def resolve(question: str, ctx: dict) -> dict:
                 if out["team_id"]:
                     out["changed"].append(f"team: {old['label']} -> {named_sites[0]} {old['team']}")
     if out["team_id"] is None and _IT.search(ql) and not named_sites:
-        out["clarify"] = "Which team do you mean? Open a team on Investigate, or name it (for example 'Richmond Night A')."
+        out["clarify"] = "Which team do you mean? Open a team on Investigate, or name it (for example 'Lanford Med-Surg Night')."
     return out

@@ -119,17 +119,17 @@ GROUP BY ALL;
 
 CREATE OR REPLACE VIEW v_ops_month AS
 SELECT o.site_id, s.site_name, o.shift, o.hour_band, strftime(o.date, '%Y-%m') AS month,
-       SUM(departures) AS departures, SUM(late_departures) AS late_departures,
-       ROUND(SUM(late_departures) * 1.0 / NULLIF(SUM(departures), 0), 3) AS late_rate,
-       SUM(rework_count) AS rework
+       SUM(scheduled_doses) AS scheduled_doses, SUM(late_doses) AS late_doses,
+       ROUND(SUM(late_doses) * 1.0 / NULLIF(SUM(scheduled_doses), 0), 3) AS late_rate,
+       SUM(missed_doses) AS missed_doses
 FROM ops_daily o JOIN sites s ON s.site_id = o.site_id
 GROUP BY ALL;
 
 CREATE OR REPLACE VIEW v_ops_hour AS
 SELECT o.site_id, s.site_name, o.shift, o.hour_band,
        CASE WHEN o.date >= '2026-06-01' THEN 'Jun-Sep 2026' ELSE 'Jan-May 2026' END AS period,
-       SUM(departures) AS departures, SUM(late_departures) AS late_departures,
-       ROUND(SUM(late_departures) * 1.0 / NULLIF(SUM(departures), 0), 3) AS late_rate
+       SUM(scheduled_doses) AS scheduled_doses, SUM(late_doses) AS late_doses,
+       ROUND(SUM(late_doses) * 1.0 / NULLIF(SUM(scheduled_doses), 0), 3) AS late_rate
 FROM ops_daily o JOIN sites s ON s.site_id = o.site_id
 GROUP BY ALL;
 
@@ -190,7 +190,7 @@ def _check_query(s: str) -> None:
 TEAM_OPS_VIEW = f"""
 CREATE OR REPLACE VIEW v_team_ops_month AS
 SELECT o.month, o.team_id, t.team_name, t.shift, t.site_id, s.site_name, o.headcount,
-       o.late_departures, o.absence_days, o.quits, o.injuries, o.rework
+       o.late_doses, o.absence_days, o.quits, o.injuries, o.overtime_shifts
 FROM team_ops_monthly o
 JOIN teams t ON t.team_id = o.team_id
 JOIN sites s ON s.site_id = t.site_id
@@ -224,7 +224,7 @@ class DB:
 
     def _sync(self, df) -> None:
         if self._team_ops_src is not df:
-            cols = ["month", "team_id", "site_id", "shift", "headcount", "absence_days", "late_departures", "quits", "injuries", "rework"]
+            cols = ["month", "team_id", "site_id", "shift", "headcount", "absence_days", "late_doses", "quits", "injuries", "overtime_shifts"]
             self.con.register("team_ops_src", df[cols])
             self.con.execute("CREATE OR REPLACE TABLE team_ops_monthly AS SELECT * FROM team_ops_src")
             self.con.unregister("team_ops_src")
@@ -262,9 +262,9 @@ class DB:
         with self.lock:
             return self.con.execute("SELECT * FROM waves ORDER BY 1").df()
 
-    # ---- upload path (Keegan's second question) -----------------------------
+    # ---- upload path (Keegan's second question): daily eMAR dose counts per site, shift and hour band ------
     def add_ops_upload(self, df: pd.DataFrame) -> int:
-        required = {"date", "site_id", "shift", "hour_band", "departures", "late_departures", "rework_count"}
+        required = {"date", "site_id", "shift", "hour_band", "scheduled_doses", "late_doses", "missed_doses"}
         missing = required - set(df.columns)
         if missing:
             raise ValueError(f"Upload is missing columns: {sorted(missing)}")
@@ -277,7 +277,7 @@ class DB:
 
     def _insert_upload(self, df: pd.DataFrame) -> None:
         self.con.register("upload_df", df)
-        self.con.execute("INSERT INTO ops_daily SELECT CAST(date AS DATE), CAST(site_id AS BIGINT), shift, hour_band, CAST(departures AS BIGINT), CAST(late_departures AS BIGINT), CAST(rework_count AS BIGINT) FROM upload_df")
+        self.con.execute("INSERT INTO ops_daily SELECT CAST(date AS DATE), CAST(site_id AS BIGINT), shift, hour_band, CAST(scheduled_doses AS BIGINT), CAST(late_doses AS BIGINT), CAST(missed_doses AS BIGINT) FROM upload_df")
         self.con.unregister("upload_df")
 
     def schema_for_prompt(self) -> str:
@@ -290,10 +290,10 @@ class DB:
 - v_tenure_wave_item(tenure_band, wave_id, item, mean_score, n, reportable): by tenure band (under_1, 1_to_3, 3_to_10, over_10).
 - v_team_tenure_mix(team_id, wave_id, tenure_band, n, grand_mean): who responded, by tenure band.
 - v_team_wave_n(team_id, wave_id, n): respondent counts.
-- v_ops_month(site_id, site_name, shift, hour_band, month, departures, late_departures, late_rate, rework): operations by month.
-- v_ops_hour(site_id, site_name, shift, hour_band, period, departures, late_departures, late_rate): operations by hour band, periods 'Jan-May 2026' and 'Jun-Sep 2026'.
+- v_ops_month(site_id, site_name, shift, hour_band, month, scheduled_doses, late_doses, late_rate, missed_doses): medication passes by month (eMAR counts per site and shift; late = given more than 60 minutes after the scheduled time).
+- v_ops_hour(site_id, site_name, shift, hour_band, period, scheduled_doses, late_doses, late_rate): medication passes by hour band (06-07 is the 06:00 pass before the 07:00 shift change), periods 'Jan-May 2026' and 'Jun-Sep 2026'.
 - v_comments_reportable(comment_id, team_id, team_name, site_id, site_name, shift, wave_id, text): open-text comments from reportable team-waves only.
-- v_team_ops_month(month, team_id, team_name, shift, site_id, site_name, headcount, late_departures, absence_days, quits, injuries, rework): team-month operating counts; teams under 4 people are not in this view.
-- staffing(month, site_id, shift, scheduled_headcount, actual_headcount).
+- v_team_ops_month(month, team_id, team_name, shift, site_id, site_name, headcount, late_doses, absence_days, quits, injuries, overtime_shifts): team-month operating counts (unit level, nothing patient-level); teams under 4 people are not in this view.
+- staffing(month, site_id, shift, scheduled_headcount, actual_headcount): scheduled vs actual RN headcount.
 - ownership_directory(process_name, site_id, site_name, owner_role, owner_name).
 - sites, teams, waves, q12_items."""

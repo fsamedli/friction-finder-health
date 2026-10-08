@@ -3,9 +3,9 @@ import { api, type ManagerFunction, type Meta, type Plan } from './api'
 
 export const DETECT = '2026-09-15'
 export const REVIEW = '2026-11-30'
-export const SEED_PLAN = 'plan-richmond-night-a'
+export const SEED_PLAN = 'plan-lanford-med-surg-night'
 
-/** Plans as they exist on the demo clock. The seeded Night A plan is a fallback: it appears once the clock passes
+/** Plans as they exist on the demo clock. The seeded Med-Surg Night plan is a fallback: it appears once the clock passes
  *  its start date, unless a plan for that team was approved live in the app (the demo path). */
 export function visiblePlans(plans: Plan[], asOf: string): Plan[] {
   const live = plans.filter((p) => p.id !== SEED_PLAN && p.status === 'approved')
@@ -21,7 +21,7 @@ interface Ctx {
 }
 export type Role = 'manager' | 'hr'
 export const PERSONA: Record<Role, { name: string; title: string; initials: string }> = {
-  manager: { name: 'Priya Singh', title: 'Site Operations Manager · Richmond', initials: 'PS' },
+  manager: { name: 'Priya Singh', title: 'Nurse Manager, Med-Surg · Lanford', initials: 'PS' },
   hr: { name: 'Jordan Ellis', title: 'Director, People Analytics · all sites', initials: 'JE' },
 }
 const C = createContext<Ctx | null>(null)

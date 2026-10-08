@@ -1,7 +1,7 @@
 // Typed client for api/main.py. Every number on screen comes from one of these calls.
 
-export type Kpi = 'absence_days' | 'late_departures' | 'quits' | 'injuries' | 'rework'
-export const KPI_ORDER: Kpi[] = ['late_departures', 'absence_days', 'quits', 'injuries', 'rework']
+export type Kpi = 'absence_days' | 'late_doses' | 'quits' | 'injuries' | 'overtime_shifts'
+export const KPI_ORDER: Kpi[] = ['late_doses', 'absence_days', 'quits', 'injuries', 'overtime_shifts']
 
 export interface Meta {
   company: string
