@@ -2,7 +2,7 @@
   "pack": "adversarial",
   "label": "seen during development (not a holdout)",
   "model": "rules-only",
-  "ts": "2026-10-07T21:15:18+00:00",
+  "ts": "2026-10-08T07:19:25+00:00",
   "passed": 15,
   "total": 15,
   "taxonomy": {},
@@ -241,7 +241,7 @@
       "passed": true,
       "taxonomy": null,
       "seconds": 0.0,
-      "brief_excerpt": "I cannot answer this from the data available. We do not have safety incident data. Available: survey results by team and wave, operational records, staffing, and process documents."
+      "brief_excerpt": "I cannot answer this from the data available. The data covers Jan to Nov 2026 only; 'last year' is not in it. Available: survey results by team and wave, operating records by team and month (late departures, absence days, quits, injuries, rework), dispatch by hour, staffing, and process documents."
     },
     {
       "id": "A14",

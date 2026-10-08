@@ -59,6 +59,7 @@ class Scope:
     unknown_entities: list[str] = field(default_factory=list)
     unsupported_reason: str | None = None
     mode: str = "rules"
+    rule_decline: bool = False   # declined by a deterministic rule (cause not in the data, period not in the data); the model cannot undo it
 
 
 @dataclass
@@ -118,13 +119,19 @@ class Result:
     assessment: Assessment | None = None
 
 
+# v0.8: absence, turnover (quits) and safety (injuries) are answered from the team-month operating records the
+# screens show (app/metrics.py). What stays declined is what the data cannot answer: compensation, finance,
+# customers; the cause of a quit or an injury (no exit reasons, no incident causes); periods before 2026.
 UNSUPPORTED_TERMS = {
-    "turnover": "turnover or attrition data", "attrition": "turnover or attrition data",
     "salary": "compensation data", "pay": "compensation data", "wages": "compensation data",
     "revenue": "financial data", "profit": "financial data", "customer": "customer data",
-    "safety": "safety incident data", "injury": "safety incident data", "absence": "absence data",
-    "sick": "absence data",
 }
+SURVEY_WORDS = re.compile(r"\b(scores?|engagement|survey|items?|q\d{2}|respon\w*|wave|materials|opinions?|recognition)\b", re.I)
+CAUSAL_WORDS = re.compile(r"\b(why|cause[sd]?|causing|root cause|reasons?|because|explains?|behind)\b", re.I)
+LOOKUP_WORDS = re.compile(r"\b(how many|how much|what (was|were|is|are) the|number of|count|rate|compare|comparison|per 10|trend)\b", re.I)
+OUT_OF_PERIOD = re.compile(r"\blast year\b|\b(19|20)(0\d|1\d|2[0-5])\b|\b(2027|2028)\b", re.I)
+NO_CAUSE_DATA = {"quits": "The data has monthly counts of voluntary quits (turnover) but no exit reasons, and the tool does not attribute causes.",
+                 "injuries": "The data has monthly counts of days-away injuries (safety) but no incident causes, and the tool does not attribute causes."}
 
 ITEM_KEYWORDS = {
     "q02": ["materials", "equipment", "tools"], "q07": ["opinion", "opinions", "count"],
@@ -135,7 +142,8 @@ ITEM_KEYWORDS = {
 COMMON_CAPS = {"Why", "What", "How", "Which", "Who", "Where", "When", "Is", "Are", "Did", "Does", "Do", "Can",
                "Show", "Give", "Tell", "Compare", "The", "In", "At", "For", "On", "Q12", "Wave", "Day", "Night",
                "March", "September", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-               "I", "We", "A", "An", "And", "Or", "Of", "To", "Our", "Please", "AM", "PM", "Gallup", "Northline", "Across"}
+               "I", "We", "A", "An", "And", "Or", "Of", "To", "Our", "Please", "AM", "PM", "Gallup", "Northline", "Across",
+               "January", "February", "April", "June", "July", "August", "October", "November", "December", "Sept", "From", "Between"}
 
 # Comment themes are counted by keyword in code so that breadth (how many separate comments) is a
 # number, not a model impression (judge Chang, Sept 15: "weight by breadth, not length").
@@ -207,6 +215,16 @@ def _scope_rules(q: str, sites: list[str], teams: pd.DataFrame) -> Scope:
         sc.intent = "review_decline_real"
     elif any(w in ql for w in ["what was", "how many", "what is the", "mean", "score for", "how much"]):
         sc.intent = "metric_lookup"
+    # v0.8: operating metrics the screens show (late departures, absence days, quits, injuries, rework)
+    from app import metrics as _M
+    metric = _M.metric_in(ql)
+    if metric and not SURVEY_WORDS.search(ql) and not CAUSAL_WORDS.search(ql) and LOOKUP_WORDS.search(ql):
+        sc.intent = "ops_metric"
+    if metric in NO_CAUSE_DATA and CAUSAL_WORDS.search(ql):
+        sc.intent, sc.unsupported_reason, sc.rule_decline = "unsupported", NO_CAUSE_DATA[metric], True
+    if OUT_OF_PERIOD.search(ql):
+        sc.intent, sc.rule_decline = "unsupported", True
+        sc.unsupported_reason = f"The data covers Jan to Nov 2026 only; '{OUT_OF_PERIOD.search(ql).group(0)}' is not in it."
     # unsupported data types
     for term, reason in UNSUPPORTED_TERMS.items():
         if re.search(rf"\b{term}\w*\b", ql):
@@ -252,15 +270,18 @@ def _scope_llm(q: str, db: DB, sites: list[str], teams: pd.DataFrame) -> Scope:
         "- Documents: shift handoff procedure, scheduling policy, action-planning guide, process ownership directory, "
         "Gallup's item-specific team discussion questions.\n"
         "- Employee open-text comments by team and wave.\n"
-        "DATA THAT DOES NOT EXIST (questions that need these are unsupported): turnover or attrition, pay or compensation, "
-        "revenue or profit, customers, safety incidents, absence or sick leave, individual employees' answers.\n\n"
+        "- Monthly operating records by team, Jan to Nov 2026: late departures, unplanned absence days, voluntary quits (turnover), "
+        "days-away injuries (safety), rework events.\n"
+        "DATA THAT DOES NOT EXIST (questions that need these are unsupported): pay or compensation, revenue or profit, customers, "
+        "exit reasons for quits, causes of injuries, any period before 2026, individual employees' answers.\n\n"
         f"Known sites: {sites}. Known team names: {sorted(teams.team_name.unique().tolist())}. Shifts: Day, Night. "
         "Waves: 1 (closed March 2026), 2 (closed September 2026). "
         f"Survey items: {[(r.item, r.label) for r in items.itertuples()]}.\n\n"
         "Intents: diagnose_drop (why did scores drop, what is going on, what obstacles, why are deliveries late: SUPPORTED), "
         "site_overview (where did scores drop across a site, which teams moved, overview or heatmap of a site), "
         "review_decline_real (is the decline real or a change in who responded), tenure_pattern (scores by tenure, honeymoon effect), "
-        "owner_lookup (who owns a process), metric_lookup (a specific number), unsupported (ONLY when the question needs a data type "
+        "owner_lookup (who owns a process), metric_lookup (a specific survey number), "
+        "ops_metric (a count or rate of late departures, absence days, quits, injuries or rework for a team, shift or site), unsupported (ONLY when the question needs a data type "
         "from the does-not-exist list, or names a site or team not in the known lists).\n"
         "Rules: never guess a site or team that is not in the known lists; put such names in unknown_entities. "
         "If the question asks for company-wide, overall, or all sites, set site to 'ALL'. "
@@ -288,6 +309,10 @@ def _scope_llm(q: str, db: DB, sites: list[str], teams: pd.DataFrame) -> Scope:
         # the model refused a question the rules can answer from existing data: do not over-refuse
         sc.intent = rules.intent
         sc.unsupported_reason = None
+    if rules.rule_decline:  # a cause or a period the data does not hold: the deterministic decline stands
+        sc.intent, sc.unsupported_reason, sc.rule_decline = "unsupported", rules.unsupported_reason, True
+    elif rules.intent == "ops_metric" and sc.intent in ("metric_lookup", "diagnose_drop", "unsupported"):
+        sc.intent, sc.unsupported_reason = "ops_metric", None
     if sc.intent == "unsupported" and not sc.unsupported_reason:
         sc.unsupported_reason = "The question needs data this prototype does not have."
     if rules.intent == "site_overview":
@@ -635,7 +660,7 @@ def _theme_of(text: str) -> str | None:
 
 def retrieve(sc: Scope, question: str, db: DB, retriever: Retriever, evidence: list[Evidence]) -> list[Evidence]:
     ev: list[Evidence] = []
-    if sc.intent in ("tenure_pattern", "metric_lookup", "site_overview", "review_decline_real", "owner_lookup"):
+    if sc.intent in ("tenure_pattern", "metric_lookup", "site_overview", "review_decline_real", "owner_lookup", "ops_metric"):
         return ev
     if sc.team_id is None and sc.site is None:
         return ev
@@ -1006,7 +1031,8 @@ def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Resu
     if sc.intent == "unsupported":
         return Result(status="refused", question=question, scope=sc, evidence=[], brief=None,
                       message=f"I cannot answer this from the data available. {sc.unsupported_reason or ''} "
-                              "Available: survey results by team and wave, operational records, staffing, and process documents.",
+                              "Available: survey results by team and wave, operating records by team and month (late departures, absence days, quits, "
+                              "injuries, rework), dispatch by hour, staffing, and process documents.",
                       notes=notes)
     if sc.site == "ALL" and sc.intent in ("diagnose_drop", "site_overview", "metric_lookup"):
         sc.intent = "site_overview"   # company-wide questions get the overview; diagnosis needs a site or team
@@ -1023,6 +1049,8 @@ def run(question: str, db: DB, retriever: Retriever, fast: bool = False) -> Resu
                       message="Which site or team do you mean? Known sites: " + ", ".join(db.sites()) + ".", notes=notes)
     if sc.intent == "owner_lookup":
         return _owner_lookup(question, sc, db, [], notes)
+    if sc.intent == "ops_metric":
+        return _ops_metric(question, sc, db, notes)
     _t1 = _time.time()
     evidence = analyze(sc, db)
     evidence += retrieve(sc, question, db, retriever, evidence)
@@ -1074,6 +1102,50 @@ def _owner_lookup(question: str, sc: Scope, db: DB, evidence: list[Evidence], no
     else:
         msg = "No owner found in the directory for that process."
     return Result(status="ok", question=question, scope=sc, evidence=evidence, brief=None, message=msg, notes=notes)
+
+
+_MONTHS = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+
+
+def _months_in(question: str) -> list[str]:
+    """Month names in the question -> 'YYYY-MM' (2026). 'June to August' is a range; no month -> [] (the board's window)."""
+    found = [_MONTHS[m.group(1)[:3]] for m in re.finditer(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b", question.lower())
+             if not (m.group(1) == "may" and re.search(r"\bmay (i|we|you)\b", question.lower()))]
+    if not found:
+        return []
+    if len(found) >= 2 and re.search(r"\b(to|through|until|till)\b|-|–", question.lower()):
+        lo, hi = min(found[0], found[-1]), max(found[0], found[-1])
+        return [f"2026-{m:02d}" for m in range(lo, hi + 1)]
+    return [f"2026-{m:02d}" for m in sorted(set(found))]
+
+
+def _ops_metric(question: str, sc: Scope, db: DB, notes: list[str]) -> Result:
+    """v0.8: an operating-metric question: structured plan -> validated templated SQL (app/metrics.py) -> computed
+    result -> one plain-English sentence with the unit and the period. The model writes no SQL here."""
+    from app import metrics as M
+    key = M.metric_in(question) or "late_departures"
+    site_id = None
+    if sc.site and sc.site != "ALL":
+        site_id = int(db.run_sql(f"SELECT site_id FROM sites WHERE site_name = '{sc.site}'").rows.iloc[0].site_id)
+    named_team = bool(sc.team and sc.team.lower() in question.lower())
+    team_id = sc.team_id if named_team else None
+    q = M.MetricQuery(metric=key, team_id=team_id, site_id=None if team_id else site_id, shift=None if team_id else sc.shift,
+                      months=_months_in(question), compare_to="comparable" if team_id else None)
+    if key == "late_rate":
+        q.site_id = site_id
+    res = M.query_metric(q, db)
+    notes.append(f"operating metric: {key} · plan {'team ' + str(team_id) if team_id else (sc.site or 'all sites') + ' ' + (sc.shift or '')} · {res.status}")
+    if res.status == "suppressed":
+        return Result(status="suppressed", question=question, scope=sc, evidence=[], brief=None, message=res.message, notes=notes)
+    if res.status != "ok":
+        return Result(status="refused", question=question, scope=sc, evidence=[], brief=None, message=res.message, notes=notes)
+    stmt = M.sentence(res) + (f" {res.message}" if res.message else "")
+    comp = res.comparison or {}
+    ev = Evidence(id="M1", kind="metric", statement=stmt, sql=";\n".join(res.sql), rows=res.rows, source=res.definition.get("view", ""),
+                  value={"metric": key, "events": res.events, "exposure": res.exposure, "per_10": res.shown, "months": res.months,
+                         "expected": round(comp["pooled_rate"] * res.exposure, 1) if comp.get("status") == "ok" else None,
+                         "definition": res.definition})
+    return Result(status="ok", question=question, scope=sc, evidence=[ev], brief=None, message=stmt, notes=notes)
 
 
 # ----------------------------------------------------------------------------- act: action plan and report

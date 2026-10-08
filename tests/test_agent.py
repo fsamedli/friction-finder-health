@@ -285,3 +285,47 @@ def test_auto_detect_picks_or_asks(db, retriever):
         assert res.scope.site == picked and any("largest site-level fall" in n for n in res.notes)
     else:
         assert res.status == "refused" and "Which site" in res.message
+
+
+# ---------------------------------------------------------------------------------------------- v0.8 operating metrics
+# Sept 24 open question 3: Ask refused absence, turnover and safety questions while the screens showed absences,
+# quits and injuries. Now they are answered from the same team-month rows as the board; declines stay only for what
+# the data cannot answer (a cause of a quit or an injury; a period before 2026).
+def _rules_run(q, db, retriever, monkeypatch):
+    from app import agent as A
+    monkeypatch.setattr(config, "has_key", lambda: False)
+    return A.run(q, db, retriever, fast=True)
+
+
+@pytest.mark.parametrize("q,kpi", [
+    ("How many unplanned absence days did Richmond Night A have?", "absence_days"),
+    ("How many quits did Richmond Night A have?", "quits"),
+    ("How many injuries did Richmond Night A have?", "injuries"),
+    ("What was the rework count on Richmond Night A?", "rework"),
+    ("How many late departures did Richmond Night A have?", "late_departures"),
+])
+def test_operating_metric_questions_match_the_board(q, kpi, db, retriever, monkeypatch):
+    from app import impact as I
+    res = _rules_run(q, db, retriever, monkeypatch)
+    assert res.status == "ok" and res.evidence[0].kind == "metric" and "v_team_ops_month" in res.evidence[0].sql
+    e = next(t for t in I.board(1, I.AS_OF_DETECT, I.default_costs())["teams"] if t["team_id"] == 4)["excess_by_kpi"][kpi]
+    assert res.evidence[0].value["events"] == e["observed"] and res.evidence[0].value["expected"] == e["expected"]
+    assert "per 10 people per month" in res.message and "Jun-Aug 2026" in res.message
+
+
+def test_causes_and_periods_the_data_cannot_answer_are_declined(db, retriever, monkeypatch):
+    r1 = _rules_run("What caused turnover on the Norfolk night shift?", db, retriever, monkeypatch)
+    assert r1.status == "refused" and "no exit reasons" in r1.message and "turnover" in r1.message
+    r2 = _rules_run("Why are injuries happening on Richmond Night A?", db, retriever, monkeypatch)
+    assert r2.status == "refused" and "no incident causes" in r2.message
+    r3 = _rules_run("How many absence days did Norfolk have in 2025?", db, retriever, monkeypatch)
+    assert r3.status == "refused" and "2025" in r3.message
+
+
+def test_small_team_metric_is_suppressed_and_months_parse(db, retriever, monkeypatch):
+    r = _rules_run("How many injuries did Richmond Maintenance Night have?", db, retriever, monkeypatch)
+    assert r.status == "suppressed" and not r.evidence
+    j = _rules_run("How many late departures did Richmond Night A have in July?", db, retriever, monkeypatch)
+    assert j.status == "ok" and j.evidence[0].value["months"] == ["2026-07"]
+    s = _rules_run("How many quits did the Norfolk night shift have from June to August?", db, retriever, monkeypatch)
+    assert s.status == "ok" and s.evidence[0].value["months"] == ["2026-06", "2026-07", "2026-08"] and "teams of 4 or more" in s.message
