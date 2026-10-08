@@ -99,6 +99,15 @@ def _check(q: dict, res, db: DB, truth: dict) -> dict:
         hm = [e for e in res.evidence if e.kind == "site_heatmap"]
         want = exp["watch_contains"]
         checks["watch_contains"] = bool(hm) and any(w["team"] == want["team"] and w["item"] == want["item"] for w in hm[0].value.get("watch", []))
+    if "matches_board" in exp:
+        # v0.8: an operating-metric answer must carry the same numbers the dashboards show (app/impact.py board):
+        # the observed count and the count comparable teams predict, for the board's window at that as-of date.
+        from app import impact as I
+        mb = exp["matches_board"]
+        b = I.board(mb["site_id"], mb.get("as_of", I.AS_OF_DETECT), I.default_costs())
+        e = next(t for t in b["teams"] if t["team_id"] == mb["team_id"])["excess_by_kpi"][mb["kpi"]]
+        text = (res.message or "") + " " + " ".join(x.statement for x in res.evidence if x.kind == "metric")
+        checks["matches_board"] = _num_in_text(float(e["observed"]), text, tol=1e-9) and _num_in_text(float(e["expected"]), text, tol=0.051)
     if "plan_actions" in exp:
         p = plan(res, db)
         lo, hi = exp["plan_actions"]

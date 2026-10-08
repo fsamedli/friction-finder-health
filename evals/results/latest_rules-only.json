@@ -1,9 +1,9 @@
 {
   "model": "rules-only",
   "retrieval": "keyword",
-  "ts": "2026-10-07T21:15:18+00:00",
+  "ts": "2026-10-08T07:17:02+00:00",
   "passed": 12,
-  "total": 12,
+  "total": 13,
   "matrix": {
     "TP": 2,
     "FN": 0,
@@ -12,9 +12,9 @@
     "FN*": 0
   },
   "lookups_passed": 5,
-  "lookups_total": 5,
+  "lookups_total": 6,
   "briefs_regenerated_or_fallback": 0,
-  "seconds": 0.1,
+  "seconds": 0.3,
   "rows": [
     {
       "id": "E1",
@@ -268,6 +268,26 @@
       },
       "outcome": "TP",
       "seconds": 0.0
+    },
+    {
+      "id": "E13",
+      "class": "lookup",
+      "planted": [
+        "P11"
+      ],
+      "question": "How many unplanned absence days did Richmond Night A have, and how does that compare with comparable teams?",
+      "status": "refused",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": false,
+      "checks": {
+        "status": false,
+        "evidence_kinds": false,
+        "matches_board": false
+      },
+      "outcome": "fail",
+      "seconds": 0.2
     }
   ]
 }

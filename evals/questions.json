@@ -64,5 +64,10 @@
     "id": "E12", "class": "positive", "planted": ["P1", "P3"],
     "question": "Why did the Richmond Night A team's scores drop?",
     "expect": {"status": "ok", "verdict": "supported", "obstacle_matches": "handoff|hand-off|hand off|shift change", "brief_checks_pass": true, "plan_actions": [3, 4]}
+  },
+  {
+    "id": "E13", "class": "lookup", "planted": ["P11"],
+    "question": "How many unplanned absence days did Richmond Night A have, and how does that compare with comparable teams?",
+    "expect": {"status": "ok", "evidence_kinds": ["metric"], "matches_board": {"site_id": 1, "team_id": 4, "kpi": "absence_days", "as_of": "2026-09-15"}}
   }
 ]
