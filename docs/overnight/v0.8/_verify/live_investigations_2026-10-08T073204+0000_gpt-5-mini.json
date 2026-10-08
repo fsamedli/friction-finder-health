@@ -1,0 +1,602 @@
+[
+ {
+  "question": "Why is Night A flagged?",
+  "generated_at": "2026-10-08T07:32:04+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": null,
+  "budget": {
+   "tool_calls": 6,
+   "max_tool_calls": 6,
+   "model_requests": 7,
+   "max_model_requests": 8,
+   "seconds": 25.7,
+   "max_seconds": 60.0,
+   "stopped": "tool-call budget reached"
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 8,
+   "numbers_total": 8,
+   "rejected": []
+  },
+  "evidence_state": "mixed",
+  "written_by": "model",
+  "conclusion": "Richmond Night A had 81 late departures in Jun-Aug 2026 versus 51.4 expected. Shift handoff is the best-supported explanation (association), supported by Wave 2 comments.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+    "mode": "model",
+    "seconds": 3.3
+   },
+   {
+    "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+    "detail": "1 evidence item: M1",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "query_metric"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked signal_check",
+    "mode": "model",
+    "seconds": 1.9
+   },
+   {
+    "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+    "detail": "3 evidence items: G2, G3, G4",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "signal_check"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked retrieve_passages {'query': 'Richmond Night A materials equipment q02 comments Jun-Aug 2026 \"Materials and equipment to do my work right\"'}",
+    "mode": "model",
+    "seconds": 2.6
+   },
+   {
+    "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
+    "detail": "5 evidence items: Y5, C6, C7, C8, C9",
+    "mode": "code",
+    "seconds": 1.2,
+    "tool": "retrieve_passages"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
+    "mode": "model",
+    "seconds": 3.1
+   },
+   {
+    "step": "Found who owns shift handoff procedure at Richmond",
+    "detail": "1 evidence item: W10",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "owner_lookup"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked compare_teams {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 3.1
+   },
+   {
+    "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+    "detail": "1 evidence item: K11",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "compare_teams"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked answer_now",
+    "mode": "model",
+    "seconds": 2.9
+   },
+   {
+    "step": "Built the month-by-month timeline for Richmond Night A",
+    "detail": "1 evidence item: T12",
+    "mode": "code",
+    "seconds": 0.1,
+    "tool": "timeline"
+   },
+   {
+    "step": "Write the answer in plain words",
+    "detail": "AI-written, then checked by code: passed",
+    "mode": "model",
+    "seconds": 7.0
+   }
+  ]
+ },
+ {
+  "question": "Could staffing explain this?",
+  "generated_at": "2026-10-08T07:32:26+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": null,
+  "budget": {
+   "tool_calls": 6,
+   "max_tool_calls": 6,
+   "model_requests": 7,
+   "max_model_requests": 8,
+   "seconds": 21.4,
+   "max_seconds": 60.0,
+   "stopped": null
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 16,
+   "numbers_total": 16,
+   "rejected": []
+  },
+  "evidence_state": "insufficient",
+  "written_by": "model",
+  "conclusion": "Staffing shortfall is not a supported explanation: staffing dipped below 90% in 2026-03, outside the flagged Jun-Aug 2026 window; late departures in Jun-Aug 2026 were 81 (19.3 per 10 people per month), above the predicted 51.4.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked timeline {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 1.7
+   },
+   {
+    "step": "Built the month-by-month timeline for Richmond Night A",
+    "detail": "1 evidence item: T13",
+    "mode": "code",
+    "seconds": 0.1,
+    "tool": "timeline"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked compare_teams {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 2.1
+   },
+   {
+    "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+    "detail": "1 evidence item: K14",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "compare_teams"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked hour_bands",
+    "mode": "model",
+    "seconds": 2.3
+   },
+   {
+    "step": "Checked late departures by hour band on Richmond night shift",
+    "detail": "1 evidence item: H15",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "hour_bands"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+    "mode": "model",
+    "seconds": 2.8
+   },
+   {
+    "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+    "detail": "1 evidence item: M16",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "query_metric"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked retrieve_passages {'query': \"Richmond Night A staffing fall late departures staffing levels comments procedures staffing change 'Richmond Night' 'staffing' 'late departures' 'shift' 'headcount' 'Jun 2026' 'Jul 2026' 'Aug 2026'\"}",
+    "mode": "model",
+    "seconds": 3.0
+   },
+   {
+    "step": "Read 4 employee comments and 2 procedures for Richmond Night A (embeddings search)",
+    "detail": "7 evidence items: Y17, D18, D19, C20, C21, C22, C23",
+    "mode": "code",
+    "seconds": 1.2,
+    "tool": "retrieve_passages"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked precedent {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 2.4
+   },
+   {
+    "step": "Looked for the same problem on other teams: 2 found",
+    "detail": "1 evidence item: R24",
+    "mode": "code",
+    "seconds": 0.6,
+    "tool": "precedent"
+   },
+   {
+    "step": "Write the answer in plain words",
+    "detail": "AI-written, then checked by code: passed",
+    "mode": "model",
+    "seconds": 5.0
+   }
+  ]
+ },
+ {
+  "question": "Compare it with the other night shifts",
+  "generated_at": "2026-10-08T07:32:45+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": null,
+  "budget": {
+   "tool_calls": 4,
+   "max_tool_calls": 6,
+   "model_requests": 6,
+   "max_model_requests": 8,
+   "seconds": 19.0,
+   "max_seconds": 60.0,
+   "stopped": null
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 5,
+   "numbers_total": 5,
+   "rejected": []
+  },
+  "evidence_state": "supported",
+  "written_by": "model",
+  "conclusion": "Richmond Night A had 19.3 late departures per 10 people per month in Jun-Aug 2026. Five comparable night teams ranged 9.8 to 15.5, so Richmond Night A is higher than every comparable team.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked compare_teams {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 1.7
+   },
+   {
+    "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+    "detail": "1 evidence item: K1",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "compare_teams"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked timeline {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 3.4
+   },
+   {
+    "step": "Built the month-by-month timeline for Richmond Night A",
+    "detail": "1 evidence item: T2",
+    "mode": "code",
+    "seconds": 0.1,
+    "tool": "timeline"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'shift'}",
+    "mode": "model",
+    "seconds": 2.4
+   },
+   {
+    "step": "Counted late departures for Richmond night shift (teams of 4 or more people) in Jun-Aug 2026",
+    "detail": "1 evidence item: M3",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "query_metric"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked precedent {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 2.5
+   },
+   {
+    "step": "Looked for the same problem on other teams: 2 found",
+    "detail": "1 evidence item: R4",
+    "mode": "code",
+    "seconds": 0.5,
+    "tool": "precedent"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked answer_now",
+    "mode": "model",
+    "seconds": 4.1
+   },
+   {
+    "step": "Write the answer in plain words",
+    "detail": "AI-written, then checked by code: passed",
+    "mode": "model",
+    "seconds": 3.9
+   }
+  ]
+ },
+ {
+  "question": "When did it start?",
+  "generated_at": "2026-10-08T07:33:11+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": "Model unavailable for the wording (RateLimitError: Error code: 429 - {'error': {'message': 'Your requests to gpt-5-mini for gpt-5-mini ); templated text shown.",
+  "budget": {
+   "tool_calls": 5,
+   "max_tool_calls": 6,
+   "model_requests": 6,
+   "max_model_requests": 8,
+   "seconds": 26.3,
+   "max_seconds": 60.0,
+   "stopped": null
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 22,
+   "numbers_total": 22,
+   "rejected": []
+  },
+  "evidence_state": "supported",
+  "written_by": null,
+  "conclusion": "Late departures on Richmond Night A were above every comparable team in 4 of 8 months (Feb 2026, May 2026, Jun 2026, Jul 2026); not above the range in the latest month. Survey: wave 1 closed in Mar 2026 and wave 2 in Sep 2026; the item change falls between them. Staffing on Richmond night shift fell below 90% of scheduled in: 2026-03. Plan: starts 2026-09-21, review 2026-11-30.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked timeline {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 2.5
+   },
+   {
+    "step": "Built the month-by-month timeline for Richmond Night A",
+    "detail": "1 evidence item: T5",
+    "mode": "code",
+    "seconds": 0.1,
+    "tool": "timeline"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked signal_check",
+    "mode": "model",
+    "seconds": 2.6
+   },
+   {
+    "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+    "detail": "3 evidence items: G6, G7, G8",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "signal_check"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked retrieve_passages {'query': \"Richmond Night A q02 'Materials and equipment to do my work right' decline when did it start comments timing 'materials' 'equipment' 'broken' 'start' 'since' 'when' 'wave 1' 'wave 2' Richmond Night A late departures start timing\"}",
+    "mode": "model",
+    "seconds": 4.5
+   },
+   {
+    "step": "Read 4 employee comments and 0 procedures for Richmond Night A (embeddings search)",
+    "detail": "5 evidence items: Y9, C10, C11, C12, C13",
+    "mode": "code",
+    "seconds": 0.9,
+    "tool": "retrieve_passages"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked compare_teams {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 6.3
+   },
+   {
+    "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+    "detail": "1 evidence item: K14",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "compare_teams"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked answer_now",
+    "mode": "model",
+    "seconds": 7.8
+   },
+   {
+    "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+    "detail": "1 evidence item: M15",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "query_metric"
+   }
+  ]
+ },
+ {
+  "question": "Is this normal for teams like ours?",
+  "generated_at": "2026-10-08T07:33:41+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": null,
+  "budget": {
+   "tool_calls": 4,
+   "max_tool_calls": 6,
+   "model_requests": 7,
+   "max_model_requests": 8,
+   "seconds": 29.9,
+   "max_seconds": 60.0,
+   "stopped": null
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 12,
+   "numbers_total": 12,
+   "rejected": []
+  },
+  "evidence_state": "supported",
+  "written_by": "model",
+  "conclusion": "For teams like Richmond Night A (night shift, 4+ people), Jun-Aug 2026 median late departures were 11.0 per 10 people per month (range 9.8 to 15.5). Richmond Night A had 19.3 per 10 people per month.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked compare_teams {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 4.3
+   },
+   {
+    "step": "Compared Richmond Night A with 5 comparable teams on late departures",
+    "detail": "1 evidence item: K1",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "compare_teams"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked benchmark {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 5.7
+   },
+   {
+    "step": "Built the norm for teams like Richmond Night A from 5 comparable teams",
+    "detail": "3 evidence items: B2, B3, B4",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "benchmark"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked query_metric {'kpi': 'late_departures', 'scope': 'team'}",
+    "mode": "model",
+    "seconds": 5.2
+   },
+   {
+    "step": "Counted late departures for Richmond Night A in Jun-Aug 2026",
+    "detail": "1 evidence item: M5",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "query_metric"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked precedent {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 5.8
+   },
+   {
+    "step": "Looked for the same problem on other teams: 2 found",
+    "detail": "1 evidence item: R6",
+    "mode": "code",
+    "seconds": 0.5,
+    "tool": "precedent"
+   },
+   {
+    "step": "Write the answer in plain words",
+    "detail": "AI-written, then checked by code: passed",
+    "mode": "model",
+    "seconds": 7.9
+   }
+  ]
+ },
+ {
+  "question": "What is missing?",
+  "generated_at": "2026-10-08T07:34:23+00:00",
+  "model": "gpt-5-mini",
+  "mode": "model",
+  "selection": "function_calling",
+  "fallback": null,
+  "budget": {
+   "tool_calls": 5,
+   "max_tool_calls": 6,
+   "model_requests": 7,
+   "max_model_requests": 8,
+   "seconds": 41.7,
+   "max_seconds": 60.0,
+   "stopped": null
+  },
+  "check": {
+   "passed": true,
+   "notes": [],
+   "numbers_checked": 7,
+   "numbers_total": 7,
+   "rejected": []
+  },
+  "evidence_state": "supported",
+  "written_by": "model",
+  "conclusion": "Shift handoff is the leading supported explanation. Wave 2 shows 4 shift-handoff comments from Richmond Night A, and departures in the 06-07 hour rose from 7.4% to 17.8% in Jun-Sep 2026, an association with the handoff issue.",
+  "trace": [
+   {
+    "step": "Choose the next check",
+    "detail": "picked retrieve_passages {'query': 'team 4 q02 late_departures site team 4 item q02 comments procedures related to late departures and handoff scheduling as of 2026-09-15'}",
+    "mode": "model",
+    "seconds": 3.4
+   },
+   {
+    "step": "Read 4 employee comments and 3 procedures for Richmond Night A (embeddings search)",
+    "detail": "8 evidence items: Y7, D8, D9, D10, C11, C12, C13, C14",
+    "mode": "code",
+    "seconds": 1.1,
+    "tool": "retrieve_passages"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked owner_lookup {'process': 'Shift handoff procedure'}",
+    "mode": "model",
+    "seconds": 3.9
+   },
+   {
+    "step": "Found who owns shift handoff procedure at Richmond",
+    "detail": "1 evidence item: W15",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "owner_lookup"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked signal_check",
+    "mode": "model",
+    "seconds": 7.1
+   },
+   {
+    "step": "Checked whether a change in who responded explains the survey drop on Richmond Night A",
+    "detail": "3 evidence items: G16, G17, G18",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "signal_check"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked hour_bands",
+    "mode": "model",
+    "seconds": 6.3
+   },
+   {
+    "step": "Checked late departures by hour band on Richmond night shift",
+    "detail": "1 evidence item: H19",
+    "mode": "code",
+    "seconds": 0.0,
+    "tool": "hour_bands"
+   },
+   {
+    "step": "Choose the next check",
+    "detail": "picked timeline {'kpi': 'late_departures'}",
+    "mode": "model",
+    "seconds": 9.1
+   },
+   {
+    "step": "Built the month-by-month timeline for Richmond Night A",
+    "detail": "1 evidence item: T20",
+    "mode": "code",
+    "seconds": 0.1,
+    "tool": "timeline"
+   },
+   {
+    "step": "Write the answer in plain words",
+    "detail": "AI-written, then checked by code: passed",
+    "mode": "model",
+    "seconds": 10.2
+   }
+  ]
+ }
+]

@@ -548,7 +548,7 @@ def investigate(question: str, context: dict | None = None, conversation_id: str
             return _finish(inv, conv, run)
         if not R.team_info(ctx["team_id"])["reportable"]:
             t = R.team_info(ctx["team_id"])
-            return _finish(_decline(inv, f"{t['label']} has fewer than 4 people, so no team figures are shown or compared; it is counted in no team or site figure here either.", run, "declined: team under 4 people"), conv, run)
+            return _finish(_decline(inv, f"{t['label']} has fewer than 4 people, so no team figures are shown or compared, and its operating counts are left out of every team, shift and site figure the investigation computes.", run, "declined: team under 4 people"), conv, run)
         _defaults(ctx)
         conv.context = {k: ctx.get(k) for k in ("site_id", "team_id", "as_of", "kpi", "item")}
         inv["function"] = {"id": fid, "label": LABEL.get(fid, "Operating metric")}

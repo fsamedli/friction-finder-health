@@ -5,11 +5,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${CHECK_PORT:-8010}"
+if curl -s -m 2 -o /dev/null "http://127.0.0.1:$PORT/" ; then echo "port $PORT is already in use (a stale server?); stop it or set CHECK_PORT" >&2; exit 2; fi
 SCRATCH="$(mktemp -d)"
 (cd web && npm run build >/dev/null)
 env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= FF_CACHE_DIR="$SCRATCH/cache" FF_APPROVALS_PATH="$SCRATCH/approvals.jsonl" \
   .venv/bin/uvicorn api.main:app --port "$PORT" --log-level warning &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null; rm -rf "$SCRATCH"' EXIT
-for _ in $(seq 1 40); do curl -sf "http://127.0.0.1:$PORT/api/meta" >/dev/null && break; sleep 0.5; done
+for _ in $(seq 1 40); do curl -sf -m 2 "http://127.0.0.1:$PORT/api/meta" >/dev/null && break; sleep 0.5; done
 node web/scripts/demo_check.mjs "http://127.0.0.1:$PORT"

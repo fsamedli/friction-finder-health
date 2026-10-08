@@ -43,11 +43,11 @@ export function SpecChart({ spec }: { spec: ChartSpec }) {
       <div className="mt-2 flex flex-wrap gap-3 text-[11.5px] text-fg-mute">
         {spec.series.map((s) => <span key={s.key} className="flex items-center gap-1.5"><span className={cx('h-2 w-3 rounded-sm', color(s.role, false))} />{s.label}</span>)}
       </div>
-      <ul className="mt-2 space-y-1.5" role="img" aria-label={`${spec.title}, ${spec.unit}: ${spec.rows.map((r) => `${r[spec.x]} ${spec.series.map((s) => `${s.label} ${fmt(r[s.key])}`).join(', ')}`).join('; ')}`}>
+      <div className="mt-2 space-y-1.5" role="img" aria-label={`${spec.title}, ${spec.unit}: ${spec.rows.map((r) => `${r[spec.x]} ${spec.series.map((s) => `${s.label} ${fmt(r[s.key])}`).join(', ')}`).join('; ')}`}>
         {spec.rows.map((r, i) => {
           const hot = spec.highlight != null && String(r[spec.x]) === String(spec.highlight)
           return (
-            <li key={i} className="grid grid-cols-[minmax(0,120px)_1fr] items-center gap-3 text-[12.5px]">
+            <div key={i} className="grid grid-cols-[minmax(0,120px)_1fr] items-center gap-3 text-[12.5px]">
               <span className={cx('truncate', hot ? 'font-semibold text-fg' : 'text-fg-soft')} title={String(r[spec.x])}>{String(r[spec.x])}</span>
               <span className="space-y-0.5">
                 {spec.series.map((s) => {
@@ -60,10 +60,10 @@ export function SpecChart({ spec }: { spec: ChartSpec }) {
                   )
                 })}
               </span>
-            </li>
+            </div>
           )
         })}
-      </ul>
+      </div>
       {caption}
     </figure>
   )

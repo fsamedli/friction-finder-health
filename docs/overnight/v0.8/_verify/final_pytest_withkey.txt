@@ -1,0 +1,18 @@
+$ .venv/bin/python -m pytest tests -q (GW key present, model calls live)
+# 2026-10-08 12:04:02 +0400 on 660fb07
+.venv/lib/python3.14/site-packages/fastapi/applications.py:4681
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_agent.py::test_main_question_is_supported_and_owned - Asser...
+FAILED tests/test_agent.py::test_blip_is_insufficient_no_owner - assert 'no t...
+FAILED tests/test_agent.py::test_chat_fallback_is_grounded - AssertionError: ...
+3 failed, 124 passed, 3 warnings in 132.40s (0:02:12)
+exit=

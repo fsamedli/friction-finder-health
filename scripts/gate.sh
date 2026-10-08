@@ -30,7 +30,7 @@ run demo_check ./scripts/demo_check.sh
 PORT="${A11Y_PORT:-8011}"; SCRATCH="$(mktemp -d)"
 "${NOKEY[@]}" FF_CACHE_DIR="$SCRATCH/cache" FF_APPROVALS_PATH="$SCRATCH/approvals.jsonl" .venv/bin/uvicorn api.main:app --port "$PORT" --log-level warning >/dev/null 2>&1 &
 SRV=$!
-for _ in $(seq 1 40); do curl -sf "http://127.0.0.1:$PORT/api/meta" >/dev/null && break; sleep 0.5; done
+for _ in $(seq 1 40); do curl -sf -m 2 "http://127.0.0.1:$PORT/api/meta" >/dev/null && break; sleep 0.5; done
 run a11y bash -c "node web/scripts/a11y.mjs http://127.0.0.1:$PORT && node -e \"\" "
 kill $SRV 2>/dev/null; rm -rf "$SCRATCH"
 grep -q '^0 rules violated' "$OUT/${TAG}_a11y.txt" || { echo "a11y: violations found"; fail=1; }
