@@ -1,0 +1,13 @@
+.venv
+.env
+.git
+web/node_modules
+web/dist
+data/generated
+data/cache
+__pycache__
+*.pyc
+approvals.jsonl
+feedback.jsonl
+study.jsonl
+docs/overnight

@@ -1,0 +1,17 @@
+# Render Blueprint: free web service built from the Dockerfile.
+# Deploy: https://render.com/deploy?repo=<this repo's GitHub URL>
+services:
+  - type: web
+    name: friction-finder-health
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/meta
+    envVars:
+      - key: OPENAI_API_KEY        # GW-provided Azure OpenAI key; entered in the Render dashboard, never committed
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://gw-sb-04.openai.azure.com/
+      - key: OPENAI_MODEL
+        value: gpt-5-mini
+      - key: OPENAI_EMBED_MODEL
+        value: text-embedding-3-small
