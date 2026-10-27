@@ -95,6 +95,18 @@ for (const width of [1440, 390]) {
   await page.goto(base + '/plans', { waitUntil: 'networkidle' })
   await see('Action plans', ['Due reviews', 'Missing follow-ups', 'Inconclusive outcomes', 'Operational measure', 'Success criterion', 'Approved', 'days to review'])
   await noOverflow('Action plans')
+  // Oct 27 round (P14): the plan that needed revision shown next to the one that worked (Prof. Hall, Oct 21)
+  await see('Action plans · revised', ['Revised', 'Superseded'])
+  // every page.goto re-runs the init script, so the clock is Sept 15 again here: plan 2 is "Not ready" until the
+  // in-app fast-forward, exactly as the Med-Surg Night plan was above
+  await page.goto(base + '/review/plan-pine-hollow-med-surg-day-2', { waitUntil: 'networkidle' })
+  await see('Review · revised plan', ['Revised plan', 'first plan', 'came back inconclusive', "See the first plan's review", 'Not ready'])
+  await click('Review · revised plan', 'Fast-forward to the review date')
+  await see('Review · revised plan at review', ['Improved', 'Unplanned overtime shifts', 'Measured, this unit, per year'])
+  await noOverflow('Review · revised plan')
+  await page.goto(base + '/review/plan-pine-hollow-med-surg-day-1', { waitUntil: 'networkidle' })
+  await see('Review · first plan', ['Inconclusive', 'Superseded', 'See the revised plan'])
+  await noOverflow('Review · first plan')
 
   await page.goto(base + '/value', { waitUntil: 'networkidle' })
   // the headline dollar figure depends on the hospital unit costs Agent A sources; labels are asserted, the figure is not

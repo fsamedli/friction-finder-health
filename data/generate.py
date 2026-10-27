@@ -84,6 +84,26 @@ LAST = ["Alvarez", "Brooks", "Chen", "Diallo", "Evans", "Farah", "Garcia", "Hugh
         "Jensen", "Kim", "Lopez", "Mensah", "Novak", "Okafor", "Patel", "Quinn", "Reyes",
         "Singh", "Turner", "Usman", "Vega", "Walsh", "Young"]
 
+# Oct 27, 2026: build_ownership() restarts the same seeded stream build_teams() uses, so the nine site owners were the first
+# nine unit managers' names (Priya Singh was the Lanford pharmacy owner AND a unit manager; Ravi Singh appeared four times;
+# the demo persona Priya Singh assigned a task to Priya Singh and signed as Priya Quinn). These fixed renames are applied
+# AFTER the draws, so every RNG call and every other file stay byte-identical. The Lanford pharmacy owner keeps her name:
+# the eval results and the seeded plan cite "Priya Singh, Pharmacy Operations Manager".
+TEAM_RENAMES = {1: "Sofia Alvarez", 4: "Hana Mensah", 8: "Omar Lopez", 17: "Mei Tanaka"}   # team_id -> manager_name (17: a second Priya in the revised-plan story)
+OWNER_RENAMES = {                                                                   # (site_id, owner_role) -> owner_name
+    (1, "Nurse Manager, Med-Surg"): "Tom Evans", (1, "Clinical Engineering Lead"): "Kwame Hughes",
+    (2, "Pharmacy Operations Manager"): "Ben Jensen", (2, "Nurse Manager, Med-Surg"): "Ines Reyes", (2, "Clinical Engineering Lead"): "Noah Garcia",
+    (3, "Pharmacy Operations Manager"): "Rosa Delgado", (3, "Nurse Manager, Med-Surg"): "Felix Adeyemi", (3, "Clinical Engineering Lead"): "Mira Kowalski",
+}
+
+
+def check_unique_names(teams: pd.DataFrame, ownership: pd.DataFrame) -> None:
+    """No two people in the unit list and the ownership directory share a full name (Oct 27 fix)."""
+    names = list(teams.manager_name) + list(ownership.owner_name)
+    dupes = sorted({n for n in names if names.count(n) > 1})
+    if dupes:
+        raise SystemExit(f"duplicate synthetic names, extend TEAM_RENAMES / OWNER_RENAMES: {dupes}")
+
 # Same number of themes and of lines per theme as v0.8, so the comment RNG stream is unchanged.
 GENERIC_COMMENTS = {
     "workload": [
@@ -153,6 +173,7 @@ def build_teams():
     teams = pd.DataFrame(rows)
     r = rng()
     teams["manager_name"] = [f"{r.choice(FIRST)} {r.choice(LAST)}" for _ in range(len(teams))]
+    teams["manager_name"] = [TEAM_RENAMES.get(int(t), n) for t, n in zip(teams.team_id, teams.manager_name)]  # after the draws
     return teams
 
 
@@ -327,6 +348,8 @@ def build_ownership(teams: pd.DataFrame):
         {"process_name": "Nurse staffing and float policy", "site_id": 0, "site_name": "ALL",
          "owner_role": "Chief Nursing Officer", "owner_name": "Marcus Okafor"},
     ]
+    for row in rows:  # after the draws, see OWNER_RENAMES
+        row["owner_name"] = OWNER_RENAMES.get((int(row["site_id"]), row["owner_role"]), row["owner_name"])
     return pd.DataFrame(rows)
 
 
@@ -434,6 +457,7 @@ def write_data_spec(frames: dict, truth: dict):
               "| P11 | Lanford Med-Surg Night: late doses, absences, quits elevated Jun-Sep 2026, recover Oct-Nov | multipliers 2.0, 1.35, 1.6 | flagged at detect, 'worked' at review |",
               "| P12 | Lower Q02 goes with more late doses and overtime shifts; lower grand mean with more absences and quits | log-rate elasticities | association found |",
               "| P13 | Injuries independent of engagement | constant base rate | 'no association detected' |",
+              "| P14 | Pine Hollow Med-Surg Day: unplanned overtime about 3.5x Feb-Aug 2026; plan 1 (June 21, float RN) misses the obstacle, plan 2 (Sept 1, IV pump par level) is followed by the base rate | excess drawn from a second generator and added, so no other team-month changes | plan 1 'inconclusive' at Aug 31, plan 2 'worked' at Nov 30; shown as the revised-plan case |",
               "", "## Checks", "",
               "- `tests/test_data.py`: every planted pattern is present at the stated strength; no comment comes from a suppressed team-wave; every employee id is unique.",
               "- `tests/test_agent.py`: suppression in SQL, numbers match the truth file, refusals, brief checks, red-team verdicts.",
@@ -559,6 +583,7 @@ def main():
     ops = build_ops(teams)
     staffing = build_staffing(teams)
     ownership = build_ownership(teams)
+    check_unique_names(teams, ownership)
     sites = pd.DataFrame([{"site_id": i, "site_name": n} for i, n in SITES])
     waves = pd.DataFrame([{"wave_id": i, "wave_name": n, "close_date": d.isoformat()} for i, n, d in WAVES])
     items = pd.DataFrame([{"item": c, "label": l} for c, l in ITEMS])

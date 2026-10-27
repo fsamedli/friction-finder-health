@@ -149,6 +149,26 @@ export default function Trust() {
           <Card>
             <CardHeader title="An AI-assisted workflow" sub="The model chooses which of a fixed set of read-only tools to run next, under a budget; code computes every number; a person approves every action. Nothing is done outside the app."
               right={<><Badge tone="brand">code computes</Badge><Badge tone="ai">AI chooses checks & writes</Badge><Badge tone="act">person decides</Badge><Badge tone="neutral">guard</Badge></>} />
+            <p className="text-[14px] leading-relaxed text-fg-soft">
+              <b className="text-fg">Which part is AI, and where does the model decide?</b> Friction Finder is an AI-assisted workflow, not an autonomous system.
+              Code detects (Poisson excess vs comparable units), adjusts (tenure-mix shift-share), links (OLS, clustered by team) and proves
+              (difference-in-differences with a placebo). The model makes two kinds of decisions, both bounded: in the investigation it chooses
+              which of eleven read-only checks to run next (function calling, budget of 6 checks, 8 requests, 60 seconds), and it writes the brief,
+              the plan draft and the owner notices from the numbers code handed it; a code check rejects any sentence whose numbers, team or
+              period are not in the cited evidence. It never writes SQL, never sets a verdict, never sends anything. The nurse manager edits and
+              approves; after approval code assigns owners, schedules the review and drafts the notices, and the manager sends them.
+            </p>
+            <div className="mt-4 mb-6 overflow-x-auto scroll-thin">
+              <table className="w-full min-w-[640px] text-[13px]">
+                <caption className="sr-only">Who decides what in Friction Finder</caption>
+                <thead><tr className="border-b border-border text-left text-[12px] text-fg-mute"><th scope="col" className="py-2 pr-3 font-medium">Who decides</th><th scope="col" className="py-2 pr-3 font-medium">What</th><th scope="col" className="py-2 font-medium">Where</th></tr></thead>
+                <tbody>
+                  <tr className="border-b border-border align-top"><td className="py-2.5 pr-3 font-medium"><Badge tone="brand">Code decides</Badge></td><td className="py-2.5 pr-3 text-fg-soft">Which team is flagged, whether a change is beyond normal variation, the evidence state of every answer, the review verdict and its interval, the placebo, the three value tiers, the owners assigned, the review date and the KPI watch at approval.</td><td className="py-2.5 text-fg-soft"><code>app/impact.py</code>, <code>app/metrics.py</code>, <code>app/investigate.py</code> (states, self-check), <code>api/main.py</code> (execution record)</td></tr>
+                  <tr className="border-b border-border align-top"><td className="py-2.5 pr-3 font-medium"><Badge tone="ai">The model decides</Badge></td><td className="py-2.5 pr-3 text-fg-soft">Which read-only check runs next for a manager's question (from a fixed registry, under the budget), and the wording of the brief, the plan draft, a regenerated action list and the owner notices, all from the numbers it is handed and all checked by code before they are shown.</td><td className="py-2.5 text-fg-soft"><code>app/investigate.py</code> (<code>_model_loop</code>, <code>_model_write</code>), <code>app/agent.py</code> (<code>write_brief</code>, <code>regenerate_actions</code>, <code>draft_notices_llm</code>)</td></tr>
+                  <tr className="align-top"><td className="py-2.5 pr-3 font-medium"><Badge tone="act">The person decides</Badge></td><td className="py-2.5 pr-3 text-fg-soft">Whether to act, what the plan says, who owns each task and by when, when a task is done, whether to send a notice (nothing is sent by the prototype), and whether to keep, change or stop the routine at the review date.</td><td className="py-2.5 text-fg-soft">Investigate › What do I do?, the checklist at <code>/plans/&#123;id&#125;</code>, Review; every decision is logged with the time in <code>approvals.jsonl</code></td></tr>
+                </tbody>
+              </table>
+            </div>
             <div className="overflow-x-auto scroll-thin"><Architecture /></div>
             <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 text-[13px]">
               <div className="rounded-lg bg-canvas p-3"><b>What the AI does</b><p className="mt-1 text-fg-soft">Chooses which read-only check runs next for a manager's question, within a budget, and writes the answer from the tool results it is handed. Model: {meta?.model ?? 'none configured (rules mode)'}.</p></div>

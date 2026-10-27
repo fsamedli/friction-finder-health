@@ -479,10 +479,19 @@ def value_case(costs: dict, headcount: int = 300) -> dict:
 # (docs/specs/2026-10-27-prof-hall-round.md). Nothing here changes a verdict or the placebo.
 GALLUP_TURNOVER_GAP = {
     "low": 0.21, "high": 0.51,
+    # Gallup splits the finding by the organization's own turnover: above 40% annualized ("high-turnover") 21%, 40% or below
+    # ("low-turnover") 51%. Staff RN turnover is 17.6% (NSI 2026), so the 51% figure is the one that applies to a hospital.
+    "applies": 0.51,
+    # Oct 27 polish: the low bound assumes the unit climbs from the bottom quartile only to the median, taken as half the
+    # top-vs-bottom gap (a linear assumption); the high bound assumes it reaches the top quartile (the full gap).
+    "median_share": 0.5,
     "source": "Gallup, Q12 Meta-Analysis, 11th edition (2024): business units in the top engagement quartile have 21% "
-              "(high-turnover organizations) to 51% (low-turnover organizations) lower turnover than units in the bottom "
-              "quartile (gallup.com/workplace/321725/q12-meta-analysis-report.aspx). Correlational, across 183,806 units.",
+              "(organizations above 40% annualized turnover) to 51% (organizations at 40% or below) lower turnover than units in "
+              "the bottom quartile (gallup.com/workplace/321725/q12-meta-analysis-report.aspx). Correlational, across 183,806 "
+              "units. Staff RN turnover is 17.6% (NSI 2026), so the 51% figure applies here.",
 }
+KPI_SINGULAR = {"late_doses": "late medication dose", "absence_days": "unplanned absence day", "quits": "voluntary separation",
+                "injuries": "days-away staff injury", "overtime_shifts": "unplanned overtime shift"}   # for "per ..." copy
 HOSPITAL_HEADCOUNT = 300          # the Business case page's standing scenario: nursing and support staff per hospital
 PROJECTION_SANE_QUITS = (0.3, 3.0)  # avoided quits a year that are plausible for one unit; outside this the UI says so
 ILLUSTRATIVE_REASON = ("Illustrative: Lanford Health is fictional and the months after the plan started are synthetic, "
@@ -493,6 +502,17 @@ def _unit_cost_row(costs: dict, kpi: str) -> dict:
     c = costs.get(KPI_COST_KEY[kpi]) or {}
     return {"value": float(c.get("value") or 0), "kind": c.get("kind", "none"), "label": c.get("label", KPI_COST_KEY[kpi]),
             "source": c.get("source", ""), "unit": c.get("unit", "")}
+
+
+def _magnitude(unit_cost: float) -> str:
+    """'tens of dollars' / 'a few hundred dollars' / '$60,090' for the plain-words sentence under the measured tier."""
+    if not unit_cost:
+        return "no unit cost"
+    if unit_cost < 100:
+        return "tens of dollars"
+    if unit_cost < 1000:
+        return "a few hundred dollars"
+    return f"${unit_cost:,.0f}"
 
 
 def _quartile_of(x: float | None, quartiles: list[dict]) -> int | None:
@@ -511,8 +531,9 @@ def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | Non
 
     measured   the established difference-in-differences effects only (95% interval excludes zero), annualised at four
                quarters, at the unit cost shown with its provenance. For a 14-person unit this is small, and says so.
-    projected  avoided turnover for this unit if it moves from the bottom to the top quartile of unit engagement:
-               headcount x sector turnover (NSI) x Gallup's published quartile gap (21% to 51%) x cost per RN separation.
+    projected  avoided turnover for this unit if it climbs from the bottom quartile of unit engagement to the median (low,
+               half the gap) or the top quartile (high, the full gap): headcount x sector turnover (NSI) x Gallup's published
+               quartile gap for organizations at or below 40% turnover (51%) x cost per RN separation.
                A projection from published, correlational evidence; the unit's own follow-up pulse is not in the demo data.
     hospital   the Business case scenario for a hospital of HOSPITAL_HEADCOUNT staff (value_case), the deck's number.
     """
@@ -527,6 +548,7 @@ def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | Non
     team_label = f'{sites.loc[int(team["site_id"]), "site_name"]} {team["team_name"]}'
 
     # tier 1: measured
+    main_cost = _unit_cost_row(costs, main["kpi"])
     components, excluded = [], []
     for r in results:
         if r.get("status") != "ok":
@@ -552,21 +574,23 @@ def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | Non
     for c in components:
         measured_inputs.append({"label": f'{c["kpi_label"]} avoided per quarter', "value": c["events_avoided_per_quarter"],
                                 "source": f'Difference-in-differences vs {c["comparison_teams"]} comparable teams; 95% interval excludes zero'})
-        measured_inputs.append({"label": f'Cost per {c["kpi_label"].lower().rstrip("s")}', "value": c["unit_cost"], "kind": c["unit_kind"], "source": c["unit_source"]})
+        measured_inputs.append({"label": f'Cost per {KPI_SINGULAR.get(c["kpi"], c["kpi_label"].lower())}', "value": c["unit_cost"], "kind": c["unit_kind"], "source": c["unit_source"]})
     measured_inputs.append({"label": "Time period", "value": "12 months", "source": "Assumption: the two-month effect holds for four quarters"})
     measured_inputs.append({"label": "Unit size", "value": headcount, "source": f"{team_label} headcount (teams.csv)"})
     measured = {"id": "measured", "kind": "measured", "label": "Measured, this unit, per year", "dollars": measured_total,
                 "low": None, "high": None, "components": components, "excluded": excluded, "inputs": measured_inputs,
                 "sentence": (f'{", ".join(c["kpi_label"].lower() for c in components)}: the established effect, annualised, at the unit cost shown.'
                              if components else "No established effect yet: every 95% interval includes zero, so nothing is counted here."),
-                "small_because": f"A {headcount}-person unit at tens of dollars per late dose stays small by construction; the retention value below is where the money is."}
+                "small_because": f"A {headcount}-person unit at {_magnitude(main_cost['value'])} per {KPI_SINGULAR.get(main['kpi'], main['kpi_label'].lower())} "
+                                 "stays small by construction; the retention value below is where the money is."}
 
     # tier 2: projected retention value for this unit
     item = plan.get("item") or "grand"
     item_label = item_labels().get(item, item) if item != "grand" else "engagement (grand mean)"
     quit_cost = _unit_cost_row(costs, "quits")
     quits_per_year = headcount * TURNOVER_RATE["value"]
-    lo_q, hi_q = quits_per_year * GALLUP_TURNOVER_GAP["low"], quits_per_year * GALLUP_TURNOVER_GAP["high"]
+    gap = GALLUP_TURNOVER_GAP["applies"]
+    lo_q, hi_q = quits_per_year * gap * GALLUP_TURNOVER_GAP["median_share"], quits_per_year * gap   # to the median; to the top quartile
     tw = _data()[4]
     w1 = float(tw.loc[(team_id, 1), item]) if (team_id, 1) in tw.index and int(tw.loc[(team_id, 1), "n"]) >= MIN_N else None
     w2 = float(tw.loc[(team_id, 2), item]) if (team_id, 2) in tw.index and int(tw.loc[(team_id, 2), "n"]) >= MIN_N else None
@@ -583,7 +607,9 @@ def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | Non
                  "dollars": None, "low": int(round(lo_q * quit_cost["value"])), "high": int(round(hi_q * quit_cost["value"])),
                  "quits_avoided_low": round(lo_q, 2), "quits_avoided_high": round(hi_q, 2), "quits_per_year_now": round(quits_per_year, 2),
                  "in_range": bool(in_range), "sane_range": list(PROJECTION_SANE_QUITS),
-                 "condition": f"If {team_label} moves from the bottom to the top quartile of unit engagement ({where}). "
+                 "recovery": {"low": "median", "high": "top quartile"},
+                 "condition": f"Low: {team_label} climbs from the bottom quartile of unit engagement to the median (taken as half the gap, an assumption). "
+                              f"High: it reaches the top quartile (the full gap). {where[0].upper() + where[1:]}. "
                               "A two-month follow-up pulse on the focus item would show whether it did; it is not in the demo data.",
                  "focus": {"item": item, "label": item_label, "w1": None if w1 is None else round(w1, 2), "w2": None if w2 is None else round(w2, 2),
                            "quartile_w1": q1, "quartile_w2": q2, "n_cells": ql["n_cells"]},
@@ -591,12 +617,15 @@ def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | Non
                  "inputs": [
                      {"label": "Unit size", "value": headcount, "source": f"{team_label} headcount (teams.csv)"},
                      {"label": "Voluntary turnover rate", "value": TURNOVER_RATE["value"], "source": TURNOVER_RATE["source"]},
-                     {"label": "Top-vs-bottom quartile turnover gap", "value": [GALLUP_TURNOVER_GAP["low"], GALLUP_TURNOVER_GAP["high"]], "source": GALLUP_TURNOVER_GAP["source"]},
+                     {"label": "Top-vs-bottom quartile turnover gap, applied", "value": gap, "source": GALLUP_TURNOVER_GAP["source"]},
+                     {"label": "Gallup's figure for organizations above 40% turnover", "value": GALLUP_TURNOVER_GAP["low"], "source": "Not used: a hospital at 17.6% RN turnover is in Gallup's 40%-or-below group."},
+                     {"label": "Recovery assumed", "value": "to the median (low) · to the top quartile (high)",
+                      "source": "Assumption: a climb from the bottom quartile to the median captures half the top-vs-bottom gap (linear); the top quartile captures all of it."},
                      {"label": quit_cost["label"], "value": quit_cost["value"], "kind": quit_cost["kind"], "source": quit_cost["source"]},
                      {"label": "Time period", "value": "12 months", "source": "Per year, at the sector turnover rate"},
                  ],
-                 "sentence": f"{round(lo_q, 1)} to {round(hi_q, 1)} fewer voluntary separations a year on {headcount} people, at the sourced cost per RN separation. "
-                             "Association, not cause: Gallup's gap is correlational and this unit's own follow-up pulse is an assumption."}
+                 "sentence": f"{round(lo_q, 1)} to {round(hi_q, 1)} fewer voluntary separations a year on {headcount} people (to the median, or to the top quartile), "
+                             "at the sourced cost per RN separation. Association, not cause: Gallup's gap is correlational and this unit's own follow-up pulse is an assumption."}
 
     # tier 3: the hospital scenario (the Business case page)
     vc = value_case(costs, hospital_headcount)

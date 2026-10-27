@@ -153,12 +153,17 @@ def test_value_projection_is_sourced_and_in_range():
     v = I.value_of_plan(_seed(), AS_OF_REVIEW, C)
     p = v["tiers"][1]
     head = v["team"]["headcount"]
-    assert p["low"] == round(head * I.TURNOVER_RATE["value"] * I.GALLUP_TURNOVER_GAP["low"] * C["quit"]["value"])
-    assert p["high"] == round(head * I.TURNOVER_RATE["value"] * I.GALLUP_TURNOVER_GAP["high"] * C["quit"]["value"])
+    gap = I.GALLUP_TURNOVER_GAP["applies"]   # Oct 27 polish: the 51% figure (organizations at or below 40% turnover); low = half of it (to the median)
+    assert gap == I.GALLUP_TURNOVER_GAP["high"] and I.GALLUP_TURNOVER_GAP["median_share"] == 0.5
+    assert p["low"] == round(head * I.TURNOVER_RATE["value"] * gap * I.GALLUP_TURNOVER_GAP["median_share"] * C["quit"]["value"])
+    assert p["high"] == round(head * I.TURNOVER_RATE["value"] * gap * C["quit"]["value"])
+    assert p["recovery"] == {"low": "median", "high": "top quartile"} and abs(p["high"] - 2 * p["low"]) <= 1   # half the gap, to the dollar
+    assert "per late medication dose" in v["tiers"][0]["small_because"] and "late dose" not in v["tiers"][0]["small_because"]
     assert 0 < p["low"] < p["high"] and p["in_range"] is True
     assert I.PROJECTION_SANE_QUITS[0] <= p["quits_avoided_low"] <= p["quits_avoided_high"] <= I.PROJECTION_SANE_QUITS[1]
     assert all(i["source"] for i in p["inputs"]) and "gallup.com" in I.GALLUP_TURNOVER_GAP["source"]
-    assert p["focus"]["item"] == "q02" and p["focus"]["quartile_w2"] == 1 and "bottom to the top quartile" in p["condition"]
+    assert p["focus"]["item"] == "q02" and p["focus"]["quartile_w2"] == 1 and "to the median" in p["condition"] and "top quartile" in p["condition"]
+    assert any(i["label"] == "Recovery assumed" for i in p["inputs"]) and any("above 40%" in i["label"] for i in p["inputs"])
     assert {m["kpi"] for m in p["mechanism"]} == {"late_doses", "quits"}
     assert "not cause" in p["sentence"]
 

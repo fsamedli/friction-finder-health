@@ -74,10 +74,21 @@ updated from those files, never from memory.
 | **Valid and reliable** | Medium | Hospital unit costs and sector rates are wrong or unsourced (Confabulation in the business case) | Each unit cost is `sourced` (publisher, report, year, figure in the string), `assumption` (formula stated) or `client_entered` (late dose; labelled fictional); segment facts cite BLS series for hospitals (NAICS 622); the web app computes every figure from the API and types none | `tests/test_impact_data.py` (cost kinds and sources present) | to be read from the v0.9-health run | Sources were verified by web search during the build; a reviewer should re-check the year and figure of each before the final deck |
 | **Fair with harmful bias managed** | Medium | Night units are compared with day units, or a new-graduate cohort makes a unit look worse (Toxicity, Bias) | Comparables are the same shift at every hospital; the engagement change is adjusted for tenure mix (P6 is the planted new-graduate-cohort artifact) | `tests/test_impact.py::test_mix_artifact_is_not_red` | to be read from the v0.9-health run | No demographic attributes exist, so group fairness still cannot be tested |
 
+## v0.10: risks added by plan execution (Oct 27, 2026)
+
+Approval now produces an execution record (owners assigned, review scheduled, KPI watch, one draft notice per
+owner) and a checklist the manager edits. The model touches two new things: a regenerated action list and the
+wording of the notices. Both are bounded the same way as the brief.
+
+| Risk (NIST 600-1) | Tier | Control in code | Test | Result (real run) | Gap |
+|---|---|---|---|---|---|
+| **A model-written notice invents a date, number or name, or tells a colleague the survey caused the problem** (Confabulation; Human-AI Configuration: a colleague acts on a wrong instruction) | Medium: a notice goes to a named person | `app/agent.py` `draft_notices_llm`: the prompt gets a facts object only (team, obstacle, focus item, KPI, start, review, manager, tasks with owner and due) and must return one notice per owner. The check rejects a draft when the set of `to` fields differs from the plan's owners, when any number in subject or body is outside `_notice_allowed_numbers(plan, team)`, when a body exceeds 140 words, or when the text contains a causal phrase (caused, causes, because of the survey, proves). Two failures and the templated notices stay, labelled "Templated · rules mode", with the rejection notes in `check`. Drafting runs in a background thread after approval (`api.main._redraft_notices_async`), so approval never waits on the model. **No code path sends anything**: `sent: false` on every notice, `nothing_sent: true` on the plan, "Nothing is sent by this prototype" on screen. | `tests/test_plans.py` (execution record present and idempotent on a repeated approval; old plans load with a derived record; PATCH and add logged), `tests/test_api.py` (report prints the checklist and the approval record) | Keyless gate, Oct 27, 2026: pytest 145 passed; demo_check 356 passed, 0 failed (`docs/overnight/v0.10/_verify/wave1_*.txt`). **Model-mode notices have not been exercised live yet** (stream B report, Oct 27) | The check catches numbers, owners, length and causal words, not a paraphrase that changes a task's meaning; before the demo a person should read one model-written notice against its plan. Add a model-mode case to the investigation pack once prepared answers are regenerated for this variant |
+| **Regenerated actions name the wrong owner or an action the evidence does not support** (Confabulation) | Low: the manager edits and approves before anything is saved | `agent.regenerate_actions`: owners come from the ownership directory for the matched theme; model mode is checked the same way as the brief; rules mode uses a theme-matched action bank; nothing is saved until "Approve plan" | `tests/test_plans.py` | as above | No eval case yet for regenerate in model mode |
+
 ## What a reviewer can re-run
 
 ```bash
-.venv/bin/python -m pytest tests -q                    # 127 passed on Oct 8 (no key needed)
+.venv/bin/python -m pytest tests -q                    # 127 passed on Oct 8; 145 on Oct 27 (no key needed)
 .venv/bin/python -m evals.run_evals --no-model         # gold, 13 questions (13/13 on Oct 8; first run 12/13)
 .venv/bin/python -m evals.adversarial.run --no-model   # adversarial, 15 cases (15/15)
 .venv/bin/python -m evals.investigate.run --no-model   # investigation, 16 cases (16/16; first run 11/16)

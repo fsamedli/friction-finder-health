@@ -1,5 +1,5 @@
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { CalendarClock, CheckCircle2, ClipboardList, FastForward, FileText } from 'lucide-react'
+import { CalendarClock, CheckCircle2, ClipboardList, FastForward, FileText, RotateCcw } from 'lucide-react'
 import { api, type Did } from '../lib/api'
 import { longDate, month, num, per10, signed } from '../lib/format'
 import { reviewTone, reviewWord } from '../lib/labels'
@@ -55,6 +55,10 @@ export default function Review() {
   const nav = useNavigate()
   const plans = useLoad(() => api.plans(), [])
   const res = useLoad(() => api.result(planId ?? SEED_PLAN, asOf), [planId, asOf])
+  // P14 (Oct 27 round): a plan revised after its review links to the first plan's result, so the judge sees the one
+  // that did not work next to the one that did.
+  const revisedFrom = plans.data?.find((x) => x.id === planId)?.revised_from ?? null
+  const first = useLoad(() => (revisedFrom ? api.result(revisedFrom, asOf) : Promise.resolve(null)), [revisedFrom, asOf])
   if (!planId) {
     if (plans.error) return <ErrorState error={plans.error} onRetry={() => window.location.reload()} />
     const latest = plans.data ? visiblePlans(plans.data, asOf).slice(-1)[0] : undefined
@@ -71,11 +75,32 @@ export default function Review() {
     <a href={`/api/report/${planId}?as_of=${asOf}`} target="_blank" rel="noreferrer"><Button variant="primary" icon={<FileText size={15} />}>One-page report</Button></a>
     <a href={`/api/report/${planId}?as_of=${asOf}&download=true`} className="text-[12.5px] font-medium text-fg-mute hover:text-fg underline">Download</a>
   </>
+  const firstPlan = p?.revised_from ? plans.data.find((x) => x.id === p.revised_from) : undefined
+  const nextPlan = p?.superseded_by ? plans.data.find((x) => x.id === p.superseded_by) : undefined
+  const fr = first.data
+  const revision = p?.revised_from ? (
+    <div className="mb-5 rounded-xl border border-info-100 bg-info-50 px-5 py-4" data-demo="revised">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <p className="min-w-0 max-w-3xl text-[14px] leading-relaxed text-fg-soft">
+          <span className="mr-2 inline-flex items-center gap-1.5 font-semibold text-info-700"><RotateCcw size={15} /> Revised plan.</span>
+          {firstPlan && <>The first plan ({longDate(firstPlan.start).replace(', 2026', '')} to {longDate(firstPlan.review).replace(', 2026', '')}: {firstPlan.obstacle}) came back <b className="text-fg">{fr?.status === 'ok' ? reviewWord(fr.verdict).toLowerCase() : 'not judged'}</b>{fr?.status === 'ok' ? <>: {fr.kpi_label.toLowerCase()} moved {signed((fr.estimate ?? 0) * 10, 1)} per 10 people a month against comparable units, 95% interval {signed(fr.ci_low! * 10, 1)} to {signed(fr.ci_high! * 10, 1)}</> : null}. </>}
+          {p.revision_reason}
+        </p>
+        {firstPlan && <Button variant="secondary" onClick={() => nav(`/review/${firstPlan.id}`)}>See the first plan's review</Button>}
+      </div>
+    </div>
+  ) : p?.superseded_by ? (
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-canvas px-5 py-4 text-[14px] text-fg-soft">
+      <p className="min-w-0 max-w-3xl leading-relaxed"><span className="mr-2 font-semibold text-fg">Superseded.</span>This plan was revised{nextPlan ? <> on {longDate(nextPlan.start)}</> : null}: {nextPlan?.revision_reason ?? 'the obstacle changed after the review.'}</p>
+      {nextPlan && <Button variant="secondary" onClick={() => nav(`/review/${nextPlan.id}`)}>See the revised plan</Button>}
+    </div>
+  ) : null
 
   if (r.status === 'not_reached') {
     return (
       <div>
         <PageHeader crumbs={crumbs} title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone="info" dot>Not ready</Badge></span>} sub={`${p?.obstacle ?? ''} · started ${longDate(r.start)}`} actions={actions} />
+        {revision}
         <Card className="py-14 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-info-50 text-info-700"><CalendarClock size={22} /></div>
           <div className="mt-4 text-[44px] font-semibold tracking-tight tnum">{r.days_to_go} days</div>
@@ -93,6 +118,7 @@ export default function Review() {
     return (
       <div>
         <PageHeader crumbs={crumbs} title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone="neutral" dot>Missing follow-up</Badge></span>} sub={p?.obstacle} actions={actions} />
+        {revision}
         <StateNote kind="insufficient" title="Not enough follow-up data to judge yet">{r.reason}</StateNote>
         <div className="mt-6"><Limits /></div>
       </div>
@@ -109,6 +135,7 @@ export default function Review() {
         title={<span className="flex flex-wrap items-center gap-3">Review <Badge tone={tone} dot className="!text-[13px] !px-2.5 !py-1">{word}</Badge></span>}
         sub={<span className="text-[15px] text-fg-soft">{word}: after the plan, <b className="text-fg">{r.kpi_label.toLowerCase()} {fell ? 'fell' : 'rose'} {per10(Math.abs(r.estimate!))} per 10 people a month more</b> than at the {compTeams.length} comparable teams over the same months. {r.verdict === 'inconclusive' ? 'The 95% interval includes no change. ' : ''}Directional, not causal.</span>}
         actions={actions} />
+      {revision}
 
       {r.value && <ValueTiers v={r.value} improved={improved} />}
 

@@ -1,0 +1,31 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m pytest tests -q -p no:cacheprovider
+# 2026-10-27 11:03:09 -0400 on 98cbf17 (v0.9-health)
+........................................................................ [ 47%]
+........................................................................ [ 95%]
+.......                                                                  [100%]
+=============================== warnings summary ===============================
+../prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+api/main.py:40
+  /Users/farid/Desktop/DNSC 6317/prototype-health/api/main.py:40: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+151 passed, 3 warnings in 10.09s
+exit=0

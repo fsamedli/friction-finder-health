@@ -1,0 +1,48 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m pytest tests -q -p no:cacheprovider
+# 2026-10-27 10:57:50 -0400 on 98cbf17 (v0.9-health)
+..........................................F............................. [ 47%]
+........................................................................ [ 95%]
+.......                                                                  [100%]
+=================================== FAILURES ===================================
+_______________________________ test_report_html _______________________________
+
+    def test_report_html():
+        pid = c.get("/api/plans").json()[0]["id"]
+        r = c.get(f"/api/report/{pid}")
+        assert r.status_code == 200 and "Did it work?" in r.text and "worked" in r.text
+        # Oct 27 round: the report is the printable checklist (task, responsible, due, status) plus what happened at approval
+>       assert "Checklist" in r.text and "Responsible" in r.text and "&#9744;" in r.text and "What happened when the plan was approved" in r.text and "Nothing is sent" in r.text
+E       assert ('Checklist' in '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>' and 'Responsible' in '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>' and '&#9744;' in '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>')
+E        +  where '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>' = <Response [200 OK]>.text
+E        +  and   '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>' = <Response [200 OK]>.text
+E        +  and   '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Friction Finder · Lanford Med-Surg Night · plan and...by code from the survey export and operating records. The AI model does not produce numbers.</li></ul>\n</body></html>' = <Response [200 OK]>.text
+
+tests/test_api.py:87: AssertionError
+=============================== warnings summary ===============================
+../prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+api/main.py:40
+  /Users/farid/Desktop/DNSC 6317/prototype-health/api/main.py:40: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_report_html - assert ('Checklist' in '<!doctyp...
+1 failed, 150 passed, 3 warnings in 11.21s
+exit=1

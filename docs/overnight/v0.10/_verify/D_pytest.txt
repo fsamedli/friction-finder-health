@@ -1,0 +1,114 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m pytest tests -q -p no:cacheprovider
+# 2026-10-27 10:51:47 -0400 on 98cbf17 (v0.9-health)
+........................................................................ [ 48%]
+...............F........................F.......F.F..................... [ 96%]
+......                                                                   [100%]
+=================================== FAILURES ===================================
+________________ test_value_projection_is_sourced_and_in_range _________________
+
+    def test_value_projection_is_sourced_and_in_range():
+        v = I.value_of_plan(_seed(), AS_OF_REVIEW, C)
+        p = v["tiers"][1]
+        head = v["team"]["headcount"]
+        gap = I.GALLUP_TURNOVER_GAP["applies"]   # Oct 27 polish: the 51% figure (organizations at or below 40% turnover); low = half of it (to the median)
+        assert gap == I.GALLUP_TURNOVER_GAP["high"] and I.GALLUP_TURNOVER_GAP["median_share"] == 0.5
+        assert p["low"] == round(head * I.TURNOVER_RATE["value"] * gap * I.GALLUP_TURNOVER_GAP["median_share"] * C["quit"]["value"])
+        assert p["high"] == round(head * I.TURNOVER_RATE["value"] * gap * C["quit"]["value"])
+>       assert p["recovery"] == {"low": "median", "high": "top quartile"} and p["high"] == 2 * p["low"]
+E       AssertionError: assert ({'low': 'medi...top quartile'} == {'low': 'medi...top quartile'}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Use -v to get more diff and 75511 == (2 * 37756))
+
+tests/test_impact.py:160: AssertionError
+__________ test_approve_records_edits_and_double_submit_is_explained ___________
+
+scratch = PosixPath('/private/var/folders/p3/b6_8ymx11tj407h07gckwnrm0000gn/T/pytest-of-farid/pytest-10/test_approve_records_edits_and0')
+
+    def test_approve_records_edits_and_double_submit_is_explained(scratch):
+        p = c.post("/api/plans", json={**BODY, "request_id": "r1"}).json()
+        assert p["status"] == "approved" and p["review"] == "2026-11-30" and p["owner"].startswith("Priya Singh") and "decided_at" in p
+        again = c.post("/api/plans", json={**BODY, "request_id": "r1"})
+        assert again.status_code == 200 and again.json()["duplicate"] and again.json()["id"] == p["id"]
+        other = c.post("/api/plans", json={**BODY, "request_id": "r2"})          # a second click with a new id, same team/KPI/period
+        assert other.status_code == 200 and other.json()["duplicate"] and other.json()["id"] == p["id"]
+>       assert len([x for x in I.load_plans() if x["id"] != SEED]) == 1   # survives reload: read back from plans.jsonl
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 3 == 1
+E        +  where 3 = len([{'id': 'plan-pine-hollow-med-surg-day-1', 'team_id': 17, 'item': 'q02', 'kpi': 'overtime_shifts', ...}, {'id': 'plan-...'item': 'q02', 'kpi': 'overtime_shifts', ...}, {'team_id': 4, 'item': 'q02', 'kpi': 'late_doses', 'obstacle': '', ...}])
+
+tests/test_plans.py:46: AssertionError
+_____________ test_tick_edit_and_add_tasks_are_saved_and_recorded ______________
+
+scratch = PosixPath('/private/var/folders/p3/b6_8ymx11tj407h07gckwnrm0000gn/T/pytest-of-farid/pytest-10/test_tick_edit_and_add_tasks_a0')
+
+    def test_tick_edit_and_add_tasks_are_saved_and_recorded(scratch):
+        p = c.post("/api/plans", json={**BODY, "request_id": "r1"}).json()
+        pid = p["id"]
+        t = c.patch(f"/api/plans/{pid}/actions/a1", json={"status": "done"}).json()
+        assert t["actions"][0]["status"] == "done" and t["actions"][0]["done_at"] and t["progress"] == {"done": 1, "total": 1}
+        t = c.patch(f"/api/plans/{pid}/actions/a1", json={"status": "todo"}).json()
+        assert t["actions"][0]["status"] == "todo" and t["actions"][0]["done_at"] is None
+        t = c.patch(f"/api/plans/{pid}/actions/a1", json={"owner": "Sam Kim, Nurse Manager", "due": "2026-10-01", "text": "Restore the 05:00 restock and log it"}).json()
+        assert t["actions"][0]["owner"] == "Sam Kim, Nurse Manager" and t["actions"][0]["due"] == "2026-10-01"
+        assert c.patch(f"/api/plans/{pid}/actions/a1", json={"due": "soon"}).status_code == 422
+        assert c.patch(f"/api/plans/{pid}/actions/zz", json={"status": "done"}).status_code == 404
+        assert c.patch("/api/plans/nope/actions/a1", json={"status": "done"}).status_code == 404
+        a = c.post(f"/api/plans/{pid}/actions", json={"text": "Post the new routine on the unit board", "owner": "", "due": "2026-10-12"}).json()
+>       assert [x["id"] for x in a["actions"]] == ["a1", "a2"] and a["actions"][1]["owner"] == BODY["owner"] and a["progress"]["total"] == 2
+E       AssertionError: assert (['a1', 'a2'] == ['a1', 'a2']
+E         
+E         Use -v to get more diff and 'Hana Mensah, nurse manager' == 'Priya Singh,...tions Manager'
+E         
+E         - Priya Singh, Pharmacy Operations Manager
+E         + Hana Mensah, nurse manager)
+
+tests/test_plans.py:160: AssertionError
+_______________ test_regenerate_actions_from_the_edited_obstacle _______________
+
+    def test_regenerate_actions_from_the_edited_obstacle():
+        """The edit-and-regenerate half of the loop: new actions and an owner from the ownership directory for the theme the
+        manager typed; rules mode is labelled; nothing is saved."""
+        r = c.post("/api/plans/regenerate", json={"team_id": 4, "obstacle": "IV pumps keep failing the pre-shift check", "kpi": "late_doses", "start": "2026-09-21"}).json()
+>       assert r["theme"] == "equipment" and r["owner"] == "Nadia Usman, Clinical Engineering Lead" and r["mode"] == "rules"
+E       AssertionError: assert ('equipment' == 'equipment'
+E         
+E           equipment and 'Kwame Hughes...ineering Lead' == 'Nadia Usman,...ineering Lead'
+E         
+E         - Nadia Usman, Clinical Engineering Lead
+E         ? ^ ^^^^^ ---
+E         + Kwame Hughes, Clinical Engineering Lead
+E         ? ^^ ^^^^^^^^)
+
+tests/test_plans.py:192: AssertionError
+=============================== warnings summary ===============================
+../prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+api/main.py:40
+  /Users/farid/Desktop/DNSC 6317/prototype-health/api/main.py:40: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681
+  /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_impact.py::test_value_projection_is_sourced_and_in_range - ...
+FAILED tests/test_plans.py::test_approve_records_edits_and_double_submit_is_explained
+FAILED tests/test_plans.py::test_tick_edit_and_add_tasks_are_saved_and_recorded
+FAILED tests/test_plans.py::test_regenerate_actions_from_the_edited_obstacle
+4 failed, 146 passed, 3 warnings in 11.16s
+exit=1

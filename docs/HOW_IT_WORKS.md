@@ -27,10 +27,22 @@ and eight unit teams per hospital; all data is synthetic (`docs/specs/2026-10-08
 2. **Investigate.** The team screen, organised by the manager's questions: Is it real? Is this normal for teams
    like ours? What explains it? What is missing? What do I do? Each block leads with one sentence and one
    evidence state. The investigation panel lives on this screen.
-3. **Action plans.** Owner, operational measure, review date, success criterion and state (draft, approved, in
-   review, reviewed), with a queue of due reviews, missing follow-ups and inconclusive outcomes.
-4. **Review.** At the review date: improved, deteriorated or inconclusive, with the interval, a placebo check and
-   the limits. **Directional, not causal**; in the demo the follow-up months are **synthetic follow-up data**.
+3. **Plan.** On Investigate under "What do I do?": one drafted plan with an owner, an operational measure, a
+   review date two full months out, a success criterion and three tasks, each with a responsible person and a
+   due date. The manager edits, or presses "Edit and regenerate" with a different obstacle, then approves.
+4. **Checklist** (`/plans/{id}`, added Oct 27). Approval turns the plan into a checklist the manager runs: tick a
+   task, edit any cell, add a task; every change is saved with the time. Next to it, what code did the moment the
+   plan was approved: owners assigned, the review scheduled in the Due reviews queue, a KPI watch set, and one
+   notice drafted per owner. **Nothing is sent**: the manager reads, copies and sends. The one-page report prints
+   the checklist and the approval record (print to PDF). The **Action plans** board shows every plan's state
+   (draft, approved, in review, reviewed) and checklist progress, with queues for due reviews, missing follow-ups
+   and inconclusive outcomes.
+5. **Review.** At the review date: improved, deteriorated or inconclusive, with the interval, a placebo check and
+   the limits, and (Oct 27) **what it is worth** in three labelled tiers: measured (the established effect,
+   annualised, at the unit cost shown), projected (fewer separations if the unit's engagement recovers, from
+   Gallup's quartile gap and NSI's cost per separation), and at hospital scale (the Business case scenario).
+   **Directional, not causal**; in the demo the follow-up months are **synthetic follow-up data** and the screen
+   says "Illustrative".
 
 ## The planted story (so the demo has an answer)
 Lanford Med-Surg Night (team 4): Q02 (materials and equipment) and Q07 (opinions count) fall in wave 2; late
@@ -58,8 +70,19 @@ about IV pumps ("single source").
 - **Investigation:** choosing the next check (up to 6 per question), reading the question only when the rules
   reader matches nothing, and wording the conclusion and competing explanation. A code check rejects any wording
   with a number, team or period that is not in the evidence it cites; then the template is shown, labelled.
+- **Plan execution** (Oct 27): "Edit and regenerate" asks the model for a new action list from the manager's
+  edited obstacle (rules mode uses a theme-matched action bank); the owner notices are templated at approval and,
+  with a key, rewritten by the model in the background from the plan's facts only. A check rejects any notice
+  whose owners do not match the plan, that contains a number not in the plan, that is over 140 words, or that
+  claims the survey caused anything; two failures and the templated notices stay, labelled.
+- **Which part is agentic?** Code decides what is flagged, every evidence state, the verdict, the value tiers,
+  and the owners, review date and KPI watch at approval. The model decides which read-only check to run next
+  and how to word the brief, the plan draft and the notices, from numbers it is handed. The person decides
+  whether to act, what the plan says, who does what by when, whether to send a notice, and what to do at the
+  review date. Say "AI-assisted workflow"; a coding agent built parts of the software, which does not make the
+  product agentic.
 - The model (gpt-5-mini on GW's Azure OpenAI) **never writes SQL, never produces a number, never sets an
-  evidence state, never sees individual survey answers, and never approves anything.** Without a key everything
+  evidence state, never sees individual survey answers, never approves anything, and never sends anything.** Without a key everything
   works in rules mode; with a key a question took about 18 to 58 s on the v0.8 data (ten live turns, Oct 8). The
   demo's scripted turns are saved model runs, shown labelled "Prepared answer" with a **Run live** button; they
   must be regenerated for this variant (`scripts/prepare_investigations.py`).

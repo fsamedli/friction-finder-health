@@ -4,6 +4,8 @@ Drawn from the code on branch `v0.8-investigate` (Oct 8, 2026); v0.9-health keep
 renames the data (Lanford Health, fictional; late doses, overtime shifts; `docs/specs/2026-10-08-healthcare-variant.md`).
 References name the function; line numbers are left out because several of these files changed during the night.
 No patient-level data exists anywhere in the pipeline: every operating record is a count at unit, shift or site level.
+v0.10 (Oct 27, 2026) adds the execution record, owner notices and value tiers on top of this; see the section near
+the end.
 
 Friction Finder is an **AI-assisted workflow** with one **AI-assisted investigation** inside it. The model
 chooses which of a fixed set of read-only tools to run next, under a budget; code computes every number and
@@ -117,6 +119,8 @@ function still runs (rules reader, fixed plans, templated text, keyword retrieva
 | 3 | Investigation: read the question | `investigate._model_read` | 0 or 1 (only when the rules reader matches nothing) | one function id from a fixed list |
 | 4 | Investigation: choose the next tool | `investigate._model_loop` → `llm.choose_tool` | up to 6 (each may retry once; all count against 8) | one tool name and its arguments, validated by code |
 | 5 | Investigation: word the answer | `investigate._model_write` | 1 | conclusion and competing explanation text with citations; `self_check` |
+| 6 | Plan: regenerate the action list (v0.10) | `agent.regenerate_actions` ← `POST /api/plans/regenerate` | 1 per "Edit and regenerate" click | three actions with owners from the ownership directory, from the manager's edited obstacle; rules mode uses a theme-matched action bank |
+| 7 | Plan: word the owner notices (v0.10) | `agent.draft_notices_llm`, started by `api.main._redraft_notices_async` after approval | 0 or 1 per approval (plus 1 retry), in a background thread; approval never waits | one notice per owner from the plan's facts only; swapped in only if the check passes (owners match the plan, every number is in the plan, under 140 words, no causal claim); otherwise the templated notices stay, labelled |
 
 Also: embeddings for retrieval (`app/retrieval.py`, text-embedding-3-small; keyword search without a key).
 `choose_tool` uses function calling with strict schemas; on a 400 from the deployment it would fall back to a
@@ -159,7 +163,10 @@ same path, so a question and a dashboard cannot disagree.
 | Decision | Screen | Code |
 |---|---|---|
 | Edit and approve a plan (drafts can be saved) | Investigate › What do I do?; panel › Draft a plan | `POST /api/plans`; an existing plan for the same team, KPI and period is shown first (`GET /api/plans/check`); a repeated `request_id` returns the saved plan; every approval appends edits, decision and time to `approvals.jsonl` |
-| Keep, change or stop at the review date | Review | `GET /api/plans/{id}/result` |
+| Regenerate the draft with a different obstacle (v0.10) | Investigate › What do I do? › "Edit and regenerate" | `POST /api/plans/regenerate`; nothing is saved until the manager approves |
+| Run the checklist: tick, untick, block or edit a task; add a task (v0.10) | `/plans/{id}` | `PATCH /api/plans/{id}/actions/{action_id}`, `POST /api/plans/{id}/actions`; every change appended to `approvals.jsonl` with `target: "action"` and the time |
+| Send an owner notice (v0.10) | `/plans/{id}` › Owner notices › Copy | No code path sends anything: every notice carries `sent: false`, the plan carries `nothing_sent: true`, and the screen says "Nothing is sent by this prototype" |
+| Keep, change or stop at the review date | Review | `GET /api/plans/{id}/result` (now with the three value tiers, `impact.value_of_plan`) |
 | Approve / reject / flag an Ask brief | `/ask?view=brief` (the v0.7 one-page brief) | `POST /api/approve` |
 | Feedback on an answer (wrong context, not actionable, missing evidence, wrong number, other) | panel | `POST /api/useful` → `feedback.jsonl`; `evals/from_feedback.py` drafts eval cases for a person to review. Approvals are never evidence that an answer was correct |
 | Unit costs | Business case | `PUT /api/costs` |
@@ -179,6 +186,43 @@ Alternatives are taken only from `SPEC.md`, `docs/specs/`, git history, the Oct 
 | **Poisson excess vs comparable teams** (detect) | flags only what exceeds normal variation; "too rare to judge" is explicit | assumes Poisson counts; about 1 false flag per site at p < 0.01 | positive excess over the comparable-team median (v0.6 design spec) | tried Sept 23: it turned half the teams red on noise; replaced ("v0.6 analytics: excess vs normal variation") |
 | **Difference-in-differences with a placebo check** (prove) | cancels site-wide and seasonal shifts; the placebo shows how unusual the result is | one treated team, 4 comparison teams; directional, not causal; the follow-up data is synthetic | bootstrap CI over comparison teams (v0.6 design spec §4); DoWhy | bootstrap: the plan switched to Poisson SEs, reason not recorded, **Farid to confirm**. DoWhy: the data cannot defend causal claims (Gaps note) |
 | **OLS association + quartile comparison** (explain) | the same presentation as Gallup's meta-analysis; CIs and n shown; clustered SEs | 34 team-waves; about 3 of 65 pairs light up by chance (shown on screen) | a driver model with statsmodels (Gaps note, gap 2) | adopted in this form (statsmodels OLS) |
+
+## v0.10 additions (Oct 27, 2026): execution record, owner notices, value tiers
+
+Added for Prof. Hall's Oct 21 review (`docs/specs/2026-10-27-prof-hall-round.md`). The architecture above is
+unchanged; three things sit on top of it.
+
+- **Execution record** (`api.main._execute`, `agent.execution_record`), written inside both approval paths under
+  the plan lock and idempotent on a repeated approval. Code assigns an owner to every task (the manager's entry
+  first, then the plan owner, then the ownership directory; the source is recorded per task), schedules the review
+  (the plan's review date, in the Due reviews queue), sets the KPI watch (the plan's KPI for the team, monthly, from
+  start to review), and drafts one notice per owner. Plans saved before v0.10 (the seeded plan, v0.7 and v0.8
+  approvals) get a `derived: true` record on read, so nothing old breaks. Every task carries `id`, `status`
+  (`todo | done | blocked`) and `done_at`; `progress {done, total}` is on every plan and board row.
+- **Owner notices.** Templated at approval from the plan's fields (`agent._template_notices`). With a key,
+  `agent.draft_notices_llm` rewrites them in a background thread from a facts object (team, obstacle, focus item,
+  KPI, start, review, manager, tasks with owner and due date) and the result replaces the templates only if the
+  check passes: the set of `to` fields equals the plan's owners; every number in subject and body is in the set
+  `_notice_allowed_numbers` builds from the plan; no body over 140 words; no `caused | causes | because of the
+  survey | proves`. Two failures and the templates stay, labelled "Templated · rules mode" in the UI with the
+  rejection notes in `check`. `sent` is always `false`; no code path sends mail or messages.
+- **Value tiers** (`impact.value_of_plan`, returned under `value` by `GET /api/plans/{id}/result`). Measured: only
+  KPIs whose DiD interval excludes zero, events avoided per quarter × 4 × the unit cost, with the unit cost's kind
+  (`sourced | assumption | client_entered`) and source. Projected: the unit's headcount × the sector turnover rate ×
+  Gallup's top-vs-bottom quartile turnover gap (21% to 51%) × the cost per RN separation; a sanity range of 0.3 to 3
+  separations a year for a unit this size is enforced and reported (`in_range`); the unit's own OLS associations
+  are returned as `mechanism` and shown, not used in the figure (the quits slope applied to the item drop gives
+  5.8 separations a year on 14 people, out of range). Hospital scale: `value_case` for the Business case headcount.
+  Every tier returns its `inputs` with sources so the UI prints the assumption next to the number, and the result
+  carries `illustrative: true` with the reason (synthetic follow-up months).
+
+**Which part is agentic (the answer for judges).** Code decides: what is flagged, whether a change is beyond normal
+variation, every evidence state, the verdict and its interval, the placebo, the value tiers, and the owners, review
+date and KPI watch at approval. The model decides: which read-only check runs next (from a fixed registry, under
+the budget) and the wording of the brief, the plan draft, a regenerated action list and the owner notices, all from
+numbers it is handed and all checked by code. The person decides: whether to act, what the plan says, who owns
+what by when, when a task is done, whether to send a notice, and whether to keep, change or stop at the review
+date. Using a coding agent to build the software does not make the product agentic.
 
 ## Known gaps (reported, not changed)
 

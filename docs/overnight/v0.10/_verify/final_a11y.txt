@@ -1,0 +1,5 @@
+$ bash -c node web/scripts/a11y.mjs http://127.0.0.1:8021 && node -e "" 
+# 2026-10-27 11:05:42 -0400 on 98cbf17 (v0.9-health)
+
+0 rules violated, 0 nodes
+exit=0

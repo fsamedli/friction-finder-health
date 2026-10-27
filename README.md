@@ -1,5 +1,64 @@
 # Friction Finder prototype (Group 4, DNSC 6317)
 
+## v0.10 (Oct 27, 2026): money first, a checklist the manager can run, the questions as the path
+
+The health variant is the product going forward. This round answers Prof. Hall's Oct 21 review (his notes:
+`../2026-10-21_Prof_Hall_Feedback_for_Group_Chat.txt`; the teammate minutes read Oct 27; the contract all streams
+worked to is `docs/specs/2026-10-27-prof-hall-round.md`). He praised the working demo, "showing money on the
+dashboard", the five business questions, the editable plan and the before-and-after, and asked for four things:
+
+- *"Approximately $1,700 appeared too small to demonstrate commercial value. Use a larger, credible scenario with
+  clear assumptions about hospital size and time period... at least a five-digit impact figure."* → **Review** now
+  leads with the verdict and three value tiers, each with its assumption and provenance one click away, full dollars
+  everywhere (`app/impact.py` `value_of_plan`, `web/src/components/ValueTiers.tsx`). For the seeded plan at Nov 30:
+
+  | Tier | Figure | Inputs (all shown on screen) |
+  |---|---|---|
+  | Measured, this unit, per year | $7,104 | late doses only (the established effect, 95% interval excludes zero): 44.4 avoided per quarter × 4 × $40 per dose (client-entered); absences and quits excluded because their intervals include zero |
+  | Projected, this unit, if engagement recovers | $31,093 to $75,511 | 14 staff × 17.6% RN turnover (NSI 2026) = 2.46 separations a year × Gallup's top-vs-bottom quartile turnover gap (21% to 51%, Q12 meta-analysis 11th ed.) × $60,090 per separation (NSI); 0.52 to 1.26 separations avoided. Labelled "association, not cause"; a two-month pulse would confirm. Wave 2 (stream F) makes the low bound a return to the median |
+  | At hospital scale (300 staff), per year | $228,270 to $588,810 | the Business case scenario: turnover falls 1 to 3 points, one days-away injury avoided ($48,000, NSC) |
+
+  The unit's own associations are shown as the mechanism, not used in the figure: across 34 team-waves the q02
+  item relates to late doses (slope −0.58 per head-month per point, 95% CI −0.91 to −0.25) and to quits (−0.043,
+  CI −0.065 to −0.021), both clustered by team.
+- *"Turn the plan into a checklist with tasks, responsible people, and due dates... A PDF export would be
+  sufficient."* → every task has an id, a responsible person, a due date and a status; approval lands on
+  **/plans/{id}**, the checklist page; ticks, edits and added tasks are saved with the time (`PATCH
+  /api/plans/{id}/actions/{action_id}`, `POST /api/plans/{id}/actions`); the one-page report prints the checklist and
+  the approval record, and the browser's print dialog is the PDF. After the draft the loop is explicit: **Approve
+  plan**, or **Edit and regenerate** with a different obstacle (`POST /api/plans/regenerate`).
+- *"The screen is too busy, with too much small text... make [the questions] prominent and consider using them to
+  organize the workflow."* → the five questions are the numbered spine of Investigate (sticky rail with scroll-spy,
+  one-sentence answers at 16.5 px, evidence behind "Show the evidence"); Today's headline and tiles are larger; the
+  Journey and the guided demo follow his five steps: Today → Investigate → Plan → Checklist → Review.
+- *"Which part of this is agentic, and where does the LLM make a decision?"* → the paragraph below, on the Trust
+  page (Architecture tab) with a three-row table, and the **execution record**: when a plan is approved, code
+  assigns owners (from the manager's edits, the plan owner or the ownership directory), schedules the review in the
+  Due reviews queue, sets a KPI watch, and drafts one notice per owner (templated in rules mode; with a key the
+  model rewrites them in the background and the text is swapped in only if a check passes: owners match the plan,
+  every number is in the plan, under 140 words, no causal claim). **Nothing is sent**; the manager copies each
+  notice. Pricing: 33 sourced benchmarks (`data/docs/pricing_benchmarks.json`; note in
+  `../My Notes/2026-10-27_Hospital_Ops_Software_Pricing_Benchmarks.md`) sit on the Business case page next to the
+  hypothesis.
+
+**The agentic answer, in one paragraph.** Friction Finder is an AI-assisted workflow, not an autonomous agent.
+Code detects (Poisson excess vs comparable units), adjusts (tenure-mix shift-share), links (OLS, clustered by team)
+and proves (difference-in-differences with a placebo). The language model makes two kinds of decisions, both
+bounded: in the investigation it chooses which of eleven read-only checks to run next (function calling, budget of
+6 tool calls, 8 requests, 60 seconds), and it writes the brief, the plan draft and the owner notices from the
+numbers code handed it; a code check rejects any sentence whose numbers, team or period are not in the cited
+evidence. It never writes SQL, never sets a verdict, never sends anything. The nurse manager edits and approves;
+after approval the system assigns owners, schedules the review and drafts the notices, and the manager sends them.
+Using a coding agent to build the software does not make the product agentic, and we do not call it one.
+
+**Demo (5 to 7 minutes; time limit unconfirmed):** `docs/demo/DEMO_SCRIPT.md`. **Gate, Oct 27 (keyless):** build,
+lint, pytest 145 passed, gold 13/13, adversarial 15/15, investigation 16/16, demo_check 356 passed / 0 failed at
+1440 and 390 px, axe 0 violations (`docs/overnight/v0.10/_verify/wave1_*.txt`). Wave 2 (same day, in progress when
+this was written): a plan that needed revision next to the one that worked (planted P14; stream D), the demo script
+and docs (E), and polish (F: synthetic-name dedupe, a hospital-scale tile on Today, the report printing the tiers,
+the $4,000 per hospital per month pricing hypothesis from the benchmarks). Prepared answers for this variant still
+need `scripts/prepare_investigations.py`.
+
 ## v0.9-health (Oct 8, 2026): the same product on a fictional hospital system
 
 Branch `v0.9-health`, a full copy of v0.8 (commit `3e95fe4`) with the industry story changed and nothing

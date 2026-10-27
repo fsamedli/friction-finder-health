@@ -457,7 +457,8 @@ def patch_action(plan_id: str, action_id: str, a: ActionPatch):
 
 @app.post("/api/plans/{plan_id}/actions")
 def add_action(plan_id: str, a: Action):
-    """Add a task to an approved plan's checklist (owner defaults to the plan owner, then the team manager)."""
+    """Add a task to an approved plan's checklist. A blank owner goes to the approving nurse manager, or to the plan owner /
+    the directory only when the task names their process (agent.default_task_owner)."""
     with _plan_lock:
         plan = _plan_or_404(plan_id)
         try:
@@ -465,7 +466,10 @@ def add_action(plan_id: str, a: Action):
         except ValueError:
             raise HTTPException(422, "due must be YYYY-MM-DD")
         n = 1 + max([int(x["id"][1:]) for x in plan["actions"] if re.fullmatch(r"a\d+", x["id"] or "")] + [len(plan["actions"])])
-        owner = a.owner.strip() or plan.get("owner") or f"{_team_ctx(int(plan['team_id']))[1]}, nurse manager"
+        owner = a.owner.strip()
+        if not owner:
+            _, manager, owners = _team_ctx(int(plan["team_id"]))
+            owner = agent.default_task_owner(a.text, plan, owners, manager)[0]
         act = {"id": f"a{n}", "text": a.text, "owner": owner, "due": a.due, "status": a.status, "done_at": None}
         plan["actions"].append(act)
         if plan.get("execution"):
@@ -595,7 +599,15 @@ def value(headcount: int = 300):
             rows = rows if isinstance(rows, list) else rows.get("benchmarks")
         except (ValueError, AttributeError):
             rows = None
-    return {**out, "benchmarks": rows, "benchmarks_note": None if rows else "Benchmark research in progress (Oct 27, 2026): prices of comparable hospital operations software, each with its source, will be listed here."}
+    ph = ROOT / "data" / "docs" / "pricing_hypothesis.json"   # Oct 27 polish: the price hypothesis is data, not a figure typed into the web app
+    pricing = None
+    if ph.exists():
+        try:
+            pricing = json.loads(ph.read_text())
+        except ValueError:
+            pricing = None
+    return {**out, "benchmarks": rows, "pricing": pricing,
+            "benchmarks_note": None if rows else "Benchmark research in progress (Oct 27, 2026): prices of comparable hospital operations software, each with its source, will be listed here."}
 
 
 # ------------------------------------------------------------------ data sources
@@ -647,6 +659,9 @@ def assumptions():
         {"k": "Inference level", "v": "Team results are screening signals; associations use 34 team-waves; nothing here is causal", "why": "24 teams x 2 waves is small. We say so on screen."},
         {"k": "External benchmark", "v": "Assumed data source: Gallup's database norms for similar roles or industries. Unavailable in the demo; the app shows 'unavailable' and computes only an internal norm (comparable teams)", "why": "Class, Oct 8: stating benchmark access as an assumption is acceptable. With a client's Access export it would be read from the export, never estimated."},
         {"k": "Follow-up pulse", "v": "Assumed: a pilot adds a two-month follow-up pulse on the plan's focus item. Not in the demo data", "why": "Class, Oct 8: a two-month follow-up survey may be assumed if stated. The demo's review uses operating data only."},
+        {"k": "Retention value (projection)", "v": f"Gallup Q12 meta-analysis, 11th ed. (2024): top-quartile units have {I.GALLUP_TURNOVER_GAP['low']:.0%} (organizations above 40% annual turnover) to {I.GALLUP_TURNOVER_GAP['high']:.0%} (40% or below) lower turnover than bottom-quartile units. Staff RN turnover is {I.TURNOVER_RATE['value']:.1%} (NSI 2026), so the {I.GALLUP_TURNOVER_GAP['applies']:.0%} figure applies; the Review projection uses half of it for a move to the median and all of it for the top quartile", "why": "Correlational, across 183,806 units. The unit's own follow-up pulse is the assumption; the figure is labelled a projection, never measured."},
+        {"k": "Hospital scenario", "v": f"{I.HOSPITAL_HEADCOUNT} nursing and support staff; voluntary turnover falls 1 to 3 points a year; one days-away injury avoided; NSI 2026 cost per RN separation", "why": "Prof. Hall, Oct 21: a credible scenario with the hospital size and time period stated. The slider on Business case changes the size."},
+        {"k": "Pricing benchmark", "v": "33 sourced rows (data/docs/pricing_benchmarks.json, Oct 27, 2026): engagement-survey tools run about $14 to $35 per employee per year in US public contracts; systems of record $15 to $42 per employee per month. The $4,000 per hospital per month hypothesis sits between the two bands", "why": "Prof. Hall, Oct 21: use actual industry pricing and avoid unrealistically low prices. A hypothesis until a pilot."},
     ], "with_real_data": ["Response counts and rates from Gallup Access exports", "The client's own cost per late dose and per absence day",
                           "Team-to-cost-center mapping from the client's timekeeping system", "12+ months of history for rare events (quits, injuries)"]}
 
@@ -997,12 +1012,19 @@ def report(plan_id: str, as_of: str = I.AS_OF_REVIEW, download: bool = False):
                      f"<li><b>Owner notices drafted:</b> {len(ex.get('notices', []))}. Nothing is sent by this prototype; the manager sends them.</li></ul>{notices}")
     else:
         execution = "<p class='muted'>This plan is a draft; nothing happens until a person approves it.</p>"
+    worth = ""
     if r["status"] == "ok":
         rows = "".join(f"<tr><td>{e(x['kpi_label'])}</td><td>{x['estimate'] * 10:+.1f}</td><td>{x['ci_low'] * 10:+.1f} to {x['ci_high'] * 10:+.1f}</td><td><b>{e(x['verdict'])}</b></td></tr>"
                        for x in results if x["status"] == "ok")
-        money = f" About ${r['dollars_per_quarter']:,.0f} a quarter at the client-entered unit cost." if r.get("dollars_per_quarter") and r["verdict"] == "worked" else ""
-        result = (f"<p>Compared with {e(', '.join(r['comparison']['teams']))} over the same months (before: {e(', '.join(r['pre_months']))}; after: {e(', '.join(r['post_months']))}).{money}</p>"
+        result = (f"<p>Compared with {e(', '.join(r['comparison']['teams']))} over the same months (before: {e(', '.join(r['pre_months']))}; after: {e(', '.join(r['post_months']))}).</p>"
                   f"<table><tr><th>KPI (per 10 people / month)</th><th>Change vs comparison</th><th>95% CI</th><th>Verdict</th></tr>{rows}</table>")
+        # Oct 27 polish: the report carries the same three value tiers as the Review screen, each with its one-line assumption
+        val = I.value_of_plan(plan, _check_as_of(as_of), costs, results)
+        if val:
+            amt = lambda t: f"${t['dollars']:,.0f}" if t["kind"] == "measured" else f"${t['low']:,.0f} to ${t['high']:,.0f}"
+            worth = ("<h2>What it is worth</h2><table><tr><th>Tier</th><th>Per year</th><th>Assumption</th></tr>"
+                     + "".join(f"<tr><td><b>{e(t['label'])}</b><br><span class='muted'>{e(t['kind'])}</span></td><td><b>{amt(t)}</b></td><td class='muted'>{e(t['sentence'])}</td></tr>" for t in val["tiers"])
+                     + f"</table><p class='muted'>{e(val['illustrative_reason'])}</p>")
     elif r["status"] == "not_reached":
         result = f"<p>The review is on {e(plan['review'])}: {r['days_to_go']} days to go.</p>"
     else:
@@ -1029,7 +1051,7 @@ table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E
 <h2>Checklist · {done} of {len(plan['actions'])} done</h2>
 <table><tr><th></th><th>Task</th><th>Responsible</th><th>Due</th><th>Status</th></tr>{acts}</table>
 <h2>What happened when the plan was approved</h2>{execution}
-<h2>Did it work?</h2>{result}
+<h2>Did it work?</h2>{result}{worth}
 <h2>Read this before acting on it</h2>
 <ul class="muted"><li>Directional, not causal: another change at the same time could explain the result. The plan owner should confirm what else changed.</li>
 <li>Survey–KPI links are associations across teams, not causes. Teams under 4 people are never shown on their own.</li>

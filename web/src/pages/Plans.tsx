@@ -97,7 +97,13 @@ export default function Plans() {
               <tbody>
                 {rows.map((p) => (
                   <tr key={p.id} onClick={() => nav(p.state === 'draft' ? `/investigate/${p.team_id}?focus=act` : `/plans/${p.id}`)} className="cursor-pointer border-b border-border align-top last:border-0 hover:bg-canvas/60">
-                    <td className="px-4 py-3 max-w-[300px]"><div className="font-medium">{p.team_label}</div><div className="text-fg-soft truncate" title={p.obstacle}>{p.obstacle}</div><div className="text-[12px] text-fg-mute">{p.actions.length} actions · focus {p.focus}</div></td>
+                    <td className="px-4 py-3 max-w-[300px]">
+                      <div className="flex flex-wrap items-center gap-2 font-medium">{p.team_label}{p.revised_from && <Badge tone="info">Revised</Badge>}{p.superseded_by && <Badge tone="neutral">Superseded</Badge>}</div>
+                      <div className="text-fg-soft truncate" title={p.obstacle}>{p.obstacle}</div>
+                      <div className="text-[12px] text-fg-mute">{p.actions.length} actions · focus {p.focus}
+                        {p.revised_from && <> · <button onClick={(e) => { e.stopPropagation(); nav(`/review/${p.revised_from}`) }} className="underline hover:text-fg">first plan</button></>}
+                        {p.superseded_by && <> · <button onClick={(e) => { e.stopPropagation(); nav(`/review/${p.superseded_by}`) }} className="underline hover:text-fg">revised plan</button></>}</div>
+                    </td>
                     <td className="px-3 py-3 text-fg-soft">{owner(p)}</td>
                     <td className="px-3 py-3 text-fg-soft">{measure(p)}</td>
                     <td className="px-3 py-3 text-fg-soft max-w-[220px]">{p.success || <span className="text-fg-faint">not recorded with this plan</span>}</td>

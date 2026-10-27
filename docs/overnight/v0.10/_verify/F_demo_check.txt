@@ -1,0 +1,383 @@
+PASS  1440px  Detect: "Med-Surg Night needs attention"
+PASS  1440px  Detect: "Excess operating cost"
+PASS  1440px  Detect: "Teams needing attention"
+PASS  1440px  Detect numbers: "81"
+PASS  1440px  Detect numbers: "late doses vs"
+PASS  1440px  Detect numbers: "51"
+PASS  1440px  Detect: no horizontal scroll
+PASS  1440px  Context strip: "(demo clock)"
+PASS  1440px  Context strip: "demo CSV, synthetic"
+PASS  1440px  Redirect /teams -> /investigate
+PASS  1440px  Redirect /teams/4?tab=plan -> /investigate/4
+PASS  1440px  Redirect /impact/plan-lanford-med-surg-night -> /review/plan-lanford-med-surg-night
+PASS  1440px  Redirect /why/4 -> /investigate/4
+PASS  1440px  Redirect /proof/plan-lanford-med-surg-night -> /review/plan-lanford-med-surg-night
+PASS  1440px  Explain: "Lanford Med-Surg Night"
+PASS  1440px  Explain: "what comparable teams predict (81 vs 51)"
+PASS  1440px  Explain: "Materials and equipment to do my work right"
+PASS  1440px  Explain: "Show the evidence"
+PASS  1440px  Explain: no horizontal scroll
+PASS  1440px  Explain · drivers: "Association, not cause"
+PASS  1440px  Explain · drivers: "Top vs bottom quartile"
+PASS  1440px  Explain · drivers: "Linked."
+PASS  1440px  Explain · evidence: "Supported hypothesis"
+PASS  1440px  Explain · evidence: "What staff wrote"
+PASS  1440px  Explain · evidence: "rules mode"
+PASS  1440px  Act: "Draft action plan"
+PASS  1440px  Act: "Needs your decision"
+PASS  1440px  Act: "reviewed Nov 30"
+PASS  1440px  Act: clicked Approve plan
+PASS  1440px  Act · approved: "See if the plan worked"
+PASS  1440px  Act · approved: "Approved"
+PASS  1440px  Act · approved: "Useful?"
+PASS  1440px  Act: no horizontal scroll
+PASS  1440px  Execute · approval recorded owners (1), review 2026-11-30, KPI watch, 1 notices, nothing sent
+PASS  1440px  Execute · checklist: "Checklist"
+PASS  1440px  Execute · checklist: "0 of 1 done"
+PASS  1440px  Execute · checklist: "What happened when you approved"
+PASS  1440px  Execute · checklist: "Owners assigned"
+PASS  1440px  Execute · checklist: "Review scheduled"
+PASS  1440px  Execute · checklist: "KPI watch set"
+PASS  1440px  Execute · checklist: "Owner notices"
+PASS  1440px  Execute · checklist: "Nothing is sent by this prototype"
+PASS  1440px  Execute · checklist: "See if the plan worked"
+PASS  1440px  Execute · checklist: "Approved"
+PASS  1440px  Execute · checklist: "Useful?"
+PASS  1440px  Execute: no horizontal scroll
+PASS  1440px  Execute · ticked task 1, progress 1 of 1
+PASS  1440px  Execute · tick persisted with a time
+PASS  1440px  Execute · one-page report prints the checklist (ticked task) and the approval record
+PASS  1440px  Execute · Action plans: "Checklist"
+PASS  1440px  Execute · Action plans: "1 of 1 done"
+PASS  1440px  Act → Prove: clicked See if the plan worked
+PASS  1440px  Review · countdown: "Not ready"
+PASS  1440px  Review · countdown: "76 days"
+PASS  1440px  Review · countdown: "Fast-forward to the review date"
+PASS  1440px  Prove: clicked Fast-forward to the review date
+PASS  1440px  Review · result: "Improved"
+PASS  1440px  Review · result: "10.6 per 10 people a month"
+PASS  1440px  Review · result: "95% CI"
+PASS  1440px  Review · result: "Synthetic data"
+PASS  1440px  Review · result: "Placebo check"
+PASS  1440px  Review · result: "inconclusive"
+PASS  1440px  Review · result: "Directional, not causal"
+PASS  1440px  Review · result: "two-month follow-up pulse"
+PASS  1440px  Review · worth: "What it is worth"
+PASS  1440px  Review · worth: "Measured, this unit, per year"
+PASS  1440px  Review · worth: "Projected, this unit, if engagement recovers"
+PASS  1440px  Review · worth: "At hospital scale"
+PASS  1440px  Review · worth: "$228,270"
+PASS  1440px  Review · worth: "Illustrative"
+PASS  1440px  Review · worth: "Inputs and assumptions"
+PASS  1440px  Review: no horizontal scroll
+PASS  1440px  Action plans: "Due reviews"
+PASS  1440px  Action plans: "Missing follow-ups"
+PASS  1440px  Action plans: "Inconclusive outcomes"
+PASS  1440px  Action plans: "Operational measure"
+PASS  1440px  Action plans: "Success criterion"
+PASS  1440px  Action plans: "Approved"
+PASS  1440px  Action plans: "days to review"
+PASS  1440px  Action plans: no horizontal scroll
+PASS  1440px  Action plans · revised: "Revised"
+PASS  1440px  Action plans · revised: "Superseded"
+PASS  1440px  Review · revised plan: "Revised plan"
+PASS  1440px  Review · revised plan: "first plan"
+PASS  1440px  Review · revised plan: "came back inconclusive"
+FAIL  1440px  Review · revised plan: missing "Improved"
+PASS  1440px  Review · revised plan: "See the first plan's review"
+PASS  1440px  Review · revised plan: no horizontal scroll
+PASS  1440px  Review · first plan: "Inconclusive"
+PASS  1440px  Review · first plan: "Superseded"
+PASS  1440px  Review · first plan: "See the revised plan"
+PASS  1440px  Review · first plan: no horizontal scroll
+PASS  1440px  Business case: "Voluntary turnover, per year"
+PASS  1440px  Business case: "US hospitals"
+PASS  1440px  Business case: "Unit costs"
+PASS  1440px  Business case: "Pricing hypothesis"
+PASS  1440px  Business case: "Sourced"
+PASS  1440px  Business case: no horizontal scroll
+PASS  1440px  Under the hood · quality: "Trust & method"
+PASS  1440px  Under the hood · quality: "Pass rate by test pack"
+PASS  1440px  Under the hood · quality: "Adversarial"
+PASS  1440px  Under the hood · quality: "Holdout"
+PASS  1440px  Under the hood · quality: "Numbers checked against the evidence"
+PASS  1440px  Under the hood: clicked Assumptions
+PASS  1440px  Under the hood · assumptions: "Minimum n"
+PASS  1440px  Under the hood · assumptions: "With real data we would need"
+PASS  1440px  Under the hood: clicked Architecture
+PASS  1440px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  1440px  Under the hood · architecture: "Why these techniques"
+PASS  1440px  Under the hood · architecture: "Farid to confirm"
+PASS  1440px  Under the hood: no horizontal scroll
+PASS  1440px  Ask (rules mode): clicked Ask
+PASS  1440px  Ask (rules mode): "Supported hypothesis"
+PASS  1440px  Ask (rules mode): "numbers checked against the evidence"
+PASS  1440px  Ask (rules mode): "Evidence register"
+PASS  1440px  Ask (rules mode): "How this answer was produced"
+PASS  1440px  Ask (rules mode): "Useful?"
+PASS  1440px  Ask: no horizontal scroll
+PASS  1440px  Ask (prepared): "Prepared answer"
+PASS  1440px  Ask (prepared): "Run live"
+PASS  1440px  One-page report: finding, plan, result, caveats
+PASS  1440px  CSV export: teams_Lanford_2026-09-15.csv
+PASS  1440px  Upload · bad file: "The file was not loaded"
+PASS  1440px  Upload · bad file: "Missing columns"
+PASS  1440px  Upload · good file: "3 team-months loaded"
+PASS  1440px  Upload · good file: "your uploaded operating records"
+PASS  1440px  Upload · board updated (Med-Surg Night no longer flagged with normal late doses)
+PASS  1440px  Upload: clicked Back to demo data
+PASS  1440px  Upload · reset: "Back to the demo data"
+PASS  1440px  Study mode: "Study mode"
+PASS  1440px  Study mode: clicked Begin
+PASS  1440px  Study mode: clicked Task 1
+PASS  1440px  Study mode: "Find the team that is costing the hospital the most"
+PASS  1440px  Study mode: clicked Done
+PASS  1440px  Journey · Today: clicked Review Med-Surg Night and decide
+PASS  1440px  Journey · Today -> Investigate Med-Surg Night
+PASS  1440px  Journey · panel: answered "Why is Med-Surg Night flagged?" (answered, supported, model)
+PASS  1440px  Journey · panel: evidence state visible
+PASS  1440px  Journey · panel: citation chip visible
+PASS  1440px  Journey · panel: every cited id resolves in the register
+PASS  1440px  Journey · panel: trace shown
+PASS  1440px  Journey · follow-up: answered "Could staffing explain this?" (answered, insufficient, model)
+PASS  1440px  Journey · follow-up: evidence state visible
+PASS  1440px  Journey · follow-up: citation chip visible
+PASS  1440px  Journey · follow-up: every cited id resolves in the register
+PASS  1440px  Journey · follow-up: trace shown
+PASS  1440px  Journey: follow-up kept the conversation
+PASS  1440px  Journey: follow-up kept the team context (Med-Surg Night)
+PASS  1440px  Journey · draft: answered "Draft a plan I can review" (answered, supported, rules)
+PASS  1440px  Journey · draft: evidence state visible
+PASS  1440px  Journey · draft: citation chip visible
+PASS  1440px  Journey · draft: every cited id resolves in the register
+PASS  1440px  Journey · draft: trace shown
+PASS  1440px  Journey · plan draft returned (owner, measure, review date, success criterion)
+PASS  1440px  Journey · approved in the panel
+PASS  1440px  Journey · after reload: "See if the plan worked"
+PASS  1440px  Journey · after reload: "Approved"
+PASS  1440px  Journey · Action plans: "Approved"
+PASS  1440px  Journey · Action plans: "days to review"
+PASS  1440px  Journey · Review: clicked See if the plan worked
+PASS  1440px  Journey · Review: "Not ready"
+PASS  1440px  Journey · Review: "days"
+PASS  1440px  Journey · Review: "Fast-forward to the review date"
+PASS  1440px  Journey · Review: no horizontal scroll
+PASS  1440px  Scripted B: answered "Compare it with the other night shifts" (answered, supported, model)
+PASS  1440px  Scripted B: evidence state visible
+PASS  1440px  Scripted B: citation chip visible
+PASS  1440px  Scripted B: every cited id resolves in the register
+PASS  1440px  Scripted B: trace shown
+PASS  1440px  Scripted B · follow-up: answered "When did it start?" (answered, supported, model)
+PASS  1440px  Scripted B · follow-up: evidence state visible
+PASS  1440px  Scripted B · follow-up: citation chip visible
+PASS  1440px  Scripted B · follow-up: every cited id resolves in the register
+PASS  1440px  Scripted B · follow-up: trace shown
+PASS  1440px  Scripted B: follow-up kept the conversation
+PASS  1440px  Scripted B: follow-up kept the team context (Med-Surg Night)
+PASS  1440px  Scripted C: answered "Is this normal for teams like ours?" (answered, supported, model)
+PASS  1440px  Scripted C: evidence state visible
+PASS  1440px  Scripted C: citation chip visible
+PASS  1440px  Scripted C: every cited id resolves in the register
+PASS  1440px  Scripted C: trace shown
+PASS  1440px  Scripted C · follow-up: answered "What is missing?" (answered, supported, model)
+PASS  1440px  Scripted C · follow-up: evidence state visible
+PASS  1440px  Scripted C · follow-up: citation chip visible
+PASS  1440px  Scripted C · follow-up: every cited id resolves in the register
+PASS  1440px  Scripted C · follow-up: trace shown
+PASS  1440px  Scripted C: follow-up kept the conversation
+PASS  1440px  Scripted C: follow-up kept the team context (Med-Surg Night)
+PASS  1440px  Ask · investigation: no horizontal scroll
+PASS  1440px  no console errors or failed API calls
+PASS  390px  Detect: "Med-Surg Night needs attention"
+PASS  390px  Detect: "Excess operating cost"
+PASS  390px  Detect: "Teams needing attention"
+PASS  390px  Detect numbers: "81"
+PASS  390px  Detect numbers: "late doses vs"
+PASS  390px  Detect numbers: "51"
+PASS  390px  Detect: no horizontal scroll
+PASS  390px  Context strip: "(demo clock)"
+PASS  390px  Context strip: "demo CSV, synthetic"
+PASS  390px  Redirect /teams -> /investigate
+PASS  390px  Redirect /teams/4?tab=plan -> /investigate/4
+PASS  390px  Redirect /impact/plan-lanford-med-surg-night -> /review/plan-lanford-med-surg-night
+PASS  390px  Redirect /why/4 -> /investigate/4
+PASS  390px  Redirect /proof/plan-lanford-med-surg-night -> /review/plan-lanford-med-surg-night
+PASS  390px  Explain: "Lanford Med-Surg Night"
+PASS  390px  Explain: "what comparable teams predict (81 vs 51)"
+PASS  390px  Explain: "Materials and equipment to do my work right"
+PASS  390px  Explain: "Show the evidence"
+PASS  390px  Explain: no horizontal scroll
+PASS  390px  Explain · drivers: "Association, not cause"
+PASS  390px  Explain · drivers: "Top vs bottom quartile"
+PASS  390px  Explain · drivers: "Linked."
+PASS  390px  Explain · evidence: "Supported hypothesis"
+PASS  390px  Explain · evidence: "What staff wrote"
+PASS  390px  Explain · evidence: "rules mode"
+PASS  390px  Act: "Draft action plan"
+PASS  390px  Act: "Needs your decision"
+PASS  390px  Act: "reviewed Nov 30"
+PASS  390px  Act: clicked Approve plan
+PASS  390px  Act · approved: "See if the plan worked"
+PASS  390px  Act · approved: "Approved"
+PASS  390px  Act · approved: "Useful?"
+PASS  390px  Act: no horizontal scroll
+PASS  390px  Execute · approval recorded owners (1), review 2026-11-30, KPI watch, 1 notices, nothing sent
+PASS  390px  Execute · checklist: "Checklist"
+PASS  390px  Execute · checklist: "0 of 1 done"
+PASS  390px  Execute · checklist: "What happened when you approved"
+PASS  390px  Execute · checklist: "Owners assigned"
+PASS  390px  Execute · checklist: "Review scheduled"
+PASS  390px  Execute · checklist: "KPI watch set"
+PASS  390px  Execute · checklist: "Owner notices"
+PASS  390px  Execute · checklist: "Nothing is sent by this prototype"
+PASS  390px  Execute · checklist: "See if the plan worked"
+PASS  390px  Execute · checklist: "Approved"
+PASS  390px  Execute · checklist: "Useful?"
+PASS  390px  Execute: no horizontal scroll
+PASS  390px  Execute · ticked task 1, progress 1 of 1
+PASS  390px  Execute · tick persisted with a time
+PASS  390px  Execute · one-page report prints the checklist (ticked task) and the approval record
+PASS  390px  Execute · Action plans: "Checklist"
+PASS  390px  Execute · Action plans: "1 of 1 done"
+PASS  390px  Act → Prove: clicked See if the plan worked
+PASS  390px  Review · countdown: "Not ready"
+PASS  390px  Review · countdown: "76 days"
+PASS  390px  Review · countdown: "Fast-forward to the review date"
+PASS  390px  Prove: clicked Fast-forward to the review date
+PASS  390px  Review · result: "Improved"
+PASS  390px  Review · result: "10.6 per 10 people a month"
+PASS  390px  Review · result: "95% CI"
+PASS  390px  Review · result: "Synthetic data"
+PASS  390px  Review · result: "Placebo check"
+PASS  390px  Review · result: "inconclusive"
+PASS  390px  Review · result: "Directional, not causal"
+PASS  390px  Review · result: "two-month follow-up pulse"
+PASS  390px  Review · worth: "What it is worth"
+PASS  390px  Review · worth: "Measured, this unit, per year"
+PASS  390px  Review · worth: "Projected, this unit, if engagement recovers"
+PASS  390px  Review · worth: "At hospital scale"
+PASS  390px  Review · worth: "$228,270"
+PASS  390px  Review · worth: "Illustrative"
+PASS  390px  Review · worth: "Inputs and assumptions"
+PASS  390px  Review: no horizontal scroll
+PASS  390px  Action plans: "Due reviews"
+PASS  390px  Action plans: "Missing follow-ups"
+PASS  390px  Action plans: "Inconclusive outcomes"
+PASS  390px  Action plans: "Operational measure"
+PASS  390px  Action plans: "Success criterion"
+PASS  390px  Action plans: "Approved"
+PASS  390px  Action plans: "days to review"
+PASS  390px  Action plans: no horizontal scroll
+PASS  390px  Action plans · revised: "Revised"
+PASS  390px  Action plans · revised: "Superseded"
+PASS  390px  Review · revised plan: "Revised plan"
+PASS  390px  Review · revised plan: "first plan"
+PASS  390px  Review · revised plan: "came back inconclusive"
+FAIL  390px  Review · revised plan: missing "Improved"
+PASS  390px  Review · revised plan: "See the first plan's review"
+PASS  390px  Review · revised plan: no horizontal scroll
+PASS  390px  Review · first plan: "Inconclusive"
+PASS  390px  Review · first plan: "Superseded"
+PASS  390px  Review · first plan: "See the revised plan"
+PASS  390px  Review · first plan: no horizontal scroll
+PASS  390px  Business case: "Voluntary turnover, per year"
+PASS  390px  Business case: "US hospitals"
+PASS  390px  Business case: "Unit costs"
+PASS  390px  Business case: "Pricing hypothesis"
+PASS  390px  Business case: "Sourced"
+PASS  390px  Business case: no horizontal scroll
+PASS  390px  Under the hood · quality: "Trust & method"
+PASS  390px  Under the hood · quality: "Pass rate by test pack"
+PASS  390px  Under the hood · quality: "Adversarial"
+PASS  390px  Under the hood · quality: "Holdout"
+PASS  390px  Under the hood · quality: "Numbers checked against the evidence"
+PASS  390px  Under the hood: clicked Assumptions
+PASS  390px  Under the hood · assumptions: "Minimum n"
+PASS  390px  Under the hood · assumptions: "With real data we would need"
+PASS  390px  Under the hood: clicked Architecture
+PASS  390px  Under the hood · architecture: "An AI-assisted workflow"
+PASS  390px  Under the hood · architecture: "Why these techniques"
+PASS  390px  Under the hood · architecture: "Farid to confirm"
+PASS  390px  Under the hood: no horizontal scroll
+PASS  390px  Ask (rules mode): clicked Ask
+PASS  390px  Ask (rules mode): "Supported hypothesis"
+PASS  390px  Ask (rules mode): "numbers checked against the evidence"
+PASS  390px  Ask (rules mode): "Evidence register"
+PASS  390px  Ask (rules mode): "How this answer was produced"
+PASS  390px  Ask (rules mode): "Useful?"
+PASS  390px  Ask: no horizontal scroll
+PASS  390px  Ask (prepared): "Prepared answer"
+PASS  390px  Ask (prepared): "Run live"
+PASS  390px  One-page report: finding, plan, result, caveats
+PASS  390px  CSV export: teams_Lanford_2026-09-15.csv
+PASS  390px  Upload · bad file: "The file was not loaded"
+PASS  390px  Upload · bad file: "Missing columns"
+PASS  390px  Upload · good file: "3 team-months loaded"
+PASS  390px  Upload · good file: "your uploaded operating records"
+PASS  390px  Upload · board updated (Med-Surg Night no longer flagged with normal late doses)
+PASS  390px  Upload: clicked Back to demo data
+PASS  390px  Upload · reset: "Back to the demo data"
+PASS  390px  Study mode: "Study mode"
+PASS  390px  Study mode: clicked Begin
+PASS  390px  Study mode: clicked Task 1
+PASS  390px  Study mode: "Find the team that is costing the hospital the most"
+PASS  390px  Study mode: clicked Done
+PASS  390px  Journey · Today: clicked Review Med-Surg Night and decide
+PASS  390px  Journey · Today -> Investigate Med-Surg Night
+PASS  390px  Journey · panel: answered "Why is Med-Surg Night flagged?" (answered, supported, model)
+PASS  390px  Journey · panel: evidence state visible
+PASS  390px  Journey · panel: citation chip visible
+PASS  390px  Journey · panel: every cited id resolves in the register
+PASS  390px  Journey · panel: trace shown
+PASS  390px  Journey · follow-up: answered "Could staffing explain this?" (answered, insufficient, model)
+PASS  390px  Journey · follow-up: evidence state visible
+PASS  390px  Journey · follow-up: citation chip visible
+PASS  390px  Journey · follow-up: every cited id resolves in the register
+PASS  390px  Journey · follow-up: trace shown
+PASS  390px  Journey: follow-up kept the conversation
+PASS  390px  Journey: follow-up kept the team context (Med-Surg Night)
+PASS  390px  Journey · draft: answered "Draft a plan I can review" (answered, supported, rules)
+PASS  390px  Journey · draft: evidence state visible
+PASS  390px  Journey · draft: citation chip visible
+PASS  390px  Journey · draft: every cited id resolves in the register
+PASS  390px  Journey · draft: trace shown
+PASS  390px  Journey · plan draft returned (owner, measure, review date, success criterion)
+PASS  390px  Journey · approved in the panel
+PASS  390px  Journey · after reload: "See if the plan worked"
+PASS  390px  Journey · after reload: "Approved"
+PASS  390px  Journey · Action plans: "Approved"
+PASS  390px  Journey · Action plans: "days to review"
+PASS  390px  Journey · Review: clicked See if the plan worked
+PASS  390px  Journey · Review: "Not ready"
+PASS  390px  Journey · Review: "days"
+PASS  390px  Journey · Review: "Fast-forward to the review date"
+PASS  390px  Journey · Review: no horizontal scroll
+PASS  390px  Scripted B: answered "Compare it with the other night shifts" (answered, supported, model)
+PASS  390px  Scripted B: evidence state visible
+PASS  390px  Scripted B: citation chip visible
+PASS  390px  Scripted B: every cited id resolves in the register
+PASS  390px  Scripted B: trace shown
+PASS  390px  Scripted B · follow-up: answered "When did it start?" (answered, supported, model)
+PASS  390px  Scripted B · follow-up: evidence state visible
+PASS  390px  Scripted B · follow-up: citation chip visible
+PASS  390px  Scripted B · follow-up: every cited id resolves in the register
+PASS  390px  Scripted B · follow-up: trace shown
+PASS  390px  Scripted B: follow-up kept the conversation
+PASS  390px  Scripted B: follow-up kept the team context (Med-Surg Night)
+PASS  390px  Scripted C: answered "Is this normal for teams like ours?" (answered, supported, model)
+PASS  390px  Scripted C: evidence state visible
+PASS  390px  Scripted C: citation chip visible
+PASS  390px  Scripted C: every cited id resolves in the register
+PASS  390px  Scripted C: trace shown
+PASS  390px  Scripted C · follow-up: answered "What is missing?" (answered, supported, model)
+PASS  390px  Scripted C · follow-up: evidence state visible
+PASS  390px  Scripted C · follow-up: citation chip visible
+PASS  390px  Scripted C · follow-up: every cited id resolves in the register
+PASS  390px  Scripted C · follow-up: trace shown
+PASS  390px  Scripted C: follow-up kept the conversation
+PASS  390px  Scripted C: follow-up kept the team context (Med-Surg Night)
+PASS  390px  Ask · investigation: no horizontal scroll
+PASS  390px  no console errors or failed API calls
+
+378 passed, 2 failed
+exit=1

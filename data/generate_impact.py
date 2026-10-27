@@ -9,6 +9,13 @@ Everything here is fictional; nothing is patient-level. Planted patterns (added 
   P12  Across teams, lower q02 (materials and equipment) goes with more late doses and overtime shifts,
        and a lower grand mean goes with more absences and quits. Modest effect, Poisson noise.
   P13  Injuries are generated independently of engagement: the tool must report "no association".
+  P14  (Oct 27, 2026) The plan that needed revision. Pine Hollow Med-Surg Day runs about 3.5x its own unplanned
+       overtime Feb-Aug 2026 (IV pumps short on the unit; nurses stay past the end of shift to find or swap
+       equipment). Plan 1 (June 21, a float RN to cover breaks) addresses staffing, not the obstacle, so the rate
+       stays up through its Aug 31 review (inconclusive). Plan 2 (Sept 1, Clinical Engineering restores the pump
+       par level) is followed by the base rate from September (improved at Nov 30). The excess is an independent
+       Poisson draw from a second generator added on top of the existing draw (Poisson(a) + Poisson(b) =
+       Poisson(a + b)), so every other team-month stays byte-identical to the Oct 8 data.
 """
 from __future__ import annotations
 
@@ -33,6 +40,16 @@ ELASTICITY = {"absence_days": ("grand", -0.9), "late_doses": ("q02", -1.1), "qui
               "overtime_shifts": ("q02", -0.7), "injuries": (None, 0.0)}
 P11_MULT = {"late_doses": 2.0, "absence_days": 1.35, "quits": 1.6}
 P11_MONTHS = ["2026-06", "2026-07", "2026-08", "2026-09"]
+
+# P14: the plan that needed revision (see the module docstring). A Day team at another hospital, so the Med-Surg
+# Night comparison group (night teams, other sites) is untouched; overtime, not late doses, so the two stories stay
+# distinct. 3.5x rather than a gentler multiplier because a 12-person unit needs that much signal for a two-month
+# difference-in-differences to exclude zero.
+P14_SITE, P14_TEAM_NAME, P14_KPI, P14_MULT = "Pine Hollow", "Med-Surg Day", "overtime_shifts", 3.5
+P14_MONTHS = [f"2026-{m:02d}" for m in range(2, 9)]           # Feb-Aug
+P14_PLAN1_ID, P14_PLAN2_ID = "plan-pine-hollow-med-surg-day-1", "plan-pine-hollow-med-surg-day-2"
+P14_PLAN1 = ("2026-06-21", "2026-08-31")                         # start, review
+P14_PLAN2 = ("2026-09-01", "2026-11-30")
 
 ITEM_CODES = [f"q{i:02d}" for i in range(1, 13)]
 
@@ -77,10 +94,15 @@ def seeded_plan(team_id: int, pharmacy_owner: str) -> list[dict]:
         "kpi": "late_doses",
         "obstacle": "Medication cabinet restocked after the 06:00 pass: night nurses start the pass with empty bins",
         "focus": "Materials and equipment to do my work right (q02)",
+        # Oct 27 round: stable ids, ticked on their due dates, so the review-date board reads 3 of 3 done. The plan
+        # approved live on the demo path replaces this seed, so nothing changes at the Sept 15 clock.
         "actions": [
-            {"text": "Pharmacy restores the 05:00 cabinet restock for the Med-Surg unit", "owner": f"{pharmacy_owner}, Pharmacy Operations Manager", "due": "2026-09-28"},
-            {"text": "Charge nurse logs stock-outs at 02:00 and sends the list to pharmacy", "owner": "Med-Surg Night charge nurse", "due": "2026-10-05"},
-            {"text": "Ten-minute team check-in on q02 every other Monday: did the actions happen, did they help?", "owner": "Med-Surg Night nurse manager", "due": "2026-10-12"},
+            {"id": "a1", "text": "Pharmacy restores the 05:00 cabinet restock for the Med-Surg unit", "owner": f"{pharmacy_owner}, Pharmacy Operations Manager",
+             "due": "2026-09-28", "status": "done", "done_at": "2026-09-28T14:00:00+00:00"},
+            {"id": "a2", "text": "Charge nurse logs stock-outs at 02:00 and sends the list to pharmacy", "owner": "Med-Surg Night charge nurse",
+             "due": "2026-10-05", "status": "done", "done_at": "2026-10-05T14:00:00+00:00"},
+            {"id": "a3", "text": "Ten-minute team check-in on q02 every other Monday: did the actions happen, did they help?", "owner": "Med-Surg Night nurse manager",
+             "due": "2026-10-12", "status": "done", "done_at": "2026-10-12T14:00:00+00:00"},
         ],
         "start": PLAN_START,
         "review": PLAN_REVIEW,
@@ -89,10 +111,58 @@ def seeded_plan(team_id: int, pharmacy_owner: str) -> list[dict]:
     }]
 
 
+def revised_plans(team_id: int, manager: str, engineering_owner: str) -> list[dict]:
+    """P14: the first plan that missed the obstacle, and the revised one. Both seeded as approved, with their tasks
+    ticked (the actions happened; the first set did not help). Names come from the generated directory so a rename
+    there flows through."""
+    mgr = f"{manager}, Nurse Manager, Med-Surg Day"
+    focus = "Materials and equipment to do my work right (q02)"
+    return [{
+        "id": P14_PLAN1_ID, "team_id": team_id, "item": "q02", "kpi": P14_KPI, "focus": focus,
+        "obstacle": "Day shift runs past the end of shift: first read as breaks and the 11:00 admission block going uncovered",
+        "actions": [
+            {"id": "a1", "text": "A float RN covers Med-Surg Day breaks and the 11:00 admission block", "owner": mgr, "due": "2026-06-28",
+             "status": "done", "done_at": "2026-06-26T15:10:00+00:00"},
+            {"id": "a2", "text": "Charge nurse records every end-of-shift overrun and its reason", "owner": "Med-Surg Day charge nurse", "due": "2026-07-05",
+             "status": "done", "done_at": "2026-07-03T21:05:00+00:00"},
+            {"id": "a3", "text": "Review the overrun log with the team at the Monday huddle", "owner": mgr, "due": "2026-07-13",
+             "status": "done", "done_at": "2026-07-13T13:40:00+00:00"},
+        ],
+        "start": P14_PLAN1[0], "review": P14_PLAN1[1], "status": "approved", "decided_at": "2026-06-21T14:02:00+00:00",
+        "owner": mgr, "measure": "Unplanned overtime shifts per 10 people a month",
+        "success": "Overtime shifts back inside the range of comparable day units by the review date",
+        "superseded_by": P14_PLAN2_ID,
+        "note": "Seeded for the demo: the first plan. Reviewed Aug 31 as inconclusive (the number did not move against comparable units); revised Sept 1.",
+    }, {
+        "id": P14_PLAN2_ID, "team_id": team_id, "item": "q02", "kpi": P14_KPI, "focus": focus,
+        "obstacle": "IV pumps short on the unit: nurses stay past the end of shift to find, clean or swap pumps",
+        "actions": [
+            {"id": "a1", "text": "Clinical Engineering restores the IV pump par level on Med-Surg Day and swaps tagged pumps the same day",
+             "owner": f"{engineering_owner}, Clinical Engineering Lead", "due": "2026-09-08", "status": "done", "done_at": "2026-09-07T16:30:00+00:00"},
+            {"id": "a2", "text": "Charge nurse tags pumps that fail and logs the count at the end of each shift", "owner": "Med-Surg Day charge nurse", "due": "2026-09-12",
+             "status": "done", "done_at": "2026-09-10T20:15:00+00:00"},
+            {"id": "a3", "text": "Ten-minute team check-in on q02 every other Monday: did the actions happen, did they help?", "owner": mgr, "due": "2026-09-14",
+             "status": "done", "done_at": "2026-09-14T13:05:00+00:00"},
+        ],
+        "start": P14_PLAN2[0], "review": P14_PLAN2[1], "status": "approved", "decided_at": "2026-09-01T13:20:00+00:00",
+        "owner": f"{engineering_owner}, Clinical Engineering Lead", "measure": "Unplanned overtime shifts per 10 people a month",
+        "success": "Overtime shifts back inside the range of comparable day units by the review date",
+        "revised_from": P14_PLAN1_ID,
+        "revision_reason": "At the Aug 31 review unplanned overtime had not moved against comparable day units. The overrun log the first plan "
+                           "started pointed at IV pumps, not breaks, so the obstacle changed and the owner moved to Clinical Engineering.",
+        "note": "Seeded for the demo: the revised plan, approved the day after the first plan's review.",
+    }]
+
+
 def run(teams: pd.DataFrame, responses: pd.DataFrame, truth: dict, ownership: pd.DataFrame) -> dict:
     r = np.random.default_rng(SEED)
+    r14 = np.random.default_rng(SEED + 1)   # P14's excess only; r's stream is consumed exactly as before
     planted = int(teams[(teams.site_id == 1) & (teams.team_name == PLANTED_TEAM_NAME)].team_id.iloc[0])
     pharmacy_owner = str(ownership[(ownership.site_id == 1) & (ownership.owner_role == "Pharmacy Operations Manager")].owner_name.iloc[0])
+    p14_site = int(ownership[ownership.site_name == P14_SITE].site_id.iloc[0])
+    p14 = int(teams[(teams.site_id == p14_site) & (teams.team_name == P14_TEAM_NAME)].team_id.iloc[0])
+    p14_manager = str(teams[teams.team_id == p14].manager_name.iloc[0])
+    p14_engineering = str(ownership[(ownership.site_id == p14_site) & (ownership.owner_role == "Clinical Engineering Lead")].owner_name.iloc[0])
 
     # observed team-wave means (the generator uses all respondents; reporting applies MIN_N later)
     resp = responses.copy()
@@ -121,11 +191,13 @@ def run(teams: pd.DataFrame, responses: pd.DataFrame, truth: dict, ownership: pd
                 if t.team_id == planted and m in P11_MONTHS:
                     lam *= P11_MULT.get(k, 1.0)
                 rec[k] = int(r.poisson(lam))
+                if t.team_id == p14 and k == P14_KPI and m in P14_MONTHS:
+                    rec[k] += int(r14.poisson(lam * (P14_MULT - 1.0)))   # added, not re-drawn: r is untouched
             rows.append(rec)
     df = pd.DataFrame(rows)
     df.to_csv(OUT / "team_ops_monthly.csv", index=False)
     (OUT / "unit_costs.json").write_text(json.dumps(unit_costs(), indent=2))
-    (OUT / "plans_seed.json").write_text(json.dumps(seeded_plan(planted, pharmacy_owner), indent=2))
+    (OUT / "plans_seed.json").write_text(json.dumps(seeded_plan(planted, pharmacy_owner) + revised_plans(p14, p14_manager, p14_engineering), indent=2))
 
     comparison = [int(x) for x in teams[(teams["shift"] == "Night") & (teams.site_id != 1) & (teams.headcount >= 4)].team_id]
     x = df[df.team_id == planted].set_index("month")
@@ -144,4 +216,17 @@ def run(teams: pd.DataFrame, responses: pd.DataFrame, truth: dict, ownership: pd
     }
     truth["patterns"]["P13"] = {"what": "Injuries independent of engagement (must be 'no association detected')",
                                 "base_per_head_month": BASE["injuries"]}
+    y = df[df.team_id == p14].set_index("month")
+    rate14 = lambda ms: round(float(y.loc[ms, P14_KPI].sum() / y.loc[ms, "headcount"].sum()), 3)
+    truth["patterns"]["P14"] = {
+        "what": f"{P14_SITE} {P14_TEAM_NAME}: unplanned overtime about {P14_MULT}x Feb-Aug 2026; plan 1 (June 21, float RN) misses the "
+                "obstacle and reviews as inconclusive on Aug 31; plan 2 (Sept 1, IV pump par level) is followed by the base rate and "
+                "reviews as improved on Nov 30",
+        "team_id": p14, "kpi": P14_KPI, "multiplier": P14_MULT, "months": P14_MONTHS,
+        "plan_1": {"id": P14_PLAN1_ID, "start": P14_PLAN1[0], "review": P14_PLAN1[1], "expected": "inconclusive"},
+        "plan_2": {"id": P14_PLAN2_ID, "start": P14_PLAN2[0], "review": P14_PLAN2[1], "expected": "worked"},
+        "overtime_rate_mar_may": rate14(["2026-03", "2026-04", "2026-05"]),
+        "overtime_rate_jun_aug": rate14(["2026-06", "2026-07", "2026-08"]),
+        "overtime_rate_oct_nov": rate14(["2026-10", "2026-11"]),
+    }
     return truth

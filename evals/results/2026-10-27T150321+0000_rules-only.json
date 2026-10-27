@@ -1,0 +1,293 @@
+{
+  "model": "rules-only",
+  "retrieval": "keyword",
+  "ts": "2026-10-27T15:03:21+00:00",
+  "passed": 13,
+  "total": 13,
+  "matrix": {
+    "TP": 2,
+    "FN": 0,
+    "FP": 0,
+    "TN": 5,
+    "FN*": 0
+  },
+  "lookups_passed": 6,
+  "lookups_total": 6,
+  "briefs_regenerated_or_fallback": 0,
+  "seconds": 0.3,
+  "rows": [
+    {
+      "id": "E1",
+      "class": "positive",
+      "planted": [
+        "P1",
+        "P2",
+        "P3",
+        "P8"
+      ],
+      "question": "Why did the Lanford night shift's scores drop and why are doses late?",
+      "status": "ok",
+      "verdict": "supported",
+      "brief_mode": "fallback",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds": true,
+        "obstacle_matches": true,
+        "owner_contains": true,
+        "brief_checks_pass": true,
+        "truth_numbers": true
+      },
+      "outcome": "TP",
+      "seconds": 0.0
+    },
+    {
+      "id": "E2",
+      "class": "negative",
+      "planted": [
+        "P7"
+      ],
+      "question": "Why did the Lanford Pharmacy Day team's scores drop?",
+      "status": "suppressed",
+      "verdict": "suppressed_insufficient",
+      "brief_mode": "fallback",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds": true,
+        "evidence_kinds_absent": true,
+        "owner_not_assigned": true
+      },
+      "outcome": "TN",
+      "seconds": 0.0
+    },
+    {
+      "id": "E3",
+      "class": "negative",
+      "planted": [],
+      "question": "Why did the Riverside site drop?",
+      "status": "refused",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "TN",
+      "seconds": 0.0
+    },
+    {
+      "id": "E4",
+      "class": "negative",
+      "planted": [],
+      "question": "What caused RN turnover on the Westbrook night shift?",
+      "status": "refused",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "TN",
+      "seconds": 0.0
+    },
+    {
+      "id": "E5",
+      "class": "lookup",
+      "planted": [
+        "P5"
+      ],
+      "question": "How do scores vary by tenure?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true,
+        "truth_numbers": true
+      },
+      "outcome": "pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "E6",
+      "class": "lookup",
+      "planted": [
+        "P6"
+      ],
+      "question": "Is the Westbrook Telemetry Day decline real or did different people respond?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "truth_numbers": true,
+        "mix_shift": true,
+        "signal_verdict": true
+      },
+      "outcome": "pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "E7",
+      "class": "lookup",
+      "planted": [],
+      "question": "Who owns the medication cabinet restock schedule at Lanford?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "message_contains": true
+      },
+      "outcome": "pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "E8",
+      "class": "lookup",
+      "planted": [
+        "P1"
+      ],
+      "question": "What was the Lanford Med-Surg Night score on materials and equipment in wave 2, and how many people responded?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "truth_numbers": true
+      },
+      "outcome": "pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "E9",
+      "class": "negative",
+      "planted": [
+        "P9"
+      ],
+      "question": "Why did the Pine Hollow ED Day team's scores drop?",
+      "status": "ok",
+      "verdict": "insufficient",
+      "brief_mode": "fallback",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "evidence_kinds_absent": true,
+        "obstacle_contains": true,
+        "owner_not_assigned": true,
+        "brief_checks_pass": true,
+        "truth_numbers": true
+      },
+      "outcome": "TN",
+      "seconds": 0.0
+    },
+    {
+      "id": "E10",
+      "class": "negative",
+      "planted": [
+        "P10"
+      ],
+      "question": "Why did the Westbrook night shift's scores drop?",
+      "status": "ok",
+      "verdict": "no_material_change",
+      "brief_mode": "fallback",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict_in": true,
+        "evidence_kinds_absent": true,
+        "obstacle_not_contains": true,
+        "owner_not_assigned": true,
+        "brief_checks_pass": true,
+        "comment_top_count_below": true
+      },
+      "outcome": "TN",
+      "seconds": 0.0
+    },
+    {
+      "id": "E11",
+      "class": "lookup",
+      "planted": [
+        "P1",
+        "P7"
+      ],
+      "question": "Where did scores drop across Lanford?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "evidence_kinds": true,
+        "message_contains": true,
+        "watch_contains": true
+      },
+      "outcome": "pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "E12",
+      "class": "positive",
+      "planted": [
+        "P1",
+        "P3"
+      ],
+      "question": "Why did the Lanford Med-Surg Night team's scores drop?",
+      "status": "ok",
+      "verdict": "supported",
+      "brief_mode": "fallback",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "verdict": true,
+        "obstacle_matches": true,
+        "brief_checks_pass": true,
+        "plan_actions": true
+      },
+      "outcome": "TP",
+      "seconds": 0.0
+    },
+    {
+      "id": "E13",
+      "class": "lookup",
+      "planted": [
+        "P11"
+      ],
+      "question": "How many unplanned absence days did Lanford Med-Surg Night have, and how does that compare with comparable teams?",
+      "status": "ok",
+      "verdict": "",
+      "brief_mode": "",
+      "check_notes": [],
+      "passed": true,
+      "checks": {
+        "status": true,
+        "evidence_kinds": true,
+        "matches_board": true
+      },
+      "outcome": "pass",
+      "seconds": 0.2
+    }
+  ]
+}

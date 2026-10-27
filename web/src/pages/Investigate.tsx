@@ -446,7 +446,7 @@ export default function Investigate() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0">
           <nav aria-label="Questions on this page" className="sticky top-16 z-20 -mx-4 mb-5 border-b border-border bg-canvas/90 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8 xl:mx-0 xl:rounded-xl xl:border xl:px-2">
-            <ol className="flex gap-2 overflow-x-auto scroll-thin">
+            <ol className="flex flex-wrap gap-2">
               {Q.map((q, i) => {
                 const on = active === q.id
                 return (

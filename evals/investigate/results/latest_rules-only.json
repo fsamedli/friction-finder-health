@@ -2,7 +2,7 @@
   "pack": "investigate",
   "label": "seen during development (not a holdout)",
   "model": "rules-only",
-  "ts": "2026-10-27T14:38:49+00:00",
+  "ts": "2026-10-27T15:03:30+00:00",
   "passed": 16,
   "total": 16,
   "rows": [
@@ -101,7 +101,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.36
+          "seconds": 0.35
         }
       ],
       "seconds": 1.29
@@ -133,7 +133,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.46
         },
         {
           "question": "What about Westbrook?",
@@ -225,7 +225,7 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.46
         },
         {
           "question": "No, I meant ICU Night",
@@ -255,7 +255,7 @@
           "seconds": 0.17
         }
       ],
-      "seconds": 0.64
+      "seconds": 0.63
     },
     {
       "id": "I05",
@@ -288,10 +288,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.39
+          "seconds": 0.37
         }
       ],
-      "seconds": 0.39
+      "seconds": 0.37
     },
     {
       "id": "I06",
@@ -424,10 +424,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.34
+          "seconds": 0.33
         }
       ],
-      "seconds": 0.34
+      "seconds": 0.33
     },
     {
       "id": "I10",
@@ -482,7 +482,7 @@
           "raw": "{'passed': False, 'notes': [\"conclusion: period 'Jan-Mar 2026' is not the period in the cited evidence\"], 'numbers_checked': 2, 'numbers_total': 2}"
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.47
     },
     {
       "id": "I11",
@@ -601,10 +601,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.17
+          "seconds": 0.16
         }
       ],
-      "seconds": 0.81
+      "seconds": 0.8
     },
     {
       "id": "I13",
@@ -636,10 +636,10 @@
             "max_seconds": 60.0,
             "stopped": null
           },
-          "seconds": 0.47
+          "seconds": 0.46
         }
       ],
-      "seconds": 0.47
+      "seconds": 0.46
     },
     {
       "id": "I14",
@@ -671,10 +671,10 @@
             "max_seconds": 0.0,
             "stopped": "time budget reached"
           },
-          "seconds": 0.34
+          "seconds": 0.33
         }
       ],
-      "seconds": 0.34
+      "seconds": 0.33
     },
     {
       "id": "I15",
@@ -707,10 +707,10 @@
             "max_seconds": 60.0,
             "stopped": "repeated equivalent tool calls"
           },
-          "seconds": 0.48
+          "seconds": 0.46
         }
       ],
-      "seconds": 0.48
+      "seconds": 0.46
     },
     {
       "id": "I16",

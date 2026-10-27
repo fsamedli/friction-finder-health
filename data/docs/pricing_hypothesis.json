@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-10-27",
+  "status": "hypothesis",
+  "model": "SaaS, per hospital per month, annual term",
+  "tiers": [
+    {"up_to_staff": 300, "monthly_usd": 4000},
+    {"up_to_staff": 1000, "monthly_usd": 9000}
+  ],
+  "above": "quoted",
+  "basis": "Assumption from the Oct 27, 2026 benchmark research (My Notes/2026-10-27_Hospital_Ops_Software_Pricing_Benchmarks.md; rows in pricing_benchmarks.json): engagement-survey tools run about $14 to $35 per employee per year in US public contracts and systems of record $15 to $42 per employee per month; Friction Finder is neither, so it is priced between the two bands.",
+  "replaces": "the earlier working figure of 10% of the low value case per hospital per month, which sat inside the engagement-survey band",
+  "usage_based": "two operating feeds included; each further connected source $500 per month (assumption); a 90-day paid pilot on two units judged by the app's review-date check",
+  "to_confirm": "Simon (business case): price, tiers and the pilot terms are open until the team confirms them"
+}

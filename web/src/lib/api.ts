@@ -72,6 +72,8 @@ export interface Plan {
   edits?: { field: string; from: string; to: string }[]
   // Oct 27 round: the checklist and what happened at approval
   execution?: Execution | null; progress?: Progress
+  // Oct 27 round (P14): a plan revised after its review, and the first plan it replaced
+  revised_from?: string; superseded_by?: string; revision_reason?: string
 }
 export interface Did {
   plan_id: string; kpi: Kpi; kpi_label: string; start: string; review: string

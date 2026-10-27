@@ -38,10 +38,11 @@ function Inputs({ inputs }: { inputs: ValueInput[] }) {
 function Figure({ t }: { t: ValueTier }) {
   const big = 'font-semibold tracking-[-0.02em] tnum leading-none'
   if (t.kind === 'measured') return <div className={cx(big, 'text-[34px] text-fg')}>{money(t.dollars)}</div>
+  const cap = t.kind === 'projection' ? { low: `if the unit climbs to the ${t.recovery?.low ?? 'median'}`, high: `if it reaches the ${t.recovery?.high ?? 'top quartile'}` } : null
   return (
     <div>
-      <div className={cx(big, 'text-[32px] text-fg')}>{money(t.low)}</div>
-      <div className={cx(big, 'mt-1 text-[22px] text-fg-soft')}><span className="text-[14px] font-normal text-fg-mute">to </span>{money(t.high)}</div>
+      <div className="flex flex-wrap items-baseline gap-x-2"><span className={cx(big, 'text-[32px] text-fg')}>{money(t.low)}</span>{cap && <span className="text-[12px] text-fg-mute">{cap.low}</span>}</div>
+      <div className="mt-1 flex flex-wrap items-baseline gap-x-2"><span className={cx(big, 'text-[22px] text-fg-soft')}><span className="text-[14px] font-normal text-fg-mute">to </span>{money(t.high)}</span>{cap && <span className="text-[12px] text-fg-mute">{cap.high}</span>}</div>
     </div>
   )
 }

@@ -83,8 +83,10 @@ def test_report_html():
     pid = c.get("/api/plans").json()[0]["id"]
     r = c.get(f"/api/report/{pid}")
     assert r.status_code == 200 and "Did it work?" in r.text and "worked" in r.text
-    # Oct 27 round: the report is the printable checklist (task, responsible, due, status) plus what happened at approval
-    assert "Checklist" in r.text and "Responsible" in r.text and "&#9744;" in r.text and "What happened when the plan was approved" in r.text and "Nothing is sent" in r.text
+    # Oct 27 round: the report is the printable checklist (task, responsible, due, status) plus what happened at approval.
+    # Seeded plans may have every task done by the review date, so either the open or the ticked box glyph counts.
+    assert "Checklist" in r.text and "Responsible" in r.text and ("&#9744;" in r.text or "&#9745;" in r.text)
+    assert "What happened when the plan was approved" in r.text and "Nothing is sent" in r.text
 
 
 def test_assumptions_evals_feedback():

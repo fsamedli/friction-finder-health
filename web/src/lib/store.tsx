@@ -21,7 +21,7 @@ interface Ctx {
 }
 export type Role = 'manager' | 'hr'
 export const PERSONA: Record<Role, { name: string; title: string; initials: string }> = {
-  manager: { name: 'Priya Singh', title: 'Nurse Manager, Med-Surg · Lanford', initials: 'PS' },
+  manager: { name: 'Hana Mensah', title: 'Nurse Manager, Med-Surg Night · Lanford', initials: 'HM' },  // team 4's manager in teams.csv (Oct 27: names deduped)
   hr: { name: 'Jordan Ellis', title: 'Director, People Analytics · all sites', initials: 'JE' },
 }
 const C = createContext<Ctx | null>(null)

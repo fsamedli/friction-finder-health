@@ -1471,23 +1471,33 @@ def _long(d: str) -> str:
         return d or ""
 
 
+_PROC_ROLE = {"restock": "Pharmacy Operations Manager", "equipment": "Clinical Engineering Lead", "schedule": "Chief Nursing Officer"}
+
+
+def default_task_owner(text: str, plan: dict, owners: dict, manager_name: str) -> tuple[str, str]:
+    """Who a task with no owner goes to (Oct 27 polish). The approving nurse manager by default (a check-in or a team
+    conversation is hers); the plan owner only when the task names the process they own (a restock task on a plan owned by
+    the pharmacy manager); else that process's owner from the ownership directory. Returns (owner, source)."""
+    task_theme = infer_theme(text)
+    plan_owner = (plan.get("owner") or "").strip()
+    if task_theme != "generic":
+        role = _PROC_ROLE.get(task_theme)
+        if role and plan_owner and plan_owner.lower() not in ("owner needed", "tbd") and role.lower() in plan_owner.lower():
+            return plan_owner, "plan owner"
+        if role and role in owners:
+            return f"{owners[role]}, {role}", "ownership directory"
+    return f"{manager_name}, nurse manager", "team manager"
+
+
 def execution_record(plan: dict, team: dict, manager_name: str, owners: dict, kpi_label: str) -> dict:
     """The record of what happened at approval. `owners` = {role: name} for the team's site; `team` has label, site.
     Deterministic; no model call. Notices are templates here (see draft_notices_llm for the model rewrite)."""
     theme = infer_theme(plan.get("obstacle", ""))
-    proc = THEME_PROCESS.get(theme)
-    proc_owner = next(({"role": r, "name": n} for r, n in owners.items() if proc and r in (
-        {"restock": ("Pharmacy Operations Manager",), "equipment": ("Clinical Engineering Lead",), "schedule": ("Chief Nursing Officer",)}.get(theme, ()))), None)
     assigned = []
     for a in plan.get("actions", []):
         owner, source = (a.get("owner") or "").strip(), "manager"
         if not owner or owner.lower() in ("owner needed", "tbd"):
-            if plan.get("owner") and plan["owner"].lower() not in ("owner needed", ""):
-                owner, source = plan["owner"], "plan owner"
-            elif proc_owner:
-                owner, source = f"{proc_owner['name']}, {proc_owner['role']}", "ownership directory"
-            else:
-                owner, source = f"{manager_name}, nurse manager", "team manager"
+            owner, source = default_task_owner(a.get("text", ""), plan, owners, manager_name)
         a["owner"] = owner
         assigned.append({"action_id": a.get("id"), "owner": owner, "source": source})
     decided = (plan.get("decided_at") or plan.get("created_at") or datetime.now(timezone.utc).isoformat())[:10]

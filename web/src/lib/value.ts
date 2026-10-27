@@ -20,6 +20,7 @@ export interface MeasuredTier extends TierBase { id: 'measured'; kind: 'measured
 export interface ProjectedTier extends TierBase {
   id: 'projected'; kind: 'projection'; low: number; high: number; quits_avoided_low: number; quits_avoided_high: number; quits_per_year_now: number
   in_range: boolean; sane_range: [number, number]; condition: string
+  recovery?: { low: string; high: string }   // Oct 27 polish: low = to the median, high = to the top quartile
   focus: { item: string; label: string; w1: number | null; w2: number | null; quartile_w1: number | null; quartile_w2: number | null; n_cells: number }
   mechanism: Mechanism[]
 }
@@ -37,4 +38,10 @@ export interface PlanValue {
 export interface PriceBenchmark {
   vendor: string; product?: string; category?: string; model?: string; price?: string | number | null; unit?: string
   basis?: string; source_url?: string; retrieved?: string; confidence?: string
+}
+
+/** The price hypothesis, from data/docs/pricing_hypothesis.json (Oct 27, 2026 research); an assumption until a pilot. */
+export interface PricingHypothesis {
+  as_of: string; status: string; model: string; tiers: { up_to_staff: number; monthly_usd: number }[]; above: string
+  basis: string; replaces?: string; usage_based?: string; to_confirm?: string
 }

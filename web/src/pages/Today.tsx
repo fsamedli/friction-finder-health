@@ -85,10 +85,15 @@ function ManagerToday() {
     const rs = await Promise.all(ps.map((p) => api.result(p.id, asOf)))
     return ps.map((p, i) => ({ p, r: rs[i] }))
   }, [asOf])
+  // Oct 27 polish (Prof. Hall's step 1, "what is happening, and what is it costing?"): the hospital-scale figure next to the
+  // unit's excess. value_case at this hospital's own nursing and support headcount; every input is the API's (NSI 2026).
+  const siteHead = board.data ? board.data.teams.reduce((s, t) => s + t.headcount, 0) : 0
+  const vc = useLoad(() => (siteHead > 0 ? api.value(siteHead) : Promise.resolve(null)), [siteHead])
   if (board.error) return <ErrorState error={board.error} onRetry={() => window.location.reload()} />
   if (pr.error) return <ErrorState error={pr.error} onRetry={() => window.location.reload()} />
   if (!board.data || !pr.data) return <PageSkeleton />
   const b: Board = board.data
+  const turnover = vc.data ? { cost: vc.data.baseline_turnover_cost, quits: vc.data.headcount * (vc.data.inputs[0]?.value ?? 0), per: vc.data.inputs[2]?.value ?? 0, staff: vc.data.headcount } : null
   const reds = b.teams.filter((t) => t.status === 'red')
   const ambers = b.teams.filter((t) => t.status === 'amber')
   const active = pr.data.filter(({ p }) => b.teams.some((t) => t.team_id === p.team_id))
@@ -152,9 +157,11 @@ function ManagerToday() {
       </div>
       {focus}
 
-      <div className="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
+      <div className="mt-5 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 stagger">
         <Stat label="Excess operating cost" value={money(b.total_excess)} icon={<DollarSign size={16} />} tone={b.total_excess > 0 ? 'crit' : undefined}
           sub={<>{monthRange(b.window)} · {money(b.annualized)} a year if it held</>} />
+        <Stat label="What turnover costs this hospital" value={turnover ? money(turnover.cost) : '—'} icon={<Users size={16} />} tone="crit"
+          sub={turnover ? <>{num(turnover.quits)} quits a year × {money(turnover.per)} · NSI 2026 · {num(turnover.staff)} staff · <button onClick={() => nav('/value')} className="underline hover:text-fg">Business case</button></> : 'from the Business case inputs'} />
         <Stat label="Teams needing attention" value={<>{reds.length}<span className="text-fg-faint text-[18px]"> / {b.teams.length}</span></>} icon={<AlertTriangle size={16} />} tone={reds.length ? 'crit' : 'ok'}
           sub={<>{ambers.length} to watch · {b.teams.filter((t) => t.status === 'rolled_up').length} rolled up for privacy</>} />
         <Stat label="Active action plans" value={active.length} icon={<ClipboardList size={16} />} sub="approved by a person" />
