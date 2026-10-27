@@ -50,7 +50,7 @@ for (const width of [1440, 390]) {
   }
 
   await page.goto(base + '/investigate/4', { waitUntil: 'networkidle' })
-  await see('Explain', ['Lanford Med-Surg Night', 'what comparable teams predict (81 vs 51)', 'Materials and equipment to do my work right', 'Survey change, wave 1'])
+  await see('Explain', ['Lanford Med-Surg Night', 'what comparable teams predict (81 vs 51)', 'Materials and equipment to do my work right', 'Show the evidence'])
   await noOverflow('Explain')
   await page.goto(base + '/investigate/4?tab=drivers', { waitUntil: 'networkidle' })
   await see('Explain · drivers', ['Association, not cause', 'Top vs bottom quartile', 'Linked.'])
@@ -62,10 +62,35 @@ for (const width of [1440, 390]) {
   await click('Act', 'Approve plan')
   await see('Act · approved', ['See if the plan worked', 'Approved', 'Useful?'])
   await noOverflow('Act')
+  // ---- Oct 27 round: Execute. The approved plan is a checklist (task, responsible, due, status) with what happened at approval.
+  const approvedPlans = (await (await fetch(base + '/api/plans')).json()).filter((p) => p.team_id === 4 && p.status === 'approved' && p.id !== 'plan-lanford-med-surg-night')
+  const livePlan = approvedPlans[approvedPlans.length - 1]
+  log(!!livePlan && livePlan.actions.every((a) => a.id && a.status === 'todo') && !!livePlan.execution && livePlan.execution.nothing_sent === true, width,
+    `Execute · approval recorded owners (${livePlan?.execution?.assigned?.length ?? 0}), review ${livePlan?.execution?.review_scheduled?.date ?? '?'}, KPI watch, ${livePlan?.execution?.notices?.length ?? 0} notices, nothing sent`)
+  if (livePlan) {
+    const nTasks = livePlan.actions.length   // the plan drafter gives one action; a manager may add more
+    await page.goto(base + '/plans/' + livePlan.id, { waitUntil: 'networkidle' })
+    await see('Execute · checklist', ['Checklist', `0 of ${nTasks} done`, 'What happened when you approved', 'Owners assigned', 'Review scheduled', 'KPI watch set', 'Owner notices', 'Nothing is sent by this prototype', 'See if the plan worked', 'Approved', 'Useful?'])
+    await noOverflow('Execute')
+    try {
+      await page.getByRole('checkbox', { name: 'Task 1 done' }).click({ timeout: 10000 })
+      await page.getByText(`1 of ${nTasks} done`).first().waitFor({ state: 'visible', timeout: 10000 })
+      log(true, width, `Execute · ticked task 1, progress 1 of ${nTasks}`)
+    } catch { log(false, width, 'Execute · could not tick task 1') }
+    const planAfter = await (await fetch(base + '/api/plans/' + livePlan.id)).json()
+    log(planAfter.actions[0].status === 'done' && !!planAfter.actions[0].done_at && planAfter.progress.done === 1, width, 'Execute · tick persisted with a time')
+    const repLive = await (await fetch(base + '/api/report/' + livePlan.id)).text()
+    log(repLive.includes('Checklist') && repLive.includes('&#9745;') && repLive.includes('What happened when the plan was approved') && repLive.includes('Nothing is sent'), width, 'Execute · one-page report prints the checklist (ticked task) and the approval record')
+    await page.goto(base + '/plans', { waitUntil: 'networkidle' })
+    await see('Execute · Action plans', ['Checklist', `1 of ${nTasks} done`])
+  }
+  await page.goto(base + '/investigate/4?tab=plan', { waitUntil: 'networkidle' })
   await click('Act → Prove', 'See if the plan worked')
   await see('Review · countdown', ['Not ready', '76 days', 'Fast-forward to the review date'])
   await click('Prove', 'Fast-forward to the review date')
   await see('Review · result', ['Improved', '10.6 per 10 people a month', '95% CI', 'Synthetic data', 'Placebo check', 'inconclusive', 'Directional, not causal', 'two-month follow-up pulse'])
+  // Oct 27 round: the money first, in full dollars, with each tier labelled (measured / projection / scenario)
+  await see('Review · worth', ['What it is worth', 'Measured, this unit, per year', 'Projected, this unit, if engagement recovers', 'At hospital scale', '$228,270', 'Illustrative', 'Inputs and assumptions'])
   await noOverflow('Review')
   await page.goto(base + '/plans', { waitUntil: 'networkidle' })
   await see('Action plans', ['Due reviews', 'Missing follow-ups', 'Inconclusive outcomes', 'Operational measure', 'Success criterion', 'Approved', 'days to review'])

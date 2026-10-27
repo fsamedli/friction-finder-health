@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ClipboardPlus } from 'lucide-react'
+import { ClipboardPlus, RefreshCw } from 'lucide-react'
 import { api, type Kpi, type Plan, type PlanAction, type PlanDraft } from '../lib/api'
 import { longDate } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
@@ -42,6 +42,7 @@ export default function PlanEditor({ seed, onSaved, title = 'Draft action plan' 
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [check, setCheck] = useState<{ existing: Plan[]; explanation: string } | null>(null)
+  const [regen, setRegen] = useState<{ busy: boolean; mode?: 'model' | 'rules'; note?: string; error?: string } | null>(null)
   const [checkErr, setCheckErr] = useState<string | null>(null)
   const requestId = useRef<string>(saved?.request_id ?? rid())
   const review = seed.review ?? defaultReview(seed.start)
@@ -82,6 +83,20 @@ export default function PlanEditor({ seed, onSaved, title = 'Draft action plan' 
     } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
   }
   const set = (i: number, k: keyof PlanAction, v: string) => { setDirty(true); setActions((a) => a.map((x, j) => (j === i ? { ...x, [k]: v } : x))) }
+  /** The other half of the loop (Prof. Hall, Oct 21): not happy with the draft? Edit the obstacle and regenerate the actions
+   *  from it. Owner, measure and success criterion the manager already edited are kept; the owner is refilled from the
+   *  ownership directory only when they had not touched it. */
+  const regenerate = async () => {
+    if (regen?.busy || !obstacle.trim()) return
+    setRegen({ busy: true })
+    try {
+      const r = await api.regenerate({ team_id: seed.team_id, obstacle: obstacle.trim(), kpi: seed.kpi, start: seed.start })
+      setDirty(true)
+      setActions(r.actions.map((a) => ({ text: a.text, owner: a.owner, due: a.due })))
+      if (!owner.trim() || owner === (seed.owner ?? '') || owner === 'Owner needed') setOwner(r.owner)
+      setRegen({ busy: false, mode: r.mode, note: r.notes.join('; ') })
+    } catch (e) { setRegen({ busy: false, error: String((e as Error).message) }) }
+  }
   const input = 'rounded-lg border border-border-strong bg-surface px-3 py-2 text-[13.5px] focus:outline-none focus:ring-4 focus:ring-brand/10'
   return (
     <Card>
@@ -119,9 +134,13 @@ export default function PlanEditor({ seed, onSaved, title = 'Draft action plan' 
         {(checkErr || (fns && !v08)) && <p className="text-[12.5px] text-fg-mute">The existing-plan check is unavailable on this server{checkErr ? ` (${checkErr})` : ''}.</p>}
       </div>
       {err && <p role="alert" className="mt-3 text-[13px] text-crit-700">Not saved: {err}. Your edits are kept; try again.</p>}
+      {regen && !regen.busy && (regen.error
+        ? <p role="alert" className="mt-3 text-[13px] text-crit-700">Could not regenerate: {regen.error}. Your draft is unchanged.</p>
+        : <p className="mt-3 flex flex-wrap items-center gap-2 text-[12.5px] text-fg-mute"><Badge tone={regen.mode === 'model' ? 'ai' : 'neutral'}>{regen.mode === 'model' ? 'AI-written · checked' : 'Templated · rules mode'}</Badge> Regenerated from the obstacle you typed. {regen.note}</p>)}
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button variant="decide" onClick={approve} disabled={busy || !obstacle.trim()} icon={<ClipboardPlus size={15} />}>{busy ? 'Saving…' : 'Approve plan'}</Button>
-        <span className="text-[12px] text-fg-mute">Your approval is recorded with your edits and the time.</span>
+        <Button variant="secondary" onClick={regenerate} disabled={busy || regen?.busy || !obstacle.trim()} icon={<RefreshCw size={15} className={regen?.busy ? 'animate-spin' : undefined} />}>{regen?.busy ? 'Regenerating…' : 'Edit and regenerate'}</Button>
+        <span className="text-[12px] text-fg-mute">Like it? Approve: you get the checklist with owners and dates, and the one-page report. Not yet? Change the obstacle and regenerate. Your approval is recorded with your edits and the time.</span>
       </div>
     </Card>
   )

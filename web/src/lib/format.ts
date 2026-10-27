@@ -1,11 +1,15 @@
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+/** Full dollars everywhere ($228,270, never $228K): Prof. Hall, Oct 21, 2026. `compact` now abbreviates only at
+ *  ten million and above, so every figure the demo shows prints in full; the flag is kept so callers still compile. */
 export const money = (v: number | null | undefined, compact = false) => {
   if (v == null || !Number.isFinite(v)) return '—'
-  if (compact && Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
-  if (compact && Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(Math.abs(v) >= 100000 ? 0 : 1)}K`
+  if (compact && Math.abs(v) >= 10_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
   return v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
+/** "$31,093 to $75,511" for a range; one figure when the ends match. */
+export const moneyRange = (lo: number | null | undefined, hi: number | null | undefined) =>
+  lo == null || hi == null ? money(lo ?? hi) : lo === hi ? money(lo) : `${money(lo)} to ${money(hi)}`
 export const pts = (v: number | null | undefined) =>
   v == null ? '—' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(2)} pts`
 export const signed = (v: number | null | undefined, d = 2) =>

@@ -1,0 +1,34 @@
+$ bash -c cd web && npm run build
+# 2026-10-27 10:38:26 -0400 on 976cff8 (v0.9-health)
+
+> web@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 2489 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                               0.82 kB │ gzip:   0.42 kB
+dist/assets/index-Btt4iHeS.css               37.18 kB │ gzip:   7.79 kB
+dist/assets/plus-AXD-dGNS.js                  0.17 kB │ gzip:   0.16 kB
+dist/assets/file-text-uW6MmPKB.js             0.41 kB │ gzip:   0.26 kB
+dist/assets/Useful-BQvbqygV.js                1.90 kB │ gzip:   0.87 kB
+dist/assets/Sus-CzlRd8A5.js                   2.78 kB │ gzip:   1.38 kB
+dist/assets/Insights-CAz9sJG4.js              4.85 kB │ gzip:   2.22 kB
+dist/assets/Teams-Dgm0pAdS.js                 6.91 kB │ gzip:   2.38 kB
+dist/assets/Plans-B61TP2ry.js                 8.43 kB │ gzip:   2.97 kB
+dist/assets/DataSources-CIKvVJZT.js           9.02 kB │ gzip:   3.22 kB
+dist/assets/Value-OtFKoiji.js                11.22 kB │ gzip:   3.83 kB
+dist/assets/Ask-D5HPHIDu.js                  11.45 kB │ gzip:   3.96 kB
+dist/assets/PlanDetail-DADELdLB.js           15.31 kB │ gzip:   5.05 kB
+dist/assets/Trust-PxT-pTKZ.js                17.84 kB │ gzip:   5.88 kB
+dist/assets/Review-C9_7Jqr9.js               19.50 kB │ gzip:   6.12 kB
+dist/assets/ui-3KD6Aru0.js                   24.18 kB │ gzip:   8.73 kB
+dist/assets/Investigate-CzKjtIyS.js          30.52 kB │ gzip:   9.66 kB
+dist/assets/InvestigationPanel-DgD2CMT3.js   32.70 kB │ gzip:   9.39 kB
+dist/assets/index-CwN0yMPY.js               307.81 kB │ gzip:  96.63 kB
+dist/assets/charts-BWMu2VRY.js              427.31 kB │ gzip: 120.37 kB
+
+✓ built in 345ms
+exit=0

@@ -1,0 +1,20 @@
+$ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m evals.run_evals --no-model
+# 2026-10-27 10:38:38 -0400 on 976cff8 (v0.9-health)
+PASS  E1 TP   [ok, supported, fallback] Why did the Lanford night shift's scores drop and why are dose   0.0s
+PASS  E2 TN   [suppressed, suppressed_insufficient, fallback] Why did the Lanford Pharmacy Day team's scores drop?             0.0s
+PASS  E3 TN   [refused] Why did the Riverside site drop?                                 0.0s
+PASS  E4 TN   [refused] What caused RN turnover on the Westbrook night shift?            0.0s
+PASS  E5 pass [ok] How do scores vary by tenure?                                    0.0s
+PASS  E6 pass [ok] Is the Westbrook Telemetry Day decline real or did different p   0.0s
+PASS  E7 pass [ok] Who owns the medication cabinet restock schedule at Lanford?     0.0s
+PASS  E8 pass [ok] What was the Lanford Med-Surg Night score on materials and equ   0.0s
+PASS  E9 TN   [ok, insufficient, fallback] Why did the Pine Hollow ED Day team's scores drop?               0.0s
+PASS E10 TN   [ok, no_material_change, fallback] Why did the Westbrook night shift's scores drop?                 0.0s
+PASS E11 pass [ok] Where did scores drop across Lanford?                            0.0s
+PASS E12 TP   [ok, supported, fallback] Why did the Lanford Med-Surg Night team's scores drop?           0.0s
+PASS E13 pass [ok] How many unplanned absence days did Lanford Med-Surg Night hav   0.2s
+
+model: rules-only | retrieval: keyword | 13/13 passed in 0.3s
+confusion matrix over planted problems: TP=2 FN=0 FP=0 TN=5
+lookups: 6/6 | briefs regenerated or fallen back: 0
+exit=0

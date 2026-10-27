@@ -2,23 +2,29 @@ import { useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { cx } from './ui'
 
-export type Step = 'detect' | 'explain' | 'act' | 'prove'
-const STEPS: { id: Step; label: string; q: string }[] = [
-  { id: 'detect', label: 'Today', q: 'Which team needs attention?' },
+export type Step = 'detect' | 'explain' | 'act' | 'execute' | 'prove'
+export const STEPS: { id: Step; label: string; q: string }[] = [
+  { id: 'detect', label: 'Today', q: 'What is happening, and what is it costing?' },
   { id: 'explain', label: 'Investigate', q: 'Is it real, and what explains it?' },
-  { id: 'act', label: 'Decide', q: 'One plan, one owner, one date' },
-  { id: 'prove', label: 'Review', q: 'Did the operating number move?' },
+  { id: 'act', label: 'Plan', q: 'One plan, one owner, one date' },
+  { id: 'execute', label: 'Checklist', q: 'Who does what by when' },
+  { id: 'prove', label: 'Review', q: 'Did the operating number move, and what is it worth?' },
 ]
 
-/** The product's loop, shown on the four screens that make it up. Earlier steps are ticked; each step links to its screen. */
+/** The product's loop, shown on the five screens that make it up (Prof. Hall's five-step flow, Oct 21, 2026).
+ *  Earlier steps are ticked; each step links to its screen when the team or plan it needs is known. */
 export default function Journey({ at, teamId, planId }: { at: Step; teamId?: number; planId?: string }) {
   const nav = useNavigate()
   const idx = STEPS.findIndex((s) => s.id === at)
   const to: Record<Step, string | null> = {
-    detect: '/', explain: teamId ? `/investigate/${teamId}` : null, act: teamId ? `/investigate/${teamId}?focus=act&tab=plan` : null, prove: planId ? `/review/${planId}` : null,
+    detect: '/',
+    explain: teamId ? `/investigate/${teamId}` : null,
+    act: teamId ? `/investigate/${teamId}?focus=act&tab=plan` : null,
+    execute: planId ? `/plans/${planId}` : null,
+    prove: planId ? `/review/${planId}` : null,
   }
   return (
-    <ol className="mb-5 flex flex-wrap items-center gap-1.5 text-[12.5px]" aria-label="Today, investigate, decide, review">
+    <ol className="mb-5 flex flex-wrap items-center gap-1.5 text-[13px]" aria-label="Today, investigate, plan, checklist, review">
       {STEPS.map((s, i) => {
         const done = i < idx, on = i === idx, target = to[s.id]
         return (

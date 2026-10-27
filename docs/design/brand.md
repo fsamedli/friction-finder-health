@@ -51,13 +51,23 @@ line; gridlines `#EEECE7`. Before/after shading uses 5–8% `crit` / `brand`. Qu
 through middle `#D0D5DD` to top `brand`. Charts the investigation API describes (`ChartSpec`) render as simple bars
 or a range strip from the rows in the response; nothing is drawn from numbers the API did not send.
 
-## Type
+## Type (v0.10, Oct 27, 2026: one notch larger on the main path)
+
+Prof. Hall (Oct 21): "too much small text; enlarge key information." The scale moved up one step on Today,
+Investigate, Plans and Review; the technical layer (methods, SQL, traces) kept its size.
 
 - **Geist** (Google Fonts) for everything; **Geist Mono** for SQL, ids and item codes.
-- Page title 24 px / 600 / −0.02em; the Today headline 26 px. Block sentence 16 px / 600. Body 14 px. Labels
-  12 px / 500 in mute. Eyebrow (`.eyebrow`) 11.5 px / 600 / +0.06em uppercase in faint (the old `.overline` class
-  name collided with Tailwind's text-decoration utility and drew a line; renamed).
-- Big numbers 26 px / 600, tabular figures (`.tnum`). Units sit beside or under the number.
+- Page title 26 px / 600 / −0.02em; the Today headline 26 px, 32 px from the `sm` breakpoint; its bullet lines 16 px.
+- **Investigate question blocks:** a numbered ink circle, the question as an `h2` at 20 px (22 px from `sm`) / 600 /
+  −0.02em, the one-sentence answer at 16.5 px regular, the evidence chip under it, and the charts and tables behind a
+  "Show the evidence" disclosure (open by default only on "What explains it?"). The sticky question rail is numbered
+  and follows the reader (13 px). Body 15 px. Labels (`.label`) 13 px / 500 in mute. Eyebrow (`.eyebrow`) 12 px / 600
+  / +0.06em uppercase in faint (the old `.overline` class name collided with Tailwind's text-decoration utility and
+  drew a line; renamed).
+- Big numbers (`Stat`) 32 px / 600, tabular figures (`.tnum`). Units sit beside or under the number. Card titles
+  16 px, subtitles 13.5 px; buttons 14 px (13.5 px small); badges 12.5 px.
+- Guided demo: the block the current step talks about carries `data-demo="focus|explain|act|checklist|money"` and
+  gets a static 6 px rust ring at 45% (`index.css`, `body[data-demo-step]`). Static, so reduced motion needs nothing.
 
 ## Shape, space and motion
 

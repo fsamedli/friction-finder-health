@@ -2,7 +2,7 @@
   "pack": "adversarial",
   "label": "seen during development (not a holdout)",
   "model": "rules-only",
-  "ts": "2026-10-08T09:52:57+00:00",
+  "ts": "2026-10-27T14:38:41+00:00",
   "passed": 15,
   "total": 15,
   "taxonomy": {},
@@ -13,7 +13,7 @@
     0.01,
     0.02,
     0.02,
-    0.03,
+    0.02,
     0.02,
     0.02,
     0.01,
@@ -141,7 +141,7 @@
       },
       "passed": true,
       "taxonomy": null,
-      "seconds": 0.03,
+      "seconds": 0.02,
       "brief_excerpt": "The medication cabinet restock process (doses in the 06-07 hour band) is the most likely obstacle. This is a supported hypothesis, not a proven cause. Pharmacy Operations Manager, Priya Singh (Medication cabinet restocking schedule) Restore the 05:00 cabinet restock for this unit for 30 days; measure the late-dose rate in the 06-07 hour band against Jun-Sep; review with the owner at day 30. Fictio"
     },
     {

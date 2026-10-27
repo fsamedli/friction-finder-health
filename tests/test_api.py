@@ -83,6 +83,8 @@ def test_report_html():
     pid = c.get("/api/plans").json()[0]["id"]
     r = c.get(f"/api/report/{pid}")
     assert r.status_code == 200 and "Did it work?" in r.text and "worked" in r.text
+    # Oct 27 round: the report is the printable checklist (task, responsible, due, status) plus what happened at approval
+    assert "Checklist" in r.text and "Responsible" in r.text and "&#9744;" in r.text and "What happened when the plan was approved" in r.text and "Nothing is sent" in r.text
 
 
 def test_assumptions_evals_feedback():
@@ -194,3 +196,19 @@ def test_ops_upload_validates_updates_board_and_resets(monkeypatch, tmp_path):
         assert next(t for t in back["teams"] if t["team_name"] == "Med-Surg Night")["status"] == "red"
     finally:
         I.reload()
+
+
+# ---- Oct 27, 2026 round: the result carries the value tiers; /api/value carries benchmarks when the research file exists
+def test_plan_result_carries_value_tiers():
+    pid = "plan-lanford-med-surg-night"
+    ok = c.get(f"/api/plans/{pid}/result", params={"as_of": "2026-11-30"}).json()
+    assert ok["value"]["illustrative"] is True and [t["id"] for t in ok["value"]["tiers"]] == ["measured", "projected", "hospital"]
+    assert ok["value"]["tiers"][2]["low"] >= 10000 and all(t["inputs"] for t in ok["value"]["tiers"])
+    assert c.get(f"/api/plans/{pid}/result", params={"as_of": "2026-10-15"}).json()["value"] is None
+
+
+def test_value_endpoint_has_benchmarks_field():
+    v = c.get("/api/value", params={"headcount": 300}).json()
+    assert "benchmarks" in v and v["low"] == 228270 and v["high"] == 588810
+    assert v["benchmarks"] is None or isinstance(v["benchmarks"], list)
+    assert v["benchmarks"] or v["benchmarks_note"]

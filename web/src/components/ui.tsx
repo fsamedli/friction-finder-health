@@ -5,8 +5,9 @@ import type { EvidenceState, Status } from '../lib/api'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
-export function Card({ children, className, pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
-  return <section className={cx('rounded-xl border border-border bg-surface shadow-card', pad && 'p-5', className)}>{children}</section>
+/** data-* attributes pass through (the guided demo rings a card with data-demo="…"); every other prop is unchanged. */
+export function Card({ children, className, pad = true, ...rest }: { children: ReactNode; className?: string; pad?: boolean } & Partial<Record<`data-${string}`, string>>) {
+  return <section {...rest} className={cx('rounded-xl border border-border bg-surface shadow-card', pad && 'p-5', className)}>{children}</section>
 }
 
 export function CardHeader({ title, sub, right, icon }: { title: ReactNode; sub?: ReactNode; right?: ReactNode; icon?: ReactNode }) {
@@ -15,8 +16,8 @@ export function CardHeader({ title, sub, right, icon }: { title: ReactNode; sub?
       <div className="flex items-start gap-2.5 min-w-[12rem] flex-1">
         {icon && <span className="mt-0.5 text-fg-mute">{icon}</span>}
         <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold text-fg leading-tight">{title}</h3>
-          {sub && <p className="text-[13px] text-fg-mute mt-0.5">{sub}</p>}
+          <h3 className="text-[16px] font-semibold text-fg leading-tight">{title}</h3>
+          {sub && <p className="text-[13.5px] text-fg-mute mt-0.5">{sub}</p>}
         </div>
       </div>
       {right && <div className="flex flex-wrap items-center gap-2">{right}</div>}
@@ -29,8 +30,8 @@ export function PageHeader({ title, sub, crumbs, actions }: { title: ReactNode; 
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 animate-in">
       <div className="min-w-0">
         {crumbs && <div className="text-[12.5px] text-fg-mute mb-1.5 flex items-center gap-1.5">{crumbs}</div>}
-        <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-fg">{title}</h1>
-        {sub && <p className="text-[14px] text-fg-mute mt-1 max-w-3xl">{sub}</p>}
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-fg">{title}</h1>
+        {sub && <p className="text-[15px] text-fg-mute mt-1 max-w-3xl">{sub}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
@@ -52,7 +53,7 @@ const DOT: Record<Tone, string> = { crit: 'bg-crit', warn: 'bg-warn', ok: 'bg-ok
 
 export function Badge({ tone = 'neutral', children, dot, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
   return (
-    <span className={cx('inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-medium ring-1 ring-inset whitespace-nowrap', TONE[tone], className)}>
+    <span className={cx('inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12.5px] font-medium ring-1 ring-inset whitespace-nowrap', TONE[tone], className)}>
       {dot && <span className={cx('h-1.5 w-1.5 rounded-full', DOT[tone])} />}{children}
     </span>
   )
@@ -77,7 +78,7 @@ export function Button({ children, onClick, variant = 'primary', size = 'md', di
     ghost: 'text-fg-soft hover:bg-canvas',
     danger: 'bg-surface text-crit-700 border border-crit-100 hover:bg-crit-50',
   }[variant]
-  const s = size === 'sm' ? 'h-8 px-3 text-[13px]' : 'h-9 px-3.5 text-[13.5px]'
+  const s = size === 'sm' ? 'h-8 px-3 text-[13.5px]' : 'h-9 px-3.5 text-[14px]'
   return (
     <button type={type} onClick={onClick} disabled={disabled}
       className={cx('inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:shadow-ring', v, s, className)}>
@@ -91,8 +92,8 @@ export function Stat({ label, value, delta, sub, tone, icon }: { label: string; 
   return (
     <Card className="!p-4">
       <div className="flex items-center justify-between"><span className="label">{label}</span>{icon && <span className="text-fg-faint">{icon}</span>}</div>
-      <div className={cx('mt-2 text-[26px] font-semibold tracking-[-0.02em] tnum leading-none', c)}>{value}</div>
-      <div className="mt-2 flex items-center gap-2 text-[12.5px] text-fg-mute">{delta}{sub}</div>
+      <div className={cx('mt-2 text-[32px] font-semibold tracking-[-0.02em] tnum leading-none', c)}>{value}</div>
+      <div className="mt-2 flex items-center gap-2 text-[13px] text-fg-mute">{delta}{sub}</div>
     </Card>
   )
 }
@@ -102,7 +103,7 @@ export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: 
     <div className="border-b border-border flex gap-5 overflow-x-auto scroll-thin">
       {tabs.map((t) => (
         <button key={t.id} onClick={() => onChange(t.id)}
-          className={cx('relative pb-2.5 pt-1 text-[13.5px] font-medium whitespace-nowrap transition-colors', value === t.id ? 'text-fg' : 'text-fg-mute hover:text-fg-soft')}>
+          className={cx('relative pb-2.5 pt-1 text-[14px] font-medium whitespace-nowrap transition-colors', value === t.id ? 'text-fg' : 'text-fg-mute hover:text-fg-soft')}>
           {t.label}{t.count != null && <span className="ml-1.5 rounded-full bg-canvas px-1.5 text-[11px] text-fg-mute ring-1 ring-border">{t.count}</span>}
           {value === t.id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />}
         </button>
@@ -116,7 +117,7 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
     <div className="inline-flex rounded-lg bg-canvas p-0.5 ring-1 ring-border">
       {options.map((o) => (
         <button key={o.id} onClick={() => onChange(o.id)}
-          className={cx('rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors', value === o.id ? 'bg-surface text-fg shadow-xs' : 'text-fg-mute hover:text-fg-soft')}>{o.label}</button>
+          className={cx('rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors', value === o.id ? 'bg-surface text-fg shadow-xs' : 'text-fg-mute hover:text-fg-soft')}>{o.label}</button>
       ))}
     </div>
   )
@@ -133,9 +134,9 @@ export function Method({ children, title = 'How this is computed' }: { children:
   return (
     <span ref={ref} className="relative inline-flex">
       <button type="button" aria-label={title} onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
-        className="inline-flex items-center gap-1 text-[12px] font-medium text-fg-mute hover:text-brand-700"><Info size={14} /> Method</button>
+        className="inline-flex items-center gap-1 text-[12.5px] font-medium text-fg-mute hover:text-brand-700"><Info size={14} /> Method</button>
       {open && (
-        <span onClick={(e) => e.stopPropagation()} className="absolute right-0 top-7 z-40 w-[380px] max-w-[85vw] rounded-xl border border-border bg-surface p-4 text-[13px] leading-relaxed text-fg-soft shadow-pop animate-in block text-left">
+        <span onClick={(e) => e.stopPropagation()} className="absolute right-0 top-7 z-40 w-[380px] max-w-[85vw] rounded-xl border border-border bg-surface p-4 text-[13.5px] leading-relaxed text-fg-soft shadow-pop animate-in block text-left">
           <span className="flex items-center justify-between mb-1.5"><b className="text-fg text-[13px]">{title}</b><button onClick={() => setOpen(false)} className="text-fg-faint hover:text-fg"><X size={14} /></button></span>
           {children}
         </span>
@@ -160,7 +161,7 @@ export function PageSkeleton() {
 
 export function ErrorState({ error, onRetry }: { error: string; onRetry?: () => void }) {
   return (
-    <Card className="border-crit-100 bg-crit-50/40 text-crit-700 text-[13.5px]">
+    <Card className="border-crit-100 bg-crit-50/40 text-crit-700 text-[14px]">
       <div role="alert" className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-2"><AlertTriangle size={16} /> Could not load: {error}. Is the API running?</span>
         {onRetry && <Button size="sm" variant="secondary" onClick={onRetry} icon={<RotateCw size={14} />}>Try again</Button>}
@@ -206,9 +207,9 @@ export function StateNote({ kind, title, children }: { kind: 'suppressed' | 'ins
     fallback: { icon: <AlertTriangle size={15} />, cls: 'bg-warn-50 text-warn-700 ring-warn-100' },
   }[kind]
   return (
-    <div className={cx('flex gap-2.5 rounded-lg px-3 py-2.5 text-[13px] ring-1 ring-inset', m.cls)}>
+    <div className={cx('flex gap-2.5 rounded-lg px-3 py-2.5 text-[13.5px] ring-1 ring-inset', m.cls)}>
       <span className="mt-0.5 shrink-0">{m.icon}</span>
-      <div><b className="font-medium">{title}</b>{children && <div className="mt-0.5 text-[12.5px] opacity-90">{children}</div>}</div>
+      <div><b className="font-medium">{title}</b>{children && <div className="mt-0.5 text-[13px] opacity-90">{children}</div>}</div>
     </div>
   )
 }
@@ -217,7 +218,7 @@ export function StateNote({ kind, title, children }: { kind: 'suppressed' | 'ins
 export function Details({ summary, children, className }: { summary: ReactNode; children: ReactNode; className?: string }) {
   return (
     <details className={cx('group rounded-lg border border-border', className)}>
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[12.5px] font-medium text-fg-mute hover:text-fg [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-medium text-fg-mute hover:text-fg [&::-webkit-details-marker]:hidden">
         {summary}<span aria-hidden className="text-fg-faint transition-transform group-open:rotate-90">›</span>
       </summary>
       <div className="border-t border-border px-3 py-3">{children}</div>
@@ -230,7 +231,7 @@ export function Empty({ icon, title, sub, action }: { icon?: ReactNode; title: s
     <div className="flex flex-col items-center text-center py-12 px-6">
       {icon && <div className="h-11 w-11 rounded-xl bg-canvas ring-1 ring-border flex items-center justify-center text-fg-mute mb-3">{icon}</div>}
       <div className="font-semibold text-fg">{title}</div>
-      {sub && <p className="text-[13px] text-fg-mute mt-1 max-w-md">{sub}</p>}
+      {sub && <p className="text-[13.5px] text-fg-mute mt-1 max-w-md">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )

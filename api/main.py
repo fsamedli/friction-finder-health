@@ -131,8 +131,12 @@ def links():
 # ------------------------------------------------------------------ act
 class Action(BaseModel):
     text: str = Field(min_length=3)
-    owner: str = Field(min_length=2)
+    owner: str = ""                       # blank = assigned at approval (ownership directory, else the team manager)
     due: str
+    # Oct 27 round: the plan is a checklist the manager runs
+    id: str | None = None
+    status: str = Field(default="todo", pattern="^(todo|done|blocked)$")
+    done_at: str | None = None
 
 
 class PlanIn(BaseModel):
@@ -172,7 +176,7 @@ def _default_review(start: date) -> date:
 def plans():
     teams = pd.read_csv(config.DATA_DIR / "teams.csv").merge(pd.read_csv(config.DATA_DIR / "sites.csv"), on="site_id")
     label = {int(t.team_id): f"{t.site_name} {t.team_name}" for t in teams.itertuples()}
-    return [{**p, "team_label": label.get(int(p["team_id"]), "")} for p in I.load_plans()]
+    return [_with_progress({**_norm_plan(p), "team_label": label.get(int(p["team_id"]), "")}) for p in I.load_plans()]
 
 
 SEED_PLAN_ID = "plan-lanford-med-surg-night"
@@ -217,12 +221,15 @@ def create_plan(p: PlanIn):
         plan["review"] = p.review or _default_review(start).isoformat()
         plan["id"] = f"plan-{uuid.uuid4().hex[:8]}"
         plan["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        plan = _norm_plan(plan)
         if p.status == "approved":
             plan["decided_at"] = plan["created_at"]
+            plan["execution"] = _execute(plan)
         saved = I.save_plan(plan)
         if p.status == "approved":
             _record_plan_decision(saved, "approved", p.edits)
-        return saved
+            _redraft_notices_async(saved["id"])
+        return _with_progress(saved)
 
 
 @app.get("/api/plans/check")
@@ -267,7 +274,7 @@ def plans_board(as_of: str = I.AS_OF_DETECT):
         r = None if p.get("status") == "draft" else _jsonable(I.did_all(p, as_of, _costs())[0])
         state = ("draft" if p.get("status") == "draft" else "approved" if (r is None or r["status"] == "not_reached")
                  else "in_review" if r["status"] == "insufficient" else "reviewed")
-        rows.append({**p, "team_label": label.get(int(p["team_id"]), ""), "state": state, "result": r})
+        rows.append(_with_progress({**_norm_plan(p), "team_label": label.get(int(p["team_id"]), ""), "state": state, "result": r}))
     return {"plans": rows, "queue": {
         "due_reviews": [p["id"] for p in rows if p["state"] in ("in_review", "reviewed")],
         "missing_follow_ups": [p["id"] for p in rows if p["state"] == "in_review"],
@@ -292,11 +299,13 @@ def approve_plan(plan_id: str, a: ApprovePlanIn):
         if same:
             x = same[-1]
             return {**x, "duplicate": True, "explanation": f"An approved plan already covers this team and KPI from {x['start']} to {x['review']} ({x['id']}); the draft was not approved."}
-        new = {**plan, "status": "approved", "request_id": a.request_id, "edits": list(plan.get("edits", [])) + a.edits,
-               "decided_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        new = _norm_plan({**plan, "status": "approved", "request_id": a.request_id, "edits": list(plan.get("edits", [])) + a.edits,
+                          "decided_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+        new["execution"] = _execute(new)
         I.save_plan(new)   # load_plans keeps the last line per id
         _record_plan_decision(new, "approved", a.edits)
-        return new
+        _redraft_notices_async(new["id"])
+        return _with_progress(new)
 
 
 def _record_plan_decision(plan: dict, decision: str, edits: list[dict]) -> None:
@@ -306,6 +315,185 @@ def _record_plan_decision(plan: dict, decision: str, edits: list[dict]) -> None:
            "edits": edits, "investigation_id": plan.get("investigation_id"), "evidence_ids": plan.get("evidence_ids", [])}
     with open(config.APPROVALS_PATH, "a") as f:
         f.write(json.dumps(rec) + "\n")
+
+
+# ------------------------------------------------------------------ the plan as a checklist (Oct 27, 2026 round)
+# Prof. Hall, Oct 21: "turn the plan into a checklist with tasks, responsible people, and due dates", and show what happens
+# after approval. Old plans (the seeded one, v0.7 and v0.8 records) have no ids or statuses: they are added on read.
+
+def _norm_plan(p: dict) -> dict:
+    out = dict(p)
+    acts = []
+    for i, a in enumerate(out.get("actions", [])):
+        acts.append({**a, "id": a.get("id") or f"a{i + 1}", "status": a.get("status") or "todo", "done_at": a.get("done_at")})
+    out["actions"] = acts
+    out.setdefault("execution", None)
+    return out
+
+
+def _with_progress(p: dict) -> dict:
+    acts = p.get("actions", [])
+    return {**p, "progress": {"done": sum(1 for a in acts if a.get("status") == "done"), "total": len(acts)}}
+
+
+def _team_ctx(team_id: int) -> tuple[dict, str, dict]:
+    """(team info, team manager name, {role: name} for the site plus the system-wide roles)."""
+    from app import relations as R
+    team = R.team_info(int(team_id))
+    t = pd.read_csv(config.DATA_DIR / "teams.csv")
+    manager = str(t[t.team_id == int(team_id)].iloc[0].manager_name)
+    d = pd.read_csv(config.DATA_DIR / "ownership_directory.csv")
+    rows = d[(d.site_name == team["site"]) | (d.site_name == "ALL")].sort_values("site_name", key=lambda s_: s_ == "ALL")
+    owners = {}
+    for r in rows.itertuples():
+        owners.setdefault(r.owner_role, r.owner_name)
+    return team, manager, owners
+
+
+def _execute(plan: dict, derived: bool = False) -> dict:
+    """What the system does once a person has approved: assign owners, schedule the review, set the KPI watch, draft the
+    notices. Code only; nothing is sent. `derived` marks a record built on read for a plan approved before this existed."""
+    team, manager, owners = _team_ctx(int(plan["team_id"]))
+    rec = agent.execution_record(plan, team, manager, owners, I.KPI_LABELS.get(plan.get("kpi", "late_doses"), plan.get("kpi", "")))
+    if derived:
+        rec["derived"] = True
+        rec["note"] = "Derived from the plan as saved (approved before the execution record existed). Nothing was sent."
+    elif config.has_key():
+        rec["notices_status"] = "drafting"   # the model rewords the templated notices in the background; see _redraft_notices_async
+    return rec
+
+
+def _redraft_notices_async(plan_id: str) -> None:
+    """Model mode only: approval stays instant (templated notices); a background thread asks the model to reword them from
+    the plan facts and keeps the result only if the check passes."""
+    if not config.has_key():
+        return
+
+    def work():
+        try:
+            plan = next((x for x in I.load_plans() if x["id"] == plan_id), None)
+            if not plan or not plan.get("execution"):
+                return
+            team, manager, _ = _team_ctx(int(plan["team_id"]))
+            notices, notes = agent.draft_notices_llm(plan, team, manager, I.KPI_LABELS.get(plan.get("kpi", "late_doses"), ""))
+            with _plan_lock:
+                cur = next((x for x in I.load_plans() if x["id"] == plan_id), None)
+                if not cur or not cur.get("execution"):
+                    return
+                ex = dict(cur["execution"])
+                if notices:
+                    ex["notices"], ex["mode"] = notices, "model"
+                ex["notices_status"], ex["notice_notes"] = "ready", notes
+                I.save_plan({**cur, "execution": ex})
+        except Exception as e:  # never let a background rewrite break anything the manager sees
+            try:
+                with _plan_lock:
+                    cur = next((x for x in I.load_plans() if x["id"] == plan_id), None)
+                    if cur and cur.get("execution"):
+                        I.save_plan({**cur, "execution": {**cur["execution"], "notices_status": "ready", "notice_notes": [f"model rewrite skipped ({type(e).__name__})"]}})
+            except Exception:
+                pass
+    threading.Thread(target=work, daemon=True).start()
+
+
+def _record_action_event(plan: dict, action: dict, changes: dict, event: str) -> None:
+    rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "who": "manager", "target": "action", "decision": event,
+           "plan_id": plan["id"], "team_id": plan["team_id"], "action_id": action.get("id"), "changes": changes}
+    with open(config.APPROVALS_PATH, "a") as f:
+        f.write(json.dumps(rec) + "\n")
+
+
+def _plan_or_404(plan_id: str) -> dict:
+    plan = next((x for x in I.load_plans() if x["id"] == plan_id), None)
+    if not plan:
+        raise HTTPException(404, "unknown plan")
+    return _norm_plan(plan)
+
+
+def _plan_view(plan: dict) -> dict:
+    label = {r["team_id"]: r["label"] for r in _team_labels()}
+    out = {**plan, "team_label": label.get(int(plan["team_id"]), "")}
+    if out.get("status") == "approved" and not out.get("execution"):
+        out["execution"] = _execute(out, derived=True)
+    return _with_progress(out)
+
+
+class ActionPatch(BaseModel):
+    text: str | None = Field(default=None, min_length=3)
+    owner: str | None = None
+    due: str | None = None
+    status: str | None = Field(default=None, pattern="^(todo|done|blocked)$")
+
+
+@app.get("/api/plans/{plan_id}")
+def get_plan(plan_id: str):
+    """One plan as a checklist, with what happened at approval (owners, review date, KPI watch, draft notices)."""
+    return _plan_view(_plan_or_404(plan_id))
+
+
+@app.patch("/api/plans/{plan_id}/actions/{action_id}")
+def patch_action(plan_id: str, action_id: str, a: ActionPatch):
+    """Tick, untick, block or edit one task. Every change is recorded with the time (approvals.jsonl, target 'action')."""
+    with _plan_lock:
+        plan = _plan_or_404(plan_id)
+        act = next((x for x in plan["actions"] if x["id"] == action_id), None)
+        if not act:
+            raise HTTPException(404, "unknown action")
+        changes = {k: v for k, v in a.model_dump().items() if v is not None and v != act.get(k)}
+        if not changes:
+            return _plan_view(plan)
+        if "due" in changes:
+            try:
+                date.fromisoformat(changes["due"])
+            except ValueError:
+                raise HTTPException(422, "due must be YYYY-MM-DD")
+        act.update(changes)
+        if "status" in changes:
+            act["done_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds") if changes["status"] == "done" else None
+        I.save_plan(plan)
+        _record_action_event(plan, act, changes, "updated")
+        return _plan_view(plan)
+
+
+@app.post("/api/plans/{plan_id}/actions")
+def add_action(plan_id: str, a: Action):
+    """Add a task to an approved plan's checklist (owner defaults to the plan owner, then the team manager)."""
+    with _plan_lock:
+        plan = _plan_or_404(plan_id)
+        try:
+            date.fromisoformat(a.due)
+        except ValueError:
+            raise HTTPException(422, "due must be YYYY-MM-DD")
+        n = 1 + max([int(x["id"][1:]) for x in plan["actions"] if re.fullmatch(r"a\d+", x["id"] or "")] + [len(plan["actions"])])
+        owner = a.owner.strip() or plan.get("owner") or f"{_team_ctx(int(plan['team_id']))[1]}, nurse manager"
+        act = {"id": f"a{n}", "text": a.text, "owner": owner, "due": a.due, "status": a.status, "done_at": None}
+        plan["actions"].append(act)
+        if plan.get("execution"):
+            plan["execution"] = {**plan["execution"], "assigned": list(plan["execution"].get("assigned", [])) + [{"action_id": act["id"], "owner": owner, "source": "manager"}]}
+        I.save_plan(plan)
+        _record_action_event(plan, act, {"added": act["text"]}, "added")
+        return _plan_view(plan)
+
+
+class RegenerateIn(BaseModel):
+    team_id: int
+    obstacle: str = Field(min_length=3)
+    kpi: str = "late_doses"
+    start: str = "2026-09-21"
+
+
+@app.post("/api/plans/regenerate")
+def regenerate_plan(r: RegenerateIn):
+    """The 'edit and regenerate' half of the loop: new actions drafted from the obstacle the manager typed. The owner comes
+    from the ownership directory for the theme named; rules mode uses the action bank; model mode rewords within checks."""
+    if r.kpi not in I.KPIS:
+        raise HTTPException(422, "unknown kpi")
+    try:
+        date.fromisoformat(r.start)
+    except ValueError:
+        raise HTTPException(422, "start must be YYYY-MM-DD")
+    team, manager, owners = _team_ctx(r.team_id)
+    return agent.regenerate_actions(r.obstacle, team, manager, owners, r.start, I.KPI_LABELS.get(r.kpi, r.kpi))
 
 
 @app.delete("/api/demo")
@@ -361,8 +549,11 @@ def plan_result(plan_id: str, as_of: str = I.AS_OF_REVIEW):
     plan = next((p for p in I.load_plans() if p["id"] == plan_id), None)
     if not plan:
         raise HTTPException(404, "unknown plan")
-    res = I.did_all(plan, _check_as_of(as_of), _costs())
-    return _jsonable({**res[0], "also": res[1:]})
+    as_of = _check_as_of(as_of)
+    costs = _costs()
+    res = I.did_all(plan, as_of, costs)
+    # value: the three labelled tiers (measured / projected / hospital scenario); None before the result exists
+    return _jsonable({**res[0], "also": res[1:], "value": I.value_of_plan(plan, as_of, costs, res)})
 
 
 # ------------------------------------------------------------------ business case
@@ -393,7 +584,18 @@ def reset_costs():
 
 @app.get("/api/value")
 def value(headcount: int = 300):
-    return I.value_case(_costs(), headcount)
+    """The business case plus, when the research file exists, comparable-software price benchmarks (each row carries its
+    source URL and retrieval date; nothing is typed into the app)."""
+    out = I.value_case(_costs(), headcount)
+    bm = ROOT / "data" / "docs" / "pricing_benchmarks.json"
+    rows = None
+    if bm.exists():
+        try:
+            rows = json.loads(bm.read_text())
+            rows = rows if isinstance(rows, list) else rows.get("benchmarks")
+        except (ValueError, AttributeError):
+            rows = None
+    return {**out, "benchmarks": rows, "benchmarks_note": None if rows else "Benchmark research in progress (Oct 27, 2026): prices of comparable hospital operations software, each with its source, will be listed here."}
 
 
 # ------------------------------------------------------------------ data sources
@@ -777,7 +979,24 @@ def report(plan_id: str, as_of: str = I.AS_OF_REVIEW, download: bool = False):
                if ex else "")
     if drops:
         finding += "Survey items that fell between waves: " + "; ".join(f"{e(c['label'])} {c['delta']:+.2f} pts" for c in drops) + "."
-    acts = "".join(f"<tr><td>{e(a['text'])}</td><td>{e(a['owner'])}</td><td>{e(a['due'])}</td></tr>" for a in plan["actions"])
+    plan = _plan_view(_norm_plan(plan))
+    glyph = {"done": "&#9745;", "blocked": "&#9888;", "todo": "&#9744;"}
+    acts = "".join(f"<tr><td class='tick'>{glyph.get(a.get('status'), '&#9744;')}</td><td>{e(a['text'])}</td><td>{e(a['owner'])}</td><td>{e(a['due'])}</td>"
+                   f"<td>{e({'done': 'Done', 'blocked': 'Blocked', 'todo': 'Open'}.get(a.get('status'), 'Open'))}{(' · ' + e(a['done_at'][:10])) if a.get('done_at') else ''}</td></tr>" for a in plan["actions"])
+    ex = plan.get("execution") or {}
+    done = sum(1 for a in plan["actions"] if a.get("status") == "done")
+    if ex:
+        srcs = {}
+        for x in ex.get("assigned", []):
+            srcs[x["source"]] = srcs.get(x["source"], 0) + 1
+        notices = "".join(f"<div class='box'><b>To:</b> {e(n['to'])}<br><b>Subject:</b> {e(n['subject'])}<pre>{e(n['body'])}</pre>"
+                          f"<span class='muted'>{'AI-written from the plan facts, checked' if n.get('written_by') == 'model' else 'Templated from the plan'} · not sent</span></div>" for n in ex.get("notices", []))
+        execution = (f"<ul><li><b>Owners assigned:</b> {len(ex.get('assigned', []))} tasks ({', '.join(f'{v} from the {k}' if k != 'manager' else f'{v} chosen by the manager' for k, v in srcs.items())}).</li>"
+                     f"<li><b>Review scheduled:</b> {e(ex.get('review_scheduled', {}).get('date', plan['review']))}, in the Due reviews queue.</li>"
+                     f"<li><b>KPI watch set:</b> {e(ex.get('kpi_watch', {}).get('kpi_label', ''))} for {e(ex.get('kpi_watch', {}).get('team_label', ''))}, {e(ex.get('kpi_watch', {}).get('cadence', 'monthly'))}, until {e(ex.get('kpi_watch', {}).get('until', plan['review']))}.</li>"
+                     f"<li><b>Owner notices drafted:</b> {len(ex.get('notices', []))}. Nothing is sent by this prototype; the manager sends them.</li></ul>{notices}")
+    else:
+        execution = "<p class='muted'>This plan is a draft; nothing happens until a person approves it.</p>"
     if r["status"] == "ok":
         rows = "".join(f"<tr><td>{e(x['kpi_label'])}</td><td>{x['estimate'] * 10:+.1f}</td><td>{x['ci_low'] * 10:+.1f} to {x['ci_high'] * 10:+.1f}</td><td><b>{e(x['verdict'])}</b></td></tr>"
                        for x in results if x["status"] == "ok")
@@ -795,7 +1014,7 @@ body{{font-family:Geist,'Source Sans 3',Calibri,sans-serif;color:#101828;backgro
 h1{{font-size:21px;margin:6px 0 2px}} h2{{font-size:14px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em;color:#344054}}
 table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E7EC;padding:5px 6px;text-align:left;vertical-align:top}} th{{font-size:12px;color:#667085;font-weight:600}}
 .tag{{display:inline-block;background:#E7F6F4;color:#0B6E65;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:600}}
-.muted{{color:#667085;font-size:12px}} .box{{border:1px solid #E4E7EC;border-radius:10px;padding:10px 12px;margin-top:6px}}
+.muted{{color:#667085;font-size:12px}} .box{{border:1px solid #E4E7EC;border-radius:10px;padding:10px 12px;margin-top:6px}} .tick{{font-size:16px;width:22px}} pre{{white-space:pre-wrap;font:inherit;margin:6px 0;color:#344054}}
 .print{{float:right;border:1px solid #D0D5DD;background:#fff;border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}}
 @media print{{.print{{display:none}} body{{margin:0}} @page{{margin:14mm}}}}
 </style></head><body>
@@ -807,7 +1026,9 @@ table{{border-collapse:collapse;width:100%}} td,th{{border-bottom:1px solid #E4E
 <h2>Obstacle and plan</h2>
 <p><b>Obstacle to test:</b> {e(plan.get('obstacle', ''))}<br><b>Focus item:</b> {e(plan.get('focus', plan['item']))} · <b>KPI to watch:</b> {e(I.KPI_LABELS[kpi])}<br>
 <b>Start:</b> {e(plan['start'])} · <b>Review:</b> {e(plan['review'])} · <b>Status:</b> {e(plan['status'])} (approved by a person)</p>
-<table><tr><th>Action</th><th>Owner</th><th>Due</th></tr>{acts}</table>
+<h2>Checklist · {done} of {len(plan['actions'])} done</h2>
+<table><tr><th></th><th>Task</th><th>Responsible</th><th>Due</th><th>Status</th></tr>{acts}</table>
+<h2>What happened when the plan was approved</h2>{execution}
 <h2>Did it work?</h2>{result}
 <h2>Read this before acting on it</h2>
 <ul class="muted"><li>Directional, not causal: another change at the same time could explain the result. The plan owner should confirm what else changed.</li>

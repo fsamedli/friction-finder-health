@@ -123,3 +123,57 @@ def test_costs_validation():
             assert False, bad
         except ValueError:
             pass
+
+
+# ---- Oct 27, 2026 round: what a plan is worth, three labelled tiers (docs/specs/2026-10-27-prof-hall-round.md)
+def _seed():
+    return next(p for p in I.load_plans() if p["id"] == "plan-lanford-med-surg-night")
+
+
+def test_value_of_plan_none_before_the_result():
+    assert I.value_of_plan(_seed(), "2026-10-15", C) is None
+
+
+def test_value_measured_counts_only_established_effects():
+    v = I.value_of_plan(_seed(), AS_OF_REVIEW, C)
+    assert v["illustrative"] is True and "synthetic" in v["illustrative_reason"]
+    m, p, h = v["tiers"]
+    assert [t["id"] for t in (m, p, h)] == ["measured", "projected", "hospital"]
+    res = {r["kpi"]: r for r in I.did_all(_seed(), AS_OF_REVIEW, C)}
+    counted = {c["kpi"] for c in m["components"]}
+    assert counted == {k for k, r in res.items() if r["status"] == "ok" and r["verdict"] == "worked"}
+    assert {e["kpi"] for e in m["excluded"]} == set(res) - counted
+    for c in m["components"]:
+        assert c["dollars"] == round(c["events_avoided_per_quarter"] * 4 * c["unit_cost"]) and c["unit_kind"] in ("sourced", "assumption", "client_entered")
+    assert m["dollars"] == sum(c["dollars"] for c in m["components"]) > 0
+    assert any(i["label"] == "Time period" for i in m["inputs"]) and any(i["label"] == "Unit size" for i in m["inputs"])
+
+
+def test_value_projection_is_sourced_and_in_range():
+    v = I.value_of_plan(_seed(), AS_OF_REVIEW, C)
+    p = v["tiers"][1]
+    head = v["team"]["headcount"]
+    assert p["low"] == round(head * I.TURNOVER_RATE["value"] * I.GALLUP_TURNOVER_GAP["low"] * C["quit"]["value"])
+    assert p["high"] == round(head * I.TURNOVER_RATE["value"] * I.GALLUP_TURNOVER_GAP["high"] * C["quit"]["value"])
+    assert 0 < p["low"] < p["high"] and p["in_range"] is True
+    assert I.PROJECTION_SANE_QUITS[0] <= p["quits_avoided_low"] <= p["quits_avoided_high"] <= I.PROJECTION_SANE_QUITS[1]
+    assert all(i["source"] for i in p["inputs"]) and "gallup.com" in I.GALLUP_TURNOVER_GAP["source"]
+    assert p["focus"]["item"] == "q02" and p["focus"]["quartile_w2"] == 1 and "bottom to the top quartile" in p["condition"]
+    assert {m["kpi"] for m in p["mechanism"]} == {"late_doses", "quits"}
+    assert "not cause" in p["sentence"]
+
+
+def test_value_hospital_tier_matches_business_case():
+    v = I.value_of_plan(_seed(), AS_OF_REVIEW, C)
+    h = v["tiers"][2]
+    vc = I.value_case(C, I.HOSPITAL_HEADCOUNT)
+    assert (h["low"], h["high"]) == (vc["low"], vc["high"]) and h["low"] >= 10000  # the five-digit figure he asked for
+    assert h["link"] == "/value" and h["headcount"] == I.HOSPITAL_HEADCOUNT
+    assert any(i["label"] == "Hospital size" for i in h["inputs"]) and any(i["label"] == "Time period" for i in h["inputs"])
+
+
+def test_value_follows_edited_unit_costs():
+    costs = {k: dict(v) for k, v in C.items()}
+    costs["late_dose"]["value"] = 400.0
+    base = I.value_of_plan(_seed(), AS_OF_REVIEW, C)["tiers"][0]["dollars"]
+    assert I.value_of_plan(_seed(), AS_OF_REVIEW, costs)["tiers"][0]["dollars"] == base * 10

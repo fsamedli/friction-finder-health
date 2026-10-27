@@ -471,3 +471,144 @@ def value_case(costs: dict, headcount: int = 300) -> dict:
                 {"label": costs["quit"]["label"], "value": quit_cost, "source": costs["quit"]["source"]},
                 {"label": costs["injury"]["label"], "value": injury_cost, "source": costs["injury"]["source"]},
             ]}
+
+
+# ---------------------------------------------------------------- what a plan is worth (Oct 27, 2026 round)
+# Prof. Hall (Oct 21): "$1,700 appeared too small"; "use a larger, credible scenario with clear assumptions about hospital
+# size and time period". Three tiers, each with its inputs, so the screen prints the assumption next to the number
+# (docs/specs/2026-10-27-prof-hall-round.md). Nothing here changes a verdict or the placebo.
+GALLUP_TURNOVER_GAP = {
+    "low": 0.21, "high": 0.51,
+    "source": "Gallup, Q12 Meta-Analysis, 11th edition (2024): business units in the top engagement quartile have 21% "
+              "(high-turnover organizations) to 51% (low-turnover organizations) lower turnover than units in the bottom "
+              "quartile (gallup.com/workplace/321725/q12-meta-analysis-report.aspx). Correlational, across 183,806 units.",
+}
+HOSPITAL_HEADCOUNT = 300          # the Business case page's standing scenario: nursing and support staff per hospital
+PROJECTION_SANE_QUITS = (0.3, 3.0)  # avoided quits a year that are plausible for one unit; outside this the UI says so
+ILLUSTRATIVE_REASON = ("Illustrative: Lanford Health is fictional and the months after the plan started are synthetic, "
+                       "planted so the method can be shown. With a client's data every figure here is recomputed from its records.")
+
+
+def _unit_cost_row(costs: dict, kpi: str) -> dict:
+    c = costs.get(KPI_COST_KEY[kpi]) or {}
+    return {"value": float(c.get("value") or 0), "kind": c.get("kind", "none"), "label": c.get("label", KPI_COST_KEY[kpi]),
+            "source": c.get("source", ""), "unit": c.get("unit", "")}
+
+
+def _quartile_of(x: float | None, quartiles: list[dict]) -> int | None:
+    if x is None:
+        return None
+    for q in quartiles:
+        lo, hi = q["x_range"]
+        if lo <= x <= hi:
+            return int(q["q"])
+    return 1 if x < quartiles[0]["x_range"][0] else 4
+
+
+def value_of_plan(plan: dict, as_of: str, costs: dict, results: list[dict] | None = None,
+                  hospital_headcount: int = HOSPITAL_HEADCOUNT) -> dict | None:
+    """What the plan is worth, in three labelled tiers. None before the review result exists.
+
+    measured   the established difference-in-differences effects only (95% interval excludes zero), annualised at four
+               quarters, at the unit cost shown with its provenance. For a 14-person unit this is small, and says so.
+    projected  avoided turnover for this unit if it moves from the bottom to the top quartile of unit engagement:
+               headcount x sector turnover (NSI) x Gallup's published quartile gap (21% to 51%) x cost per RN separation.
+               A projection from published, correlational evidence; the unit's own follow-up pulse is not in the demo data.
+    hospital   the Business case scenario for a hospital of HOSPITAL_HEADCOUNT staff (value_case), the deck's number.
+    """
+    results = results or did_all(plan, as_of, costs)
+    main = results[0]
+    if main.get("status") != "ok":
+        return None
+    team_id = int(plan["team_id"])
+    team = _team(team_id)
+    headcount = int(team["headcount"])
+    sites = _data()[2].set_index("site_id")
+    team_label = f'{sites.loc[int(team["site_id"]), "site_name"]} {team["team_name"]}'
+
+    # tier 1: measured
+    components, excluded = [], []
+    for r in results:
+        if r.get("status") != "ok":
+            excluded.append({"kpi": r["kpi"], "kpi_label": r["kpi_label"], "verdict": None, "why": r.get("reason") or "no result yet"})
+            continue
+        if r["verdict"] != "worked":
+            why = "the 95% interval includes zero (two months is short for this KPI)" if r["verdict"] == "inconclusive" else "the KPI rose relative to comparable teams"
+            excluded.append({"kpi": r["kpi"], "kpi_label": r["kpi_label"], "verdict": r["verdict"], "why": why,
+                             "estimate": r["estimate"], "ci_low": r["ci_low"], "ci_high": r["ci_high"]})
+            continue
+        cost = _unit_cost_row(costs, r["kpi"])
+        if not cost["value"]:
+            excluded.append({"kpi": r["kpi"], "kpi_label": r["kpi_label"], "verdict": r["verdict"], "why": "no unit cost entered"})
+            continue
+        per_year = float(r["events_avoided_per_quarter"]) * 4
+        components.append({"kpi": r["kpi"], "kpi_label": r["kpi_label"], "events_avoided_per_quarter": r["events_avoided_per_quarter"],
+                           "events_avoided_per_year": round(per_year, 1), "unit_cost": cost["value"], "unit_kind": cost["kind"],
+                           "unit_source": cost["source"], "comparison_teams": len(r["comparison"]["teams"]),
+                           "ci_low_per_10": round(r["ci_low"] * 10, 2), "ci_high_per_10": round(r["ci_high"] * 10, 2),
+                           "dollars": round(per_year * cost["value"])})
+    measured_total = int(sum(c["dollars"] for c in components))
+    measured_inputs = []
+    for c in components:
+        measured_inputs.append({"label": f'{c["kpi_label"]} avoided per quarter', "value": c["events_avoided_per_quarter"],
+                                "source": f'Difference-in-differences vs {c["comparison_teams"]} comparable teams; 95% interval excludes zero'})
+        measured_inputs.append({"label": f'Cost per {c["kpi_label"].lower().rstrip("s")}', "value": c["unit_cost"], "kind": c["unit_kind"], "source": c["unit_source"]})
+    measured_inputs.append({"label": "Time period", "value": "12 months", "source": "Assumption: the two-month effect holds for four quarters"})
+    measured_inputs.append({"label": "Unit size", "value": headcount, "source": f"{team_label} headcount (teams.csv)"})
+    measured = {"id": "measured", "kind": "measured", "label": "Measured, this unit, per year", "dollars": measured_total,
+                "low": None, "high": None, "components": components, "excluded": excluded, "inputs": measured_inputs,
+                "sentence": (f'{", ".join(c["kpi_label"].lower() for c in components)}: the established effect, annualised, at the unit cost shown.'
+                             if components else "No established effect yet: every 95% interval includes zero, so nothing is counted here."),
+                "small_because": f"A {headcount}-person unit at tens of dollars per late dose stays small by construction; the retention value below is where the money is."}
+
+    # tier 2: projected retention value for this unit
+    item = plan.get("item") or "grand"
+    item_label = item_labels().get(item, item) if item != "grand" else "engagement (grand mean)"
+    quit_cost = _unit_cost_row(costs, "quits")
+    quits_per_year = headcount * TURNOVER_RATE["value"]
+    lo_q, hi_q = quits_per_year * GALLUP_TURNOVER_GAP["low"], quits_per_year * GALLUP_TURNOVER_GAP["high"]
+    tw = _data()[4]
+    w1 = float(tw.loc[(team_id, 1), item]) if (team_id, 1) in tw.index and int(tw.loc[(team_id, 1), "n"]) >= MIN_N else None
+    w2 = float(tw.loc[(team_id, 2), item]) if (team_id, 2) in tw.index and int(tw.loc[(team_id, 2), "n"]) >= MIN_N else None
+    ql = quartile_link("quits", item)
+    q1, q2 = _quartile_of(w1, ql["quartiles"]), _quartile_of(w2, ql["quartiles"])
+    mech = []
+    for kpi in dict.fromkeys([main["kpi"], "quits"]):
+        a = association(kpi, item)
+        mech.append({k: a[k] for k in ("kpi", "item", "slope", "ci_low", "ci_high", "p", "n_cells", "n_teams", "verdict")})
+    in_range = PROJECTION_SANE_QUITS[0] <= lo_q and hi_q <= PROJECTION_SANE_QUITS[1]
+    where = (f'after wave 2 it sits in quartile {q2} of {ql["n_cells"]} reportable unit-waves on "{item_label}"'
+             + (f", down from quartile {q1} at wave 1" if q1 and q2 and q1 != q2 else "")) if q2 else "its wave-2 position is not reportable"
+    projected = {"id": "projected", "kind": "projection", "label": "Projected, this unit, if engagement recovers",
+                 "dollars": None, "low": int(round(lo_q * quit_cost["value"])), "high": int(round(hi_q * quit_cost["value"])),
+                 "quits_avoided_low": round(lo_q, 2), "quits_avoided_high": round(hi_q, 2), "quits_per_year_now": round(quits_per_year, 2),
+                 "in_range": bool(in_range), "sane_range": list(PROJECTION_SANE_QUITS),
+                 "condition": f"If {team_label} moves from the bottom to the top quartile of unit engagement ({where}). "
+                              "A two-month follow-up pulse on the focus item would show whether it did; it is not in the demo data.",
+                 "focus": {"item": item, "label": item_label, "w1": None if w1 is None else round(w1, 2), "w2": None if w2 is None else round(w2, 2),
+                           "quartile_w1": q1, "quartile_w2": q2, "n_cells": ql["n_cells"]},
+                 "mechanism": mech,
+                 "inputs": [
+                     {"label": "Unit size", "value": headcount, "source": f"{team_label} headcount (teams.csv)"},
+                     {"label": "Voluntary turnover rate", "value": TURNOVER_RATE["value"], "source": TURNOVER_RATE["source"]},
+                     {"label": "Top-vs-bottom quartile turnover gap", "value": [GALLUP_TURNOVER_GAP["low"], GALLUP_TURNOVER_GAP["high"]], "source": GALLUP_TURNOVER_GAP["source"]},
+                     {"label": quit_cost["label"], "value": quit_cost["value"], "kind": quit_cost["kind"], "source": quit_cost["source"]},
+                     {"label": "Time period", "value": "12 months", "source": "Per year, at the sector turnover rate"},
+                 ],
+                 "sentence": f"{round(lo_q, 1)} to {round(hi_q, 1)} fewer voluntary separations a year on {headcount} people, at the sourced cost per RN separation. "
+                             "Association, not cause: Gallup's gap is correlational and this unit's own follow-up pulse is an assumption."}
+
+    # tier 3: the hospital scenario (the Business case page)
+    vc = value_case(costs, hospital_headcount)
+    hospital = {"id": "hospital", "kind": "scenario", "label": f"At hospital scale ({hospital_headcount:,} staff), per year",
+                "dollars": None, "low": int(vc["low"]), "high": int(vc["high"]), "headcount": hospital_headcount, "link": "/value",
+                "condition": vc["scenario"],
+                "inputs": [{"label": "Hospital size", "value": hospital_headcount, "source": "Scenario: nursing and support staff per hospital (Business case page slider)"},
+                           {"label": "Turnover falls", "value": [0.01, 0.03], "source": "Scenario: 1 point (low) to 3 points (high) of the workforce a year"},
+                           {"label": quit_cost["label"], "value": quit_cost["value"], "kind": quit_cost["kind"], "source": quit_cost["source"]},
+                           {"label": "One days-away injury avoided", "value": float(costs["injury"]["value"]), "kind": costs["injury"].get("kind"), "source": costs["injury"].get("source", "")},
+                           {"label": "Time period", "value": "12 months", "source": "Per hospital per year"}],
+                "sentence": f"The Business case figure for a {hospital_headcount:,}-person hospital: turnover falls 1 to 3 points and one days-away injury is avoided a year."}
+
+    return {"illustrative": True, "illustrative_reason": ILLUSTRATIVE_REASON, "team": {"team_id": team_id, "label": team_label, "headcount": headcount},
+            "as_of": as_of, "tiers": [measured, projected, hospital]}

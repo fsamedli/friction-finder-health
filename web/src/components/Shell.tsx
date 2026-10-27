@@ -55,14 +55,14 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             <div key={n.to}>
               {header && <div className="px-2.5 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-side-mute">{header}</div>}
               <NavLink to={n.to} end={n.end} onClick={onNavigate}
-                className={cx('flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors', on ? 'bg-side-active text-white' : 'text-side-fg hover:bg-side-hover hover:text-white')}>
+                className={cx('flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-colors', on ? 'bg-side-active text-white' : 'text-side-fg hover:bg-side-hover hover:text-white')}>
                 <span className={on ? 'text-brand-500' : 'text-side-mute'}>{n.icon}</span>{n.label}
               </NavLink>
             </div>
           )
         })}
       </nav>
-      <div className="m-3 rounded-xl border border-side-line bg-side-hover/60 p-3 text-[12px] text-side-mute">
+      <div className="m-3 rounded-xl border border-side-line bg-side-hover/60 p-3 text-[12.5px] text-side-mute">
         <div className="flex items-center gap-1.5 text-side-fg font-medium"><BookOpenCheck size={14} /> Demo workspace</div>
         <p className="mt-1 leading-snug">Lanford Health is fictional. All data is synthetic; no patient data.</p>
         <ul className="mt-2.5 space-y-1.5">
@@ -254,7 +254,7 @@ function ContextStrip() {
   }, [loc.pathname])
   const upload = !!s?.active
   return (
-    <div className={cx('border-b px-4 py-1.5 text-[12px] lg:px-8', upload ? 'border-info-100 bg-info-50 text-info-700' : 'border-border bg-surface/70 text-fg-mute')}>
+    <div className={cx('border-b px-4 py-1.5 text-[12.5px] lg:px-8', upload ? 'border-info-100 bg-info-50 text-info-700' : 'border-border bg-surface/70 text-fg-mute')}>
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-x-3 gap-y-0.5">
         <span><span className="font-medium text-fg-soft">As of {longDate(asOf)}</span> (demo clock)</span>
         <span aria-hidden className="text-fg-faint">·</span>

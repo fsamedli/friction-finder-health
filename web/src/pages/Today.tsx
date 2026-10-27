@@ -62,14 +62,14 @@ function PlanRow({ p, r }: { p: Plan; r: Did | null }) {
 /** The first thing a nurse manager sees: one team, why it matters in plain words, one next step. */
 function Focus({ eyebrow, title, chip, lines, action }: { eyebrow: string; title: React.ReactNode; chip: React.ReactNode; lines: React.ReactNode[]; action: React.ReactNode }) {
   return (
-    <Card className="!p-6 sm:!p-8 animate-in" >
+    <Card className="!p-6 sm:!p-8 animate-in" data-demo="focus">
       <div className="eyebrow">{eyebrow}</div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-[22px] sm:text-[26px] font-semibold tracking-[-0.02em] leading-tight text-fg">{title}</h2>
+        <h2 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-tight text-fg">{title}</h2>
         {chip}
       </div>
       <ul className="mt-4 space-y-2.5 max-w-3xl">
-        {lines.map((l, i) => <li key={i} className="flex gap-2.5 text-[14.5px] leading-relaxed text-fg-soft"><span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span className="min-w-0">{l}</span></li>)}
+        {lines.map((l, i) => <li key={i} className="flex gap-2.5 text-[16px] leading-relaxed text-fg-soft"><span className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-fg-faint" /><span className="min-w-0">{l}</span></li>)}
       </ul>
       <div className="mt-6 flex flex-wrap items-center gap-3">{action}</div>
     </Card>
@@ -148,11 +148,21 @@ function ManagerToday() {
     <div>
       <div className="mb-5 animate-in">
         <div className="text-[12.5px] text-fg-mute">{b.site} · {role === 'manager' ? 'your hospital' : 'selected hospital'} · {dataThrough(b.window)}</div>
-        <h1 className="mt-1 text-[22px] sm:text-[24px] font-semibold tracking-[-0.02em] text-fg">Good morning, {PERSONA[role].name.split(' ')[0]}</h1>
+        <h1 className="mt-1 text-[24px] sm:text-[26px] font-semibold tracking-[-0.02em] text-fg">Good morning, {PERSONA[role].name.split(' ')[0]}</h1>
       </div>
       {focus}
 
-      <div className="mt-10 grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
+        <Stat label="Excess operating cost" value={money(b.total_excess)} icon={<DollarSign size={16} />} tone={b.total_excess > 0 ? 'crit' : undefined}
+          sub={<>{monthRange(b.window)} · {money(b.annualized)} a year if it held</>} />
+        <Stat label="Teams needing attention" value={<>{reds.length}<span className="text-fg-faint text-[18px]"> / {b.teams.length}</span></>} icon={<AlertTriangle size={16} />} tone={reds.length ? 'crit' : 'ok'}
+          sub={<>{ambers.length} to watch · {b.teams.filter((t) => t.status === 'rolled_up').length} rolled up for privacy</>} />
+        <Stat label="Active action plans" value={active.length} icon={<ClipboardList size={16} />} sub="approved by a person" />
+        <Stat label={reviewReady ? 'Plan review' : 'Next review'} value={reviewReady ? reviewWord(r?.verdict) : r?.status === 'not_reached' ? `${r.days_to_go} days` : '—'}
+          icon={<CalendarClock size={16} />} tone={reviewReady ? (reviewTone(r?.verdict) === 'crit' ? 'crit' : reviewTone(r?.verdict) === 'ok' ? 'ok' : 'warn') : 'brand'} sub={main ? `${main.p.team_label} · ${longDate(main.p.review)}` : 'no plan yet'} />
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader title="Also on your list" sub={`Other teams whose operating KPIs or engagement moved beyond normal variation · ${monthRange(b.window)}`} />
           {others.length === 0 ? <Empty icon={<CheckCircle2 size={20} />} title="Nothing else outside normal variation" sub="Every other team is within the range comparable teams would predict." />
@@ -166,15 +176,6 @@ function ManagerToday() {
         </Card>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Stat label="Excess operating cost" value={money(b.total_excess)} icon={<DollarSign size={16} />} tone={b.total_excess > 0 ? 'crit' : undefined}
-          sub={<>{monthRange(b.window)} · {money(b.annualized, true)} a year if it held</>} />
-        <Stat label="Teams needing attention" value={<>{reds.length}<span className="text-fg-faint text-[18px]"> / {b.teams.length}</span></>} icon={<AlertTriangle size={16} />} tone={reds.length ? 'crit' : 'ok'}
-          sub={<>{ambers.length} to watch · {b.teams.filter((t) => t.status === 'rolled_up').length} rolled up for privacy</>} />
-        <Stat label="Active action plans" value={active.length} icon={<ClipboardList size={16} />} sub="approved by a person" />
-        <Stat label={reviewReady ? 'Plan review' : 'Next review'} value={reviewReady ? reviewWord(r?.verdict) : r?.status === 'not_reached' ? `${r.days_to_go} days` : '—'}
-          icon={<CalendarClock size={16} />} tone={reviewReady ? (reviewTone(r?.verdict) === 'crit' ? 'crit' : reviewTone(r?.verdict) === 'ok' ? 'ok' : 'warn') : 'brand'} sub={main ? `${main.p.team_label} · ${longDate(main.p.review)}` : 'no plan yet'} />
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
@@ -225,8 +226,8 @@ function HrToday() {
     <div>
       <div className="mb-5 animate-in">
         <div className="text-[12.5px] text-fg-mute">{meta?.company ?? 'Lanford Health (fictional)'} · all hospitals</div>
-        <h1 className="mt-1 text-[22px] sm:text-[24px] font-semibold tracking-[-0.02em] text-fg">Good morning, Jordan</h1>
-        <p className="mt-1 text-[14px] text-fg-mute max-w-3xl">{reds.length ? <><b className="text-fg">{reds.length} team{reds.length > 1 ? 's' : ''}</b> across {meta?.sites.length ?? 3} sites need attention</> : 'No team is outside normal variation'}; {ambers.length} to watch. Excess operating cost {money(total)} in {monthRange(all[0].window)}.</p>
+        <h1 className="mt-1 text-[24px] sm:text-[26px] font-semibold tracking-[-0.02em] text-fg">Good morning, Jordan</h1>
+        <p className="mt-1 text-[15px] text-fg-mute max-w-3xl">{reds.length ? <><b className="text-fg">{reds.length} team{reds.length > 1 ? 's' : ''}</b> across {meta?.sites.length ?? 3} sites need attention</> : 'No team is outside normal variation'}; {ambers.length} to watch. Excess operating cost {money(total)} in {monthRange(all[0].window)}.</p>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 stagger">
         {all.map((b) => {
@@ -235,7 +236,7 @@ function HrToday() {
             <Card key={b.site_id} className="hover:shadow-pop transition-shadow cursor-pointer">
               <button className="w-full text-left" onClick={() => { setSiteId(b.site_id); nav('/investigate') }}>
                 <div className="flex items-center justify-between"><span className="font-semibold">{b.site}</span>{r ? <Badge tone="crit" dot>{r} need attention</Badge> : a ? <Badge tone="warn" dot>{a} to watch</Badge> : <Badge tone="ok" dot>Normal</Badge>}</div>
-                <div className="mt-4 text-[26px] font-semibold tnum tracking-tight">{money(b.total_excess)}</div>
+                <div className="mt-4 text-[32px] font-semibold tnum tracking-tight">{money(b.total_excess)}</div>
                 <div className="text-[12.5px] text-fg-mute">excess operating cost · {monthRange(b.window)}</div>
                 <div className="mt-4 flex gap-4 text-[12.5px] text-fg-soft"><span className="flex items-center gap-1"><Users size={13} />{b.teams.length} teams</span><span>{b.teams.filter((t) => t.status === 'rolled_up').length} rolled up</span></div>
               </button>

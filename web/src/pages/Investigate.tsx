@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, ClipboardPlus, FileText, Lock, MessageSquareQuote, Sparkles, UserRound } from 'lucide-react'
+import { ArrowRight, ClipboardList, ClipboardPlus, FileText, Lock, MessageSquareQuote, Sparkles, UserRound } from 'lucide-react'
 import { api, KPI_ORDER, type AskResult, type EvidenceState, type Investigation, type Kpi, type Plan, type Why } from '../lib/api'
 import { longDate, money, monthRange, num, per10, pval, signed } from '../lib/format'
 import { KPI_SHORT } from '../lib/labels'
@@ -37,16 +37,33 @@ function conclusion(w: Why) {
   return out.charAt(0).toUpperCase() + out.slice(1)
 }
 
-/** One manager question: one sentence and one evidence state first, the chart or table under it, method one click down. */
-function Block({ id, q, sentence, state, children, details }: { id: string; q: string; sentence: ReactNode; state?: EvidenceState | null; children?: ReactNode; details?: ReactNode }) {
+/** One manager question (Prof. Hall, Oct 21, 2026: make the questions the visible structure). The question is the
+ *  heading, the one-sentence answer and its evidence state come first, and the charts and tables sit behind
+ *  "Show the evidence", open by default only where the demo points ("What explains it?"). The action blocks
+ *  ("What is missing?", "What do I do?") show their content directly: a list of gaps or the plan is the answer. */
+function Block({ id, n, q, sentence, state, children, details, evidence = 'closed', demo }: {
+  id: string; n: number; q: string; sentence: ReactNode; state?: EvidenceState | null; children?: ReactNode; details?: ReactNode
+  evidence?: 'open' | 'closed' | 'none'; demo?: string
+}) {
   return (
-    <section id={id} data-anchor aria-labelledby={`${id}-q`} className="rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-card">
-      <div id={`${id}-q`} className="eyebrow">{q}</div>
-      <div className="mt-1.5 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <p className="min-w-0 flex-1 text-[16px] font-semibold leading-snug text-fg">{sentence}</p>
-        {state && <EvidenceChip state={state} />}
+    <section id={id} data-anchor data-demo={demo} aria-labelledby={`${id}-q`} className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-card">
+      <div className="flex items-start gap-3.5">
+        <span aria-hidden className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-fg text-[13px] font-semibold text-white tnum">{n}</span>
+        <div className="min-w-0 flex-1">
+          <h2 id={`${id}-q`} className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.02em] leading-tight text-fg">{q}</h2>
+          <p className="mt-2.5 text-[16.5px] leading-snug text-fg">{sentence}</p>
+          {state && <div className="mt-2.5"><EvidenceChip state={state} /></div>}
+        </div>
       </div>
-      {children && <div className="mt-5">{children}</div>}
+      {children && (evidence === 'none' ? <div className="mt-5">{children}</div> : (
+        <details open={evidence === 'open'} className="group mt-5">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13.5px] font-medium text-fg-soft ring-1 ring-border hover:bg-canvas hover:text-fg [&::-webkit-details-marker]:hidden">
+            <span className="group-open:hidden">Show the evidence</span><span className="hidden group-open:inline">Hide the evidence</span>
+            <span aria-hidden className="text-fg-faint transition-transform group-open:rotate-90">›</span>
+          </summary>
+          <div className="mt-5">{children}</div>
+        </details>
+      ))}
       {details && <div className="mt-4">{details}</div>}
     </section>
   )
@@ -90,7 +107,7 @@ function RealBlock({ w, ev }: { w: Why; ev: AskResult | null }) {
   const state: EvidenceState = flagged.length && drop?.significant ? 'supported' : flagged.length || drop?.significant ? 'mixed' : 'insufficient'
   const mix = ev?.evidence.find((x) => x.kind === 'tenure_mix' || x.kind === 'signal_check')
   return (
-    <Block id="real" q="Is it real?" state={state} sentence={conclusion(w)}
+    <Block id="real" n={1} q="Is it real?" state={state} sentence={conclusion(w)} evidence="closed"
       details={<Details summary="Method: how 'beyond normal variation' is decided">
         <div className="space-y-2 text-[12.5px] text-fg-soft">
           {KPI_ORDER.map((x) => { const v = w.excess?.[x]; return v ? <p key={x}><b className="text-fg">{KPI_SHORT[x]}</b>: {num(v.observed)} observed vs {num(v.expected, 1)} expected · {v.judgeable ? `${pval(v.p)} (flagged below p = 0.01)` : 'too rare to judge (fewer than 3 expected)'}</p> : null })}
@@ -130,7 +147,7 @@ function NormalBlock({ w, asOf }: { w: Why; asOf: string }) {
   const inv = useInv('normal', QUESTION.normal!(w.team.team_name), { team_id: w.team.team_id, site_id: w.team.site_id, as_of: asOf })
   const a = inv.data?.answer
   return (
-    <Block id="normal" q="Is this normal for teams like ours?" state={a?.evidence_state ?? (inv.unavailable ? 'unavailable' : null)}
+    <Block id="normal" n={2} q="Is this normal for teams like ours?" evidence="closed" state={a?.evidence_state ?? (inv.unavailable ? 'unavailable' : null)}
       sentence={a?.conclusion ?? (inv.data?.message ?? (inv.unavailable || inv.error ? 'The comparison with teams like this one could not be run here.' : 'Comparing with teams like this one…'))}
       details={<Details summary="What “teams like ours” means here">
         <p className="text-[12.5px] text-fg-soft">The internal norm uses the teams on the same shift at the other hospitals and at this one, with 4 or more people. An external Gallup benchmark is an assumed data source: it is not in this prototype, and the answer says “unavailable” rather than guess.</p>
@@ -211,7 +228,7 @@ function ExplainBlock({ w, asOf, ev }: { w: Why; asOf: string; ev: { r: AskResul
   const quote = (s: string) => s.match(/"(.+)"/)?.[1] ?? s
   const meta = (s: string) => s.match(/\(([^)]*wave \d[^)]*)\)/)?.[1] ?? ''
   return (
-    <Block id="explain" q="What explains it?" state={a?.evidence_state ?? null}
+    <Block id="explain" n={3} q="What explains it?" evidence="open" demo="explain" state={a?.evidence_state ?? null}
       sentence={a?.conclusion ?? r?.assessment?.label ?? (ev.err ? 'The explanation could not be loaded.' : 'Checking the explanations…')}>
       <div className="space-y-6">
         {inv.data && a?.hypotheses && a.hypotheses.length > 0 && (
@@ -221,10 +238,10 @@ function ExplainBlock({ w, asOf, ev }: { w: Why; asOf: string; ev: { r: AskResul
               {a.hypotheses.map((h, i) => (
                 <li key={h.id} className="rounded-lg border border-border px-3.5 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 font-medium text-[14px]"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-canvas text-[11px] text-fg-mute ring-1 ring-border">{i + 1}</span>{h.label}</span>
+                    <span className="flex items-center gap-2 font-medium text-[15px]"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-canvas text-[11px] text-fg-mute ring-1 ring-border">{i + 1}</span>{h.label}</span>
                     <EvidenceChip state={h.evidence_state} />
                   </div>
-                  <p className="mt-1 text-[13px] text-fg-soft">{h.text} <Cites ids={h.evidence_ids} register={inv.data!.evidence} /></p>
+                  <p className="mt-1 text-[14px] text-fg-soft">{h.text} <Cites ids={h.evidence_ids} register={inv.data!.evidence} /></p>
                 </li>
               ))}
             </ol>
@@ -239,7 +256,7 @@ function ExplainBlock({ w, asOf, ev }: { w: Why; asOf: string; ev: { r: AskResul
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_1fr]">
             <div className="min-w-0 rounded-xl border border-border p-4">
               <CardHeader title={r.assessment?.label ?? r.message} sub="Verdict computed by rules from survey, operating records and comments" right={<><Provenance kind="computed" /><Badge tone="neutral">rules mode · {r.seconds.toFixed(1)} s</Badge></>} />
-              <ul className="space-y-2 text-[13.5px]">
+              <ul className="space-y-2 text-[14px]">
                 {(r.assessment?.reasons ?? []).map((x) => <li key={x} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand shrink-0" /><span className="text-fg-soft">{x}</span></li>)}
               </ul>
               <div className="mt-4 border-t border-border pt-3 text-[13px]"><div className="label mb-1">Operating detail</div><p className="text-fg-soft">{ops?.statement ?? '—'}</p>{staffing && <p className="text-fg-soft mt-2">{staffing.statement}</p>}</div>
@@ -250,7 +267,7 @@ function ExplainBlock({ w, asOf, ev }: { w: Why; asOf: string; ev: { r: AskResul
               <ul className="space-y-3">
                 {comments.map((c) => (
                   <li key={c.id} className="rounded-lg border border-border p-3">
-                    <p className="text-[13.5px] text-fg">“{quote(c.statement)}”</p>
+                    <p className="text-[14px] text-fg">“{quote(c.statement)}”</p>
                     <p className="mt-1 text-[11.5px] text-fg-mute">{meta(c.statement)}</p>
                   </li>
                 ))}
@@ -271,14 +288,14 @@ function MissingBlock({ w, asOf }: { w: Why; asOf: string }) {
   const inv = useInv('whats_missing', QUESTION.whats_missing!(w.team.team_name), { team_id: w.team.team_id, site_id: w.team.site_id, as_of: asOf })
   const a = inv.data?.answer
   return (
-    <Block id="missing" q="What is missing?" state={a?.evidence_state ?? (inv.unavailable ? 'unavailable' : null)}
+    <Block id="missing" n={4} q="What is missing?" evidence="none" state={a?.evidence_state ?? (inv.unavailable ? 'unavailable' : null)}
       sentence={a?.conclusion ?? (inv.data?.message ?? (inv.unavailable || inv.error ? 'The list of gaps could not be produced here.' : 'Listing what the data cannot tell us…'))}>
       {inv.data ? (
         <div className="space-y-3">
           {a?.gaps && a.gaps.length > 0 ? (
             <ul className="divide-y divide-border rounded-xl border border-border">
               {a.gaps.map((g, i) => (
-                <li key={i} className="grid grid-cols-1 gap-1 px-4 py-3 text-[13px] md:grid-cols-[1.2fr_1.4fr_auto] md:gap-4">
+                <li key={i} className="grid grid-cols-1 gap-1 px-4 py-3 text-[14px] md:grid-cols-[1.2fr_1.4fr_auto] md:gap-4">
                   <span className="font-medium text-fg">{g.gap}</span>
                   <span className="text-fg-soft">{g.step}</span>
                   <span className="text-fg-mute md:text-right">{g.owner}</span>
@@ -324,7 +341,7 @@ function ActBlock({ w, ev, existing, onSaved, asOf }: { w: Why; ev: AskResult | 
   const seed = useMemo(() => (draft ? seedFromDraft(draft, inv.data?.id) : deriveSeed(w, ev)), [draft, inv.data?.id, w, ev])
   if (existing) {
     return (
-      <Block id="act" q="What do I do?" sentence={<>A plan is approved: {existing.obstacle}</>}>
+      <Block id="act" n={5} q="What do I do?" evidence="none" demo="act" sentence={<>A plan is approved: {existing.obstacle}</>}>
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
           <div className="min-w-0 rounded-xl border border-border p-4">
             <CardHeader title={existing.obstacle} sub={`Focus item: ${existing.focus} · KPI to watch: ${KPI_SHORT[existing.kpi]}`} right={<Badge tone="ok" dot>Approved</Badge>} />
@@ -345,6 +362,7 @@ function ActBlock({ w, ev, existing, onSaved, asOf }: { w: Why; ev: AskResult | 
             </ol>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
+              <Button variant="secondary" onClick={() => nav(`/plans/${existing.id}`)} icon={<ClipboardList size={15} />}>Open the checklist</Button>
               <a href={`/api/report/${existing.id}`} target="_blank" rel="noreferrer"><Button variant="secondary" icon={<FileText size={15} />}>One-page report</Button></a>
             </div>
             <div className="mt-4 border-t border-border pt-3"><Useful target="plan" id={existing.id} /></div>
@@ -362,7 +380,7 @@ function ActBlock({ w, ev, existing, onSaved, asOf }: { w: Why; ev: AskResult | 
     )
   }
   return (
-    <Block id="act" q="What do I do?" sentence={draft ? <>Draft one plan from the evidence; you edit it and approve it.</> : <>Draft one plan from this team's evidence; you edit it and approve it.</>}>
+    <Block id="act" n={5} q="What do I do?" evidence="none" demo="act" sentence={draft ? <>Draft one plan from the evidence; you edit it and approve it.</> : <>Draft one plan from this team's evidence; you edit it and approve it.</>}>
       {inv.data && draft && <p className="mb-3 text-[12px] text-fg-mute">Prefilled by the plan drafter (code, rules mode). Evidence: <Cites ids={draft.evidence_ids} register={inv.data.evidence} /></p>}
       {(inv.unavailable || inv.error) && <div className="mb-3"><StateNote kind="fallback" title="Prefilled from this screen's evidence">The plan drafter did not answer, so the draft below is built from the numbers on this screen.</StateNote></div>}
       {waiting ? <Loading label="Drafting the plan" /> : <PlanEditor key={draft ? `draft-${inv.data?.id}` : ev ? 'with-evidence' : 'drafting'} seed={seed} onSaved={onSaved} />}
@@ -387,6 +405,18 @@ export default function Investigate() {
   const ready = !!why.data && !!detect.data
   const wide = useMedia('(min-width: 1280px)')
   const panelCtx = useMemo(() => ({ site_id: why.data?.team.site_id ?? null, team_id: id, as_of: asOf }), [why.data?.team.site_id, id, asOf])
+  // the question rail follows the reader: the topmost question block in view is the current one
+  const [active, setActive] = useState<string>(focus && Q.some((q) => q.id === focus) ? focus : 'real')
+  useEffect(() => {
+    if (!ready || typeof IntersectionObserver === 'undefined') return
+    const els = Q.map((q) => document.getElementById(q.id)).filter(Boolean) as HTMLElement[]
+    const io = new IntersectionObserver((entries) => {
+      const seen = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+      if (seen[0]) setActive(seen[0].target.id)
+    }, { rootMargin: '-104px 0px -55% 0px', threshold: 0 })
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [ready])
   useEffect(() => {
     if (!ready || !focus) return
     const t = setTimeout(() => document.getElementById(focus)?.scrollIntoView({ block: 'start' }), 150)
@@ -411,22 +441,32 @@ export default function Investigate() {
         title={<span className="flex flex-wrap items-center gap-3">{w.team.site} {w.team.team_name} {w.status && <StatusBadge s={w.status} />}</span>}
         sub={<>{w.team.shift} shift · {w.team.headcount} people · {monthRange(w.window ?? [])}</>}
         actions={existing
-          ? <Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button>
+          ? <><Button variant="secondary" onClick={() => nav(`/plans/${existing.id}`)} icon={<ClipboardList size={15} />}>Checklist</Button><Button variant="primary" onClick={() => nav(`/review/${existing.id}`)} icon={<ArrowRight size={15} />}>See if the plan worked</Button></>
           : <Button variant="decide" onClick={() => document.getElementById('act')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} icon={<ClipboardPlus size={15} />}>Draft a plan</Button>} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0">
           <nav aria-label="Questions on this page" className="sticky top-16 z-20 -mx-4 mb-5 border-b border-border bg-canvas/90 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8 xl:mx-0 xl:rounded-xl xl:border xl:px-2">
-            <ul className="flex gap-2 overflow-x-auto scroll-thin">
-              {Q.map((q) => <li key={q.id} className="shrink-0"><a href={`#${q.id}`} className={cx('inline-block rounded-full px-3 py-1 text-[12.5px] font-medium ring-1 ring-border hover:bg-surface', focus === q.id ? 'bg-surface text-fg' : 'text-fg-soft')}>{q.label}</a></li>)}
-              {!wide && <li className="shrink-0"><a href="#ask" className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12.5px] font-medium text-ai-700 ring-1 ring-ai-100 hover:bg-surface"><Sparkles size={12} /> Ask</a></li>}
-            </ul>
+            <ol className="flex gap-2 overflow-x-auto scroll-thin">
+              {Q.map((q, i) => {
+                const on = active === q.id
+                return (
+                  <li key={q.id} className="shrink-0">
+                    <a href={`#${q.id}`} aria-current={on ? 'true' : undefined} onClick={() => setActive(q.id)}
+                      className={cx('inline-flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-[13px] font-medium ring-1 transition-colors', on ? 'bg-fg text-white ring-fg' : 'text-fg-soft ring-border hover:bg-surface')}>
+                      <span className={cx('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold tnum', on ? 'bg-white/15 text-white' : 'bg-surface text-fg-mute ring-1 ring-border')}>{i + 1}</span>{q.label}
+                    </a>
+                  </li>
+                )
+              })}
+              {!wide && <li className="shrink-0"><a href="#ask" className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium text-ai-700 ring-1 ring-ai-100 hover:bg-surface"><Sparkles size={12} /> Ask</a></li>}
+            </ol>
           </nav>
           <div className="space-y-6">
             <RealBlock w={w} ev={ev.r} />
             <NormalBlock w={detect.data} asOf={asOf} />
             <ExplainBlock w={detect.data} asOf={asOf} ev={ev} />
             <MissingBlock w={detect.data} asOf={asOf} />
-            <ActBlock w={detect.data} ev={ev.r} existing={existing} asOf={asOf} onSaved={(p) => { plans.setData([...(plans.data ?? []), p]) }} />
+            <ActBlock w={detect.data} ev={ev.r} existing={existing} asOf={asOf} onSaved={(p) => { plans.setData([...(plans.data ?? []), p]); nav(`/plans/${p.id}`) }} />
             {!wide && <div id="ask" data-anchor><InvestigationPanel initial={panelCtx} /></div>}
             <Journey at={existing ? 'act' : 'explain'} teamId={w.team.team_id} planId={existing?.id} />
           </div>

@@ -7,6 +7,7 @@ import Today from './pages/Today'
 const Teams = lazy(() => import('./pages/Teams'))
 const Investigate = lazy(() => import('./pages/Investigate'))
 const Plans = lazy(() => import('./pages/Plans'))
+const PlanDetail = lazy(() => import('./pages/PlanDetail'))
 const Review = lazy(() => import('./pages/Review'))
 const Insights = lazy(() => import('./pages/Insights'))
 const Ask = lazy(() => import('./pages/Ask'))
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="investigate" element={<Teams />} />
             <Route path="investigate/:teamId" element={<Investigate />} />
             <Route path="plans" element={<Plans />} />
+            <Route path="plans/:planId" element={<PlanDetail />} />
             <Route path="review" element={<Review />} />
             <Route path="review/:planId" element={<Review />} />
             <Route path="insights" element={<Insights />} />

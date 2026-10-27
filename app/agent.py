@@ -1314,8 +1314,8 @@ def report_markdown(result: Result, plan_: ActionPlan | None) -> str:
         lines += ["", f"**Process owner:** {b.owner}", "", f"**Proposed test:** {b.proposed_test}", "", f"**Limits:** {b.limits}", ""]
     if plan_:
         lines += ["## Action plan (State of the Team shape)", f"**Performance goal:** {plan_.goal}", f"**Focus item:** {plan_.focus_item}, {plan_.focus_label}", "",
-                  "| # | Action | Owner | Due |", "|---|---|---|---|"]
-        lines += [f"| {i + 1} | {x['action']} | {x['owner_role']}, {x['owner_name']} | {x['due']} |" for i, x in enumerate(plan_.actions)]
+                  "| # | Done | Action | Responsible | Due |", "|---|---|---|---|---|"]
+        lines += [f"| {i + 1} | [ ] | {x['action']} | {x['owner_role']}, {x['owner_name']} | {x['due']} |" for i, x in enumerate(plan_.actions)]
         lines += ["", f"**Success measure:** {plan_.success_measure}", f"**Review:** {plan_.review_cadence}", "",
                   "### Questions for the team conversation (quoted)"] + [f"- {q}" for q in plan_.team_questions] + [f"_Source: {plan_.questions_source}_", ""]
     lines += ["## Evidence register"] + [f"- [{e.id}] ({e.origin}) {e.statement}" for e in result.evidence]
@@ -1394,8 +1394,9 @@ def report_html(result: Result, plan_: ActionPlan | None) -> str:
     if plan_:
         parts += ["<h2>Action plan, State of the Team shape <span class='tag grey'>" + ("generated" if plan_.mode == "llm" else "templated") + "</span></h2>",
                   f"<p><b>Performance goal:</b> {_h.escape(plan_.goal)}<br><b>Focus item:</b> {plan_.focus_item}, {_h.escape(plan_.focus_label)}</p>",
-                  "<table><tr><th>#</th><th>Action</th><th>Owner</th><th>Due</th></tr>" +
-                  "".join(f"<tr><td>{i + 1}</td><td>{_h.escape(x['action'])}</td><td>{_h.escape(x['owner_role'])}, {_h.escape(x['owner_name'])}</td><td>{x['due']}</td></tr>" for i, x in enumerate(plan_.actions)) + "</table>",
+                  "<table><tr><th>Done</th><th>Action</th><th>Responsible</th><th>Due</th></tr>" +
+                  "".join(f"<tr><td>&#9744;</td><td>{_h.escape(x['action'])}</td><td>{_h.escape(x['owner_role'])}, {_h.escape(x['owner_name'])}</td><td>{x['due']}</td></tr>" for i, x in enumerate(plan_.actions)) + "</table>"
+                  "<p class='small'>A checklist once approved: tick each action as it is done; the approved plan's page keeps the status, the responsible person and the due date.</p>",
                   f"<p><b>Success measure:</b> {_h.escape(plan_.success_measure)}<br><b>Review:</b> {_h.escape(plan_.review_cadence)}</p>",
                   "<h2>Questions for the team conversation (quoted)</h2><ul>" + "".join(f"<li>{_h.escape(q)}</li>" for q in plan_.team_questions) + f"</ul><p class='small'>Source: {_h.escape(plan_.questions_source)}</p>"]
     parts.append("<h2>Evidence register</h2><table><tr><th>Id</th><th>Origin</th><th>Statement</th></tr>" +
@@ -1429,6 +1430,205 @@ def review_log() -> list[dict]:
         except json.JSONDecodeError:
             continue
     return out
+
+
+# ----------------------------------------------------------------------------- plan execution (Oct 27, 2026 round)
+# After a person approves a plan the system does four bounded things, all recorded and none sent anywhere: it assigns an
+# owner to every task (the manager's choice, else the ownership directory, else the team manager), schedules the review,
+# sets the KPI watch, and drafts one notice per owner. Code builds the record; in model mode the model only rewords the
+# notices from the facts it is handed and a check rejects any number or name that is not in those facts.
+
+THEME_PROCESS = {"restock": "Medication cabinet restocking schedule", "equipment": "IV pump and equipment maintenance",
+                 "schedule": "Nurse staffing and float policy"}
+_THEME_WORDS = {"restock": r"restock|cabinet|pyxis|omnicell|par level|stock[- ]?out|empty bin|dispens",
+                "equipment": r"\bpump|equipment|biomed|device|maintenance|broken|repair",
+                "schedule": r"staff|float|schedul|short[- ]?staffed|vacanc|overtime|coverage"}
+
+
+def infer_theme(text: str) -> str:
+    t = (text or "").lower()
+    for theme, pat in _THEME_WORDS.items():
+        if re.search(pat, t):
+            return theme
+    return "generic"
+
+
+_ROLE_WORDS = re.compile(r"\b(nurse|manager|lead|officer|charge|team|pharmacy|partner|director|supervisor)\b", re.I)
+
+
+def _greeting(owner: str) -> str:
+    """'Hello Priya,' for 'Priya Singh, Pharmacy Operations Manager'; 'Hello,' for a role with no name ('Med-Surg Night charge nurse')."""
+    name = (owner or "").split(",")[0].strip()
+    if not name or ("," not in (owner or "") and _ROLE_WORDS.search(name)):
+        return "Hello,"
+    return f"Hello {name.split(' ')[0]},"
+
+
+def _long(d: str) -> str:
+    try:
+        return date.fromisoformat(d).strftime("%b %-d, %Y")
+    except (TypeError, ValueError):
+        return d or ""
+
+
+def execution_record(plan: dict, team: dict, manager_name: str, owners: dict, kpi_label: str) -> dict:
+    """The record of what happened at approval. `owners` = {role: name} for the team's site; `team` has label, site.
+    Deterministic; no model call. Notices are templates here (see draft_notices_llm for the model rewrite)."""
+    theme = infer_theme(plan.get("obstacle", ""))
+    proc = THEME_PROCESS.get(theme)
+    proc_owner = next(({"role": r, "name": n} for r, n in owners.items() if proc and r in (
+        {"restock": ("Pharmacy Operations Manager",), "equipment": ("Clinical Engineering Lead",), "schedule": ("Chief Nursing Officer",)}.get(theme, ()))), None)
+    assigned = []
+    for a in plan.get("actions", []):
+        owner, source = (a.get("owner") or "").strip(), "manager"
+        if not owner or owner.lower() in ("owner needed", "tbd"):
+            if plan.get("owner") and plan["owner"].lower() not in ("owner needed", ""):
+                owner, source = plan["owner"], "plan owner"
+            elif proc_owner:
+                owner, source = f"{proc_owner['name']}, {proc_owner['role']}", "ownership directory"
+            else:
+                owner, source = f"{manager_name}, nurse manager", "team manager"
+        a["owner"] = owner
+        assigned.append({"action_id": a.get("id"), "owner": owner, "source": source})
+    decided = (plan.get("decided_at") or plan.get("created_at") or datetime.now(timezone.utc).isoformat())[:10]
+    notices = _template_notices(plan, team, manager_name, kpi_label, decided)
+    return {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "mode": "rules", "theme": theme,
+            "assigned": assigned,
+            "review_scheduled": {"date": plan["review"], "queue": "Due reviews",
+                                 "what": f"{kpi_label} for {team['label']} before and after the plan, compared with comparable teams that did not act"},
+            "kpi_watch": {"kpi": plan.get("kpi", "late_doses"), "kpi_label": kpi_label, "team_id": int(plan["team_id"]), "team_label": team["label"],
+                          "from": plan["start"], "until": plan["review"], "cadence": "monthly, from the team-month operating records"},
+            "notices": notices, "notices_status": "ready", "nothing_sent": True,
+            "note": "Recorded by code when the plan was approved. Nothing was sent: the manager copies each notice into email or the staffing system."}
+
+
+def _template_notices(plan: dict, team: dict, manager_name: str, kpi_label: str, decided: str) -> list[dict]:
+    by_owner: dict[str, list[dict]] = {}
+    for a in plan.get("actions", []):
+        by_owner.setdefault(a["owner"], []).append(a)
+    out = []
+    for owner, acts in by_owner.items():
+        tasks = "\n".join(f"- {a['text']} (due {_long(a['due'])})" for a in acts)
+        body = (f"{_greeting(owner)}\n\n"
+                f"After the September engagement results, the {team['label']} nurse manager approved a plan starting {_long(plan['start'])} to test one obstacle: "
+                f"{plan.get('obstacle', '').rstrip('.')}.\n\n"
+                f"You are down for:\n{tasks}\n\n"
+                f"The operating measure we will watch is {kpi_label.lower()}; the review is on {_long(plan['review'])}. "
+                f"If a date does not work, reply and we will move it. Thank you.\n\n"
+                f"{manager_name}, nurse manager, {team['label']}")
+        n_words = {1: "one action", 2: "two actions", 3: "three actions", 4: "four actions"}.get(len(acts), f"{len(acts)} actions")
+        out.append({"to": owner, "subject": f"{team['label']}: {n_words} for you, first due {_long(min(a['due'] for a in acts))}" if len(acts) > 1
+                    else f"{team['label']}: one action for you, due {_long(acts[0]['due'])}",
+                    "body": body, "written_by": "rules", "check": ["templated from the plan; no model call"], "sent": False})
+    return out
+
+
+def _notice_allowed_numbers(plan: dict, team: dict) -> set[str]:
+    allowed = set(str(i) for i in range(0, 32)) | {f"{i:02d}" for i in range(0, 10)} | {"2026", "2027"}
+    for d in [plan.get("start"), plan.get("review"), plan.get("decided_at"), plan.get("created_at")] + [a.get("due") for a in plan.get("actions", [])]:
+        for m in NUM_RE.finditer(str(d or "")):
+            allowed.add(m.group(1))
+    for txt in [plan.get("obstacle", ""), plan.get("measure", ""), plan.get("success", ""), plan.get("baseline", "")] + [a.get("text", "") for a in plan.get("actions", [])]:
+        for m in NUM_RE.finditer(txt or ""):
+            allowed.add(m.group(1))
+    allowed.add(str(team.get("headcount", "")))
+    return allowed
+
+
+def draft_notices_llm(plan: dict, team: dict, manager_name: str, kpi_label: str) -> tuple[list[dict] | None, list[str]]:
+    """Model mode: reword the owner notices from the plan facts only. Returns (notices, notes); None when the model
+    is unavailable or fails the check twice (the templated notices stay)."""
+    owners = sorted({a["owner"] for a in plan.get("actions", [])})
+    facts = {"team": team["label"], "obstacle": plan.get("obstacle"), "focus_item": plan.get("focus"), "kpi": kpi_label,
+             "start": plan.get("start"), "review": plan.get("review"),
+             "manager": f"{manager_name}, nurse manager, {team['label']}",
+             "tasks": [{"owner": a["owner"], "task": a["text"], "due": a["due"]} for a in plan.get("actions", [])]}
+    system = ("You write short internal notices (under 110 words each) from a hospital unit nurse manager to a colleague who owns one or more tasks "
+              "in an approved improvement plan. Plain, warm, specific. Use ONLY the facts provided: never add a number, date, name or claim that "
+              "is not in them, and never say the survey or engagement caused anything. One notice per owner, `to` copied exactly from the facts. "
+              "Return ONLY JSON: {\"notices\": [{\"to\": str, \"subject\": str, \"body\": str}]}.")
+    user = "Facts:\n" + json.dumps(facts, indent=1) + "\n\nOwners (one notice each, `to` exactly): " + json.dumps(owners)
+    notes: list[str] = []
+    allowed = _notice_allowed_numbers(plan, team)
+    for attempt in range(2):
+        try:
+            out = llm.chat_json(system, user if attempt == 0 else user + "\n\nYour previous draft failed: " + "; ".join(notes))
+        except llm.LLMUnavailable as e:
+            return None, [f"model unavailable ({e}); templated notices kept"]
+        ns = [n for n in (out.get("notices") or []) if isinstance(n, dict) and n.get("to") and n.get("body")]
+        notes = []
+        if sorted(n["to"] for n in ns) != owners:
+            notes.append(f"owners do not match: got {[n['to'] for n in ns]}, need {owners}")
+        for n in ns:
+            text = f"{n.get('subject', '')} {n['body']}"
+            for m in NUM_RE.finditer(text):
+                if m.group(1) not in allowed:
+                    notes.append(f"number {m.group(1)} not in the plan")
+            if len(n["body"].split()) > 140:
+                notes.append("a notice is over 140 words")
+            if re.search(r"\b(caused|causes|because of the survey|proves?)\b", text, re.I):
+                notes.append("causal claim")
+        if not notes:
+            return [{"to": n["to"], "subject": str(n.get("subject") or f"{team['label']}: one action for you"), "body": n["body"], "written_by": "model",
+                     "check": ["passed: owners match the plan, every number is in the plan, no causal claim"], "sent": False} for n in ns], ["model notices passed the check"]
+    return None, ["model notices failed the check twice: " + "; ".join(notes) + "; templated notices kept"]
+
+
+_ACTION_BANK = {
+    "restock": [("Restore the 05:00 restock of the unit's dispensing cabinet so every bin is at par before the 06:00 pass", "process"),
+                ("Charge nurse logs stock-outs at 02:00 and sends the list to pharmacy each morning", "charge"),
+                ("Ten-minute team check-in every other Monday: did the actions happen, did they help?", "manager")],
+    "equipment": [("Review every open biomed ticket older than seven days with the clinical engineering lead and set a closure date for each", "process"),
+                  ("Tag every pump that fails the pre-shift check and log the tag number at handover", "charge"),
+                  ("Ten-minute team check-in every other Monday: did the actions happen, did they help?", "manager")],
+    "schedule": [("Review the RN staffing report with the chief nursing officer and agree a recovery plan for any month under the policy floor", "process"),
+                 ("Post next month's float coverage for the unit by the 20th and confirm it at the huddle", "manager"),
+                 ("Ten-minute team check-in every other Monday: did the actions happen, did they help?", "manager")],
+    "generic": [("Write down the step the comments describe as the obstacle and the new routine that replaces it", "manager"),
+                ("Ask the unit in the next huddle what gets in the way, and record the top three answers", "charge"),
+                ("Ten-minute team check-in every other Monday: did the actions happen, did they help?", "manager")],
+}
+
+
+def regenerate_actions(obstacle: str, team: dict, manager_name: str, owners: dict, start: str, kpi_label: str) -> dict:
+    """The 'edit and regenerate' half of the loop: new actions drafted from the manager's edited obstacle. Owners come from
+    the ownership directory for the theme the obstacle names, else the team. Model mode rewords within the same checks;
+    rules mode uses the bank. Returns {actions, owner, theme, mode, notes}."""
+    theme = infer_theme(obstacle)
+    role = {"restock": "Pharmacy Operations Manager", "equipment": "Clinical Engineering Lead", "schedule": "Chief Nursing Officer"}.get(theme)
+    proc_owner = f"{owners[role]}, {role}" if role and role in owners else None
+    who = {"process": proc_owner or f"{manager_name}, nurse manager", "charge": f"{team['team']} charge nurse", "manager": f"{manager_name}, nurse manager"}
+    d0 = date.fromisoformat(start)
+    due = lambda n: (d0 + timedelta(days=n)).isoformat()
+    bank = [{"text": t, "owner": who[w], "due": due(7 * (i + 1))} for i, (t, w) in enumerate(_ACTION_BANK.get(theme, _ACTION_BANK["generic"]))]
+    mode, notes = "rules", ["templated from the obstacle you typed (rules mode); the owner comes from the ownership directory"]
+    if config.has_key():
+        allowed_owners = sorted(set(who.values()))
+        system = ("You draft exactly three immediate actions for a hospital unit nurse manager's improvement plan. Each action is one sentence under "
+                  "25 words, concrete and assignable. Use ONLY the obstacle and facts given; introduce no numbers that are not in them. "
+                  "`owner` MUST be one of the allowed owners exactly. Return ONLY JSON: {\"actions\": [{\"action\": str, \"owner\": str}]}.")
+        user = json.dumps({"obstacle": obstacle, "team": team["label"], "kpi_to_watch": kpi_label, "allowed_owners": allowed_owners, "plan_start": start})
+        allowed_nums = set(str(i) for i in range(0, 32)) | {f"{i:02d}" for i in range(0, 10)} | {m.group(1) for m in NUM_RE.finditer(obstacle or "")} | {"2026"}
+        fail: list[str] = []
+        for attempt in range(2):
+            try:
+                out = llm.chat_json(system, user if attempt == 0 else user + "\n\nYour previous draft failed: " + "; ".join(fail))
+            except llm.LLMUnavailable as e:
+                notes = [f"model unavailable ({e}); templated actions shown"]
+                break
+            acts = [x for x in (out.get("actions") or []) if isinstance(x, dict) and x.get("action")]
+            fail = []
+            if len(acts) != 3:
+                fail.append(f"{len(acts)} actions; need 3")
+            fail += [f"owner not allowed: {x.get('owner')}" for x in acts if x.get("owner") not in allowed_owners]
+            fail += [f"number {m.group(1)} not in the facts" for x in acts for m in NUM_RE.finditer(x["action"]) if m.group(1) not in allowed_nums]
+            if not fail:
+                bank = [{"text": x["action"], "owner": x["owner"], "due": due(7 * (i + 1))} for i, x in enumerate(acts)]
+                mode, notes = "model", ["AI-written from your edited obstacle; checked: owners are in the directory or the team, no number outside the facts"]
+                break
+        else:
+            notes = ["model actions failed the check twice: " + "; ".join(fail) + "; templated actions shown"]
+    return {"actions": bank, "owner": proc_owner or f"{manager_name}, nurse manager", "theme": theme, "mode": mode, "notes": notes}
 
 
 # ----------------------------------------------------------------------------- ask about this brief (grounded follow-up chat)

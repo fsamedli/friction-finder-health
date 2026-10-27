@@ -50,7 +50,19 @@ export interface Why {
   excess?: Partial<Record<Kpi, Excess>>; excess_cost?: number; status?: Status; window?: string[]
   links: Assoc[]
 }
-export interface PlanAction { text: string; owner: string; due: string }
+export type ActionStatus = 'todo' | 'done' | 'blocked'
+/** One task on the plan's checklist (Oct 27 round): id and status are added on read for plans saved before they existed. */
+export interface PlanAction { text: string; owner: string; due: string; id?: string; status?: ActionStatus; done_at?: string | null }
+export interface Notice { to: string; subject: string; body: string; written_by: 'model' | 'rules'; check?: string[]; sent: boolean }
+/** What the system did once a person approved: code only, recorded, nothing sent. */
+export interface Execution {
+  at: string; mode: 'model' | 'rules'; theme?: string; derived?: boolean; note?: string
+  assigned: { action_id: string | null; owner: string; source: string }[]
+  review_scheduled: { date: string; queue: string; what: string }
+  kpi_watch: { kpi: Kpi; kpi_label: string; team_id: number; team_label: string; from: string; until: string; cadence: string }
+  notices: Notice[]; notices_status: 'drafting' | 'ready'; notice_notes?: string[]; nothing_sent: boolean
+}
+export interface Progress { done: number; total: number }
 export interface Plan {
   id: string; team_id: number; item: string; kpi: Kpi; obstacle: string; focus: string
   actions: PlanAction[]; start: string; review: string; status: string; note: string; team_label?: string
@@ -58,6 +70,8 @@ export interface Plan {
   owner?: string; measure?: string; baseline?: string; success?: string; assumptions?: string[]; finding?: string; rationale?: string
   investigation_id?: string | null; evidence_ids?: string[]; request_id?: string; decided_at?: string; created_at?: string
   edits?: { field: string; from: string; to: string }[]
+  // Oct 27 round: the checklist and what happened at approval
+  execution?: Execution | null; progress?: Progress
 }
 export interface Did {
   plan_id: string; kpi: Kpi; kpi_label: string; start: string; review: string
@@ -71,6 +85,8 @@ export interface Did {
   events_avoided_per_quarter?: number; dollars_per_quarter?: number | null; unit_cost?: number
   series?: { month: string; treated: number; comparison: number }[]
   also?: Did[]
+  /** Oct 27 round: what the plan is worth, three labelled tiers (types in lib/value.ts); null before the result exists. */
+  value?: import('./value').PlanValue | null
 }
 export interface Cost { label: string; value: number; unit: string; kind: 'sourced' | 'assumption' | 'client_entered' | 'none'; source: string; note: string }
 export interface Value {
@@ -143,7 +159,7 @@ export interface InvestigateIn {
 }
 export interface ManagerFunction { id: FunctionId; label: string; chip: string; question: string; shipped: boolean; research_label: string }
 export type PlanState = 'draft' | 'approved' | 'in_review' | 'reviewed'
-export interface PlanRow extends Plan { state: PlanState; result: Did | null; owner?: string; measure?: string; success?: string; baseline?: string; assumptions?: string[] }
+export interface PlanRow extends Plan { state: PlanState; result: Did | null; owner?: string; measure?: string; success?: string; baseline?: string; assumptions?: string[]; progress?: Progress }
 export interface PlansBoard { plans: PlanRow[]; queue: { due_reviews: string[]; missing_follow_ups: string[]; inconclusive: string[] } }
 
 export interface PackRun { file: string; ts: string; model: string; passed: number; total: number }
@@ -210,6 +226,14 @@ export const api = {
   functions: () => j<ManagerFunction[]>('/api/functions'),
   plansBoard: (as_of: string) => j<PlansBoard>('/api/plans/board' + q({ as_of })),
   planCheck: (team_id: number, kpi: Kpi, start: string) => j<{ existing: Plan[]; explanation: string }>('/api/plans/check' + q({ team_id, kpi, start })),
+  // Oct 27 round: the plan as a checklist the manager runs, and the edit-and-regenerate half of the loop
+  plan: (id: string) => j<Plan>(`/api/plans/${id}`),
+  patchAction: (id: string, actionId: string, body: Partial<Pick<PlanAction, 'text' | 'owner' | 'due' | 'status'>>) =>
+    j<Plan>(`/api/plans/${id}/actions/${actionId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+  addAction: (id: string, body: { text: string; owner: string; due: string }) =>
+    j<Plan>(`/api/plans/${id}/actions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+  regenerate: (body: { team_id: number; obstacle: string; kpi: Kpi; start: string }) =>
+    j<{ actions: PlanAction[]; owner: string; theme: string; mode: 'model' | 'rules'; notes: string[] }>('/api/plans/regenerate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
   approvePlan: (id: string, body: { request_id: string; edits: { field: string; from: string; to: string }[] }) =>
     j<Plan>(`/api/plans/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
   invFeedback: (investigation_id: string, reason: string, evidence_ids: string[], note = '') =>
