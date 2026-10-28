@@ -1,7 +1,8 @@
 $ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m pytest tests -q -p no:cacheprovider
-# 2026-10-08 13:52:45 +0400 on 3e95fe4 (v0.9-health)
-........................................................................ [ 54%]
-.............................................................            [100%]
+# 2026-10-28 13:22:44 -0400 on 62601fb (v0.9-health)
+........................................................................ [ 46%]
+........................................................................ [ 92%]
+............                                                             [100%]
 =============================== warnings summary ===============================
 ../prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53
   /Users/farid/Desktop/DNSC 6317/prototype/.venv/lib/python3.14/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
@@ -26,5 +27,5 @@ api/main.py:40
     return self.router.on_event(event_type)  # ty: ignore[deprecated]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-133 passed, 3 warnings in 9.14s
+156 passed, 3 warnings in 6.91s
 exit=0

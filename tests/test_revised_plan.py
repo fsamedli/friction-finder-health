@@ -7,13 +7,24 @@ every other team-month, and every Med-Surg Night number, is unchanged."""
 import json
 
 import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
+from app import config
 from app import impact as I
 from app.config import DATA_DIR
 
 c = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def scratch(tmp_path, monkeypatch):
+    """A clean cache: plans approved during a rehearsal on this laptop would otherwise hide the seeded plans."""
+    monkeypatch.setattr(config, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(I, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(config, "APPROVALS_PATH", tmp_path / "approvals.jsonl")
+    I.reload()
 P1, P2 = "plan-pine-hollow-med-surg-day-1", "plan-pine-hollow-med-surg-day-2"
 
 

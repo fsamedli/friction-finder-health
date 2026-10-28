@@ -1,5 +1,5 @@
 $ env GW_AZURE_OPENAI_KEY= OPENAI_API_KEY= .venv/bin/python -m evals.run_evals --no-model
-# 2026-10-08 13:52:54 +0400 on 3e95fe4 (v0.9-health)
+# 2026-10-28 13:22:51 -0400 on 62601fb (v0.9-health)
 PASS  E1 TP   [ok, supported, fallback] Why did the Lanford night shift's scores drop and why are dose   0.0s
 PASS  E2 TN   [suppressed, suppressed_insufficient, fallback] Why did the Lanford Pharmacy Day team's scores drop?             0.0s
 PASS  E3 TN   [refused] Why did the Riverside site drop?                                 0.0s
@@ -14,7 +14,7 @@ PASS E11 pass [ok] Where did scores drop across Lanford?                        
 PASS E12 TP   [ok, supported, fallback] Why did the Lanford Med-Surg Night team's scores drop?           0.0s
 PASS E13 pass [ok] How many unplanned absence days did Lanford Med-Surg Night hav   0.2s
 
-model: rules-only | retrieval: keyword | 13/13 passed in 0.3s
+model: rules-only | retrieval: keyword | 13/13 passed in 0.4s
 confusion matrix over planted problems: TP=2 FN=0 FP=0 TN=5
 lookups: 6/6 | briefs regenerated or fallen back: 0
 exit=0

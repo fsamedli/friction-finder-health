@@ -39,12 +39,27 @@ _state: dict = {"db": None, "retriever": None, "results": {}}
 
 @app.on_event("startup")
 def _warm() -> None:
-    """Compute the cross-team associations once at startup (about 0.8 s cold), so the first click on
-    Insights or Drivers during a demo is instant. Deterministic; no model call."""
-    try:
-        I.link_matrix()
-    except Exception:  # never block startup on a warm-up
-        pass
+    """Fill the result memo in a background thread: the cross-team associations, the board for every site at both
+    demo dates, the explanation for every team and the review result for every saved plan. Deterministic, no model
+    call; about 2 s on a laptop and about a minute on a 0.5-CPU host, during which the service already answers
+    (a page that arrives first just computes its own result). Nothing here can take the service down."""
+    def work() -> None:
+        try:
+            costs = _costs()
+            I.link_matrix()
+            sites = pd.read_csv(config.DATA_DIR / "sites.csv")
+            for as_of in (I.AS_OF_DETECT, I.AS_OF_REVIEW):
+                for site_id in sites.site_id:
+                    I.board(int(site_id), as_of, costs)
+            for t in _team_labels():
+                I.why(int(t["team_id"]), I.AS_OF_DETECT, costs)
+            for plan in I.load_plans():
+                if plan.get("status") != "draft":
+                    for as_of in (I.AS_OF_DETECT, I.AS_OF_REVIEW):
+                        I.did_all(plan, as_of, costs)
+        except Exception:
+            pass
+    threading.Thread(target=work, daemon=True, name="warm").start()
 
 
 def _db() -> DB:

@@ -176,13 +176,18 @@ for (const width of [1440, 390]) {
   const askIn = async (label, question) => {
     const panel = panelOf()
     const before = await panel.getByRole('article').count()
-    const n0 = invs.length
     try {
       await panel.getByLabel('Ask a question').fill(question)
+      // Match the answer to the panel's own request: the Investigate page also runs background investigations for
+      // the question rail, and their responses can land after this one when the server is busy.
+      const posted = page.waitForResponse((r) => r.request().method() === 'POST' && /\/api\/investigate(\/|$)/.test(new URL(r.url()).pathname)
+        && r.request().postDataJSON()?.question === question, { timeout: 30000 })
       await panel.getByRole('button', { name: 'Ask', exact: true }).click()
+      const mine = await (await posted).json()
       await panel.getByRole('article').nth(before).waitFor({ state: 'visible', timeout: 30000 })
-      for (let i = 0; i < 40 && invs.length === n0; i++) await page.waitForTimeout(100)
-      const inv = invs[invs.length - 1]
+      const own = () => [...invs].reverse().find((x) => x.id === mine.id)
+      for (let i = 0; i < 40 && !own(); i++) await page.waitForTimeout(100)
+      const inv = own() ?? (mine.status !== 'running' ? mine : null)
       const art = panel.getByRole('article').nth(before)
       const chip = await art.getByText(/^(Supported|Mixed|Insufficient|Unavailable)/).first().isVisible().catch(() => false)
       const cite = (await art.getByRole('button', { name: /^Evidence / }).count()) > 0

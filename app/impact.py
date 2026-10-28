@@ -20,7 +20,9 @@ two identify people as surely as survey scores do.
 from __future__ import annotations
 
 import calendar
+import copy
 import json
+import threading
 from datetime import date
 from functools import lru_cache
 
@@ -89,8 +91,38 @@ def upload_path():
 
 def reload() -> None:
     """Drop cached data and results after an upload or a return to demo data."""
+    global _MEMO_GEN
     for f in (_data, _cells, quartile_link, association):
         f.cache_clear()
+    with _MEMO_LOCK:
+        _MEMO.clear()
+        _MEMO_GEN += 1
+
+
+# ---------------------------------------------------------------- result memo
+# board(), why() and did_all() are pure functions of the data files, the as-of date, the unit costs and (for
+# did_all) the plan itself. Each costs 1 to 2 s on a 0.5-CPU host, so results are kept per process and handed
+# out as copies. The key carries everything a result depends on; reload() (upload, reset) empties the memo, and
+# a result computed across a reload is not kept.
+_MEMO: dict = {}
+_MEMO_LOCK = threading.Lock()
+_MEMO_GEN = 0
+
+
+def _key(*parts) -> tuple:
+    return tuple(json.dumps(x, sort_keys=True, default=str) if isinstance(x, (dict, list)) else x for x in parts)
+
+
+def _memo(key: tuple, compute):
+    with _MEMO_LOCK:
+        hit = _MEMO.get(key)
+        gen = _MEMO_GEN
+    if hit is None:
+        hit = compute()
+        with _MEMO_LOCK:
+            if gen == _MEMO_GEN:
+                _MEMO[key] = hit
+    return copy.deepcopy(hit)
 
 
 def validate_upload(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
@@ -259,6 +291,10 @@ def _elevation(team_id: int, team, months: list[str], kpi: str) -> dict:
 
 # ---------------------------------------------------------------- detect
 def board(site_id: int, as_of: str, costs: dict) -> dict:
+    return _memo(_key("board", int(site_id), as_of, costs), lambda: _board(int(site_id), as_of, costs))
+
+
+def _board(site_id: int, as_of: str, costs: dict) -> dict:
     ops, teams, sites, _, _ = _data()
     months = window(as_of)
     shown_months = full_months_through(as_of)
@@ -346,6 +382,10 @@ def link_matrix() -> list[dict]:
 
 
 def why(team_id: int, as_of: str, costs: dict) -> dict:
+    return _memo(_key("why", int(team_id), as_of, costs), lambda: _why(int(team_id), as_of, costs))
+
+
+def _why(team_id: int, as_of: str, costs: dict) -> dict:
     team = _team(team_id)
     sites = _data()[2].set_index("site_id")
     head = {"team_id": int(team_id), "team_name": team["team_name"], "shift": team["shift"],
@@ -448,6 +488,10 @@ def did(plan: dict, as_of: str, costs: dict, kpi: str | None = None) -> dict:
 
 
 def did_all(plan: dict, as_of: str, costs: dict) -> list[dict]:
+    return _memo(_key("did_all", plan, as_of, costs), lambda: _did_all(plan, as_of, costs))
+
+
+def _did_all(plan: dict, as_of: str, costs: dict) -> list[dict]:
     """The plan's KPI first, then the other KPIs the obstacle plausibly touches."""
     main = plan.get("kpi", "late_doses")
     return [did(plan, as_of, costs, k) for k in [main] + [k for k in ("absence_days", "quits") if k != main]]
